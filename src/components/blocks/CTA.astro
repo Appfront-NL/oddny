@@ -1,0 +1,53 @@
+---
+interface Props {
+  title: string;
+  button_text?: string;
+  button_url?: string;
+  background_color?: string;
+}
+
+const { title, button_text = 'Click here', button_url = '#', background_color = '#10b981' } = Astro.props;
+---
+
+<section class="cta" style={`background-color: ${background_color};`}>
+  <div class="cta-content">
+    <h2>{title}</h2>
+    <a href={button_url} class="button">{button_text}</a>
+  </div>
+</section>
+
+<style>
+  .cta {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: white;
+  }
+
+  .cta-content {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  h2 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+  }
+
+  .button {
+    display: inline-block;
+    padding: 1rem 2rem;
+    background: white;
+    color: inherit;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+</style>

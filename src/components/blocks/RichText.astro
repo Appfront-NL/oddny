@@ -1,0 +1,57 @@
+---
+interface Props {
+  headline?: string;
+  content?: string;
+}
+
+const { headline, content } = Astro.props;
+---
+
+<section class="richtext">
+  <div class="richtext-content">
+    {headline && <h2>{headline}</h2>}
+    {content && <div class="content" set:html={content} />}
+  </div>
+</section>
+
+<style>
+  .richtext {
+    padding: 3rem 2rem;
+    background: #f9fafb;
+  }
+
+  .richtext-content {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  h2 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    color: #1f2937;
+  }
+
+  .content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #4b5563;
+  }
+
+  .content :global(p) {
+    margin-bottom: 1rem;
+  }
+
+  .content :global(ul),
+  .content :global(ol) {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+
+  .content :global(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  .content :global(strong) {
+    color: #1f2937;
+  }
+</style>

@@ -1,0 +1,494 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getArticleBySlug, getSimilarArticles, locales, type Locale, defaultLocale } from '../../../lib/directus';
+
+export async function getStaticPaths() {
+  return [];
+}
+
+const { locale, slug } = Astro.params;
+const currentLocale = (locales.includes(locale as Locale) ? locale : defaultLocale) as Locale;
+const article = await getArticleBySlug(slug as string);
+
+if (!article) {
+  return Astro.redirect('/404');
+}
+
+const similarArticles = article.category ? await getSimilarArticles(article.category.id, article.id, 4) : [];
+const directusUrl = 'http://85.215.222.143:8055';
+const articleLanguage = currentLocale;
+
+// Get localized content
+const title = article[`title_${currentLocale}`] || article.title_nl || article.title || 'Untitled';
+const excerpt = article[`excerpt_${currentLocale}`] || article.excerpt_nl || article.excerpt || '';
+const content = article[`content_${currentLocale}`] || article.content_nl || article.content || '';
+
+function getImageUrl(image: any) {
+  if (!image) return null;
+  if (typeof image === 'string') return `${directusUrl}/assets/${image}`;
+  return `${directusUrl}/assets/${image.id}`;
+}
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString(currentLocale === 'nl' ? 'nl-NL' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+function setAttr(opts: { collection: string; item: any; fields?: string; mode?: string }) {
+  const parts = [`collection:${opts.collection}`, `item:${opts.item}`];
+  if (opts.fields) parts.push(`fields:${opts.fields}`);
+  if (opts.mode) parts.push(`mode:${opts.mode}`);
+  return parts.join(';');
+}
+
+const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
+---
+
+<Layout title={title} currentLocale={currentLocale} currentSlug={`blog/${slug}`}>
+  <article
+    data-directus-article={article.id}
+    data-article-id={article.id}
+    data-article-language={articleLanguage}
+  >
+    <!-- Hero Image -->
+    {getImageUrl(article.featured_image) && (
+      <div
+        style="width: 100%; max-height: 500px; overflow: hidden;"
+        data-directus={setAttr({ collection: 'articles', item: article.id, fields: 'featured_image', mode: 'popover' })}
+      >
+        <img
+          src={getImageUrl(article.featured_image)}
+          alt={title}
+          style="width: 100%; height: 100%; object-fit: cover;"
+        />
+      </div>
+    )}
+
+    <div style="max-width: 800px; margin: 0 auto; padding: 40px 20px;">
+      <!-- Back link -->
+      <a href={`/${currentLocale}/blog`} style="display: inline-flex; align-items: center; gap: 8px; color: #ff40b4; text-decoration: none; font-size: 14px; margin-bottom: 24px;">
+        ← {currentLocale === 'nl' ? 'Terug naar Artikelen' : 'Back to Articles'}
+      </a>
+
+      <!-- Category -->
+      {article.category && (
+        <span
+          style={`display: inline-block; padding: 6px 16px; background: ${article.category.color || '#ff40b4'}; color: white; font-size: 13px; font-weight: 500; border-radius: 4px; margin-bottom: 16px; text-transform: uppercase;`}
+          data-directus={setAttr({ collection: 'articles', item: article.id, fields: 'category', mode: 'popover' })}
+        >
+          {article.category.name}
+        </span>
+      )}
+
+      <!-- Title -->
+      <h1
+        style="font-family: 'Neue Haas Grotesk Display Pro', sans-serif; font-size: 42px; font-weight: 500; color: #42383e; margin-bottom: 24px; line-height: 1.2;"
+        data-directus={setAttr({ collection: 'articles', item: article.id, fields: `title_${currentLocale}`, mode: 'popover' })}
+      >
+        {title}
+      </h1>
+
+      <!-- Excerpt -->
+      <p
+        style="font-family: 'Neue Haas Grotesk Display Pro', sans-serif; font-size: 18px; color: #42383e; line-height: 1.6; margin-bottom: 32px;"
+        data-directus={setAttr({ collection: 'articles', item: article.id, fields: `excerpt_${currentLocale}`, mode: 'popover' })}
+      >
+        {excerpt}
+      </p>
+
+      <!-- Meta -->
+      <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 32px; padding-bottom: 32px; border-bottom: 1px solid #eee; font-size: 14px; color: #888484;">
+        <span data-directus={setAttr({ collection: 'articles', item: article.id, fields: 'published_date', mode: 'popover' })}>
+          {article.published_date ? formatDate(article.published_date) : 'No date'}
+        </span>
+        <span data-directus={setAttr({ collection: 'articles', item: article.id, fields: 'reading_time', mode: 'popover' })}>
+          {article.reading_time || 0} min {currentLocale === 'nl' ? 'leestijd' : 'read'}
+        </span>
+      </div>
+
+      <!-- Image 2 (if exists) - full width -->
+      {getImageUrl(article.image_2) && (
+        <div
+          style="margin: 32px 0; border-radius: 12px; overflow: hidden;"
+          data-directus={setAttr({ collection: 'articles', item: article.id, fields: 'image_2', mode: 'popover' })}
+        >
+          <img src={getImageUrl(article.image_2)} alt="" style="width: 100%; height: auto;" />
+        </div>
+      )}
+
+      <!-- Content Part 1 -->
+      <div
+        class="article-content"
+        set:html={content}
+        data-directus={setAttr({ collection: 'articles', item: article.id, fields: `content_${currentLocale}`, mode: 'drawer' })}
+      />
+
+      <!-- Image 3 & 4 side by side (if exist) -->
+      {(getImageUrl(article.image_3) || getImageUrl(article.image_4)) && (
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 32px 0;">
+          {getImageUrl(article.image_3) && (
+            <div
+              style="border-radius: 12px; overflow: hidden;"
+              data-directus={setAttr({ collection: 'articles', item: article.id, fields: 'image_3', mode: 'popover' })}
+            >
+              <img src={getImageUrl(article.image_3)} alt="" style="width: 100%; height: auto;" />
+            </div>
+          )}
+          {getImageUrl(article.image_4) && (
+            <div
+              style="border-radius: 12px; overflow: hidden;"
+              data-directus={setAttr({ collection: 'articles', item: article.id, fields: 'image_4', mode: 'popover' })}
+            >
+              <img src={getImageUrl(article.image_4)} alt="" style="width: 100%; height: auto;" />
+            </div>
+          )}
+        </div>
+      )}
+
+      <!-- Share Section -->
+      <div style="margin-top: 48px; padding: 24px; background: #f9f9f9; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <p style="font-weight: 500; color: #42383e; margin-bottom: 12px; font-size: 14px;">
+            {currentLocale === 'nl' ? 'Deel dit artikel:' : 'Share Article:'}
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(Astro.url.href)}&text=${encodeURIComponent(title)}`} target="_blank" rel="noopener" style="width: 32px; height: 32px; background: #42383e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; font-size: 12px;">𝕏</a>
+            <a href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(Astro.url.href)}&title=${encodeURIComponent(title)}`} target="_blank" rel="noopener" style="width: 32px; height: 32px; background: #0077b5; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; font-weight: bold; font-size: 12px;">in</a>
+            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener" style="width: 32px; height: 32px; background: #1877f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; font-weight: bold; font-size: 12px;">f</a>
+          </div>
+        </div>
+        <a href={`/${currentLocale}/blog`} style="color: #ff40b4; text-decoration: none; font-size: 14px; font-weight: 500;">
+          {currentLocale === 'nl' ? 'Alle Artikelen' : 'All Articles'} →
+        </a>
+      </div>
+
+      <!-- Similar Articles -->
+      {similarArticles.length > 0 && (
+        <div style="margin-top: 64px;">
+          <h2 style="font-family: 'Neue Haas Grotesk Display Pro', sans-serif; font-size: 24px; font-weight: 500; color: #42383e; margin-bottom: 24px;">
+            {currentLocale === 'nl' ? 'Vergelijkbare Artikelen' : 'Similar Articles'}
+          </h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px;">
+            {similarArticles.map((similar: any) => (
+              <a href={`/${currentLocale}/blog/${similar.slug}`} style="text-decoration: none; color: inherit;">
+                <div style="aspect-ratio: 1; border-radius: 8px; overflow: hidden; margin-bottom: 12px; background: #f0f0f0;">
+                  {getImageUrl(similar.featured_image) ? (
+                    <img src={getImageUrl(similar.featured_image)} alt={similar.title_nl || similar.title} style="width: 100%; height: 100%; object-fit: cover;" />
+                  ) : (
+                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #ccc;">No image</div>
+                  )}
+                </div>
+                <h3 style="font-size: 14px; font-weight: 500; color: #42383e; line-height: 1.4;">
+                  {similar[`title_${currentLocale}`] || similar.title_nl || similar.title}
+                </h3>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </article>
+</Layout>
+
+<style is:global>
+  .article-content {
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    font-size: 16px;
+    line-height: 1.8;
+    color: #42383e;
+  }
+  .article-content p { margin-bottom: 20px; }
+  .article-content h2 { font-size: 28px; font-weight: 500; margin: 40px 0 20px; }
+  .article-content h3 { font-size: 22px; font-weight: 500; margin: 32px 0 16px; }
+  .article-content img { max-width: 100%; border-radius: 8px; margin: 24px 0; }
+  .article-content ul, .article-content ol { margin-bottom: 20px; padding-left: 24px; }
+  .article-content li { margin-bottom: 8px; }
+  .article-content blockquote { border-left: 4px solid #ff40b4; padding-left: 20px; margin: 24px 0; font-style: italic; color: #666; }
+
+  [data-directus] { position: relative; transition: outline 0.15s ease; }
+  [data-directus]:hover { outline: 2px solid #6644ff; outline-offset: 4px; cursor: pointer; }
+
+  /* Article Toolbar */
+  .article-toolbar {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    display: flex;
+    gap: 12px;
+    z-index: 9999;
+    font-family: Inter, system-ui, sans-serif;
+  }
+
+  /* Save & Stay Button */
+  .save-stay-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #2ecda7 0%, #26b896 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(46, 205, 167, 0.3);
+    transition: all 0.15s ease;
+  }
+  .save-stay-btn:hover {
+    background: linear-gradient(135deg, #26b896 0%, #1fa882 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(46, 205, 167, 0.4);
+  }
+  .save-stay-btn:active {
+    transform: translateY(0);
+  }
+  .save-stay-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .save-stay-btn .btn-icon {
+    font-size: 16px;
+  }
+
+  /* Language Toolbar */
+  .language-toolbar {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    padding: 6px;
+  }
+  .lang-tabs { display: flex; gap: 4px; }
+  .lang-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    border: none;
+    background: #f3f4f6;
+  }
+  .lang-tab.active {
+    background: linear-gradient(135deg, #6644ff 0%, #5533dd 100%);
+    color: white;
+    cursor: default;
+  }
+  .lang-tab:not(.active):hover { background: #e5e7eb; color: #374151; }
+  .lang-flag { font-size: 1.1rem; }
+  .lang-name { font-weight: 600; }
+
+  /* Inline edit styles */
+  .inline-edit-popup {
+    position: fixed;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    z-index: 10000;
+    min-width: 320px;
+    max-width: 450px;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .inline-edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+    border-radius: 12px 12px 0 0;
+  }
+  .inline-edit-header h3 { margin: 0; font-size: 14px; font-weight: 600; color: #374151; }
+  .inline-edit-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #9ca3af; }
+  .inline-edit-body { padding: 16px; }
+  .inline-edit-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  .inline-edit-input:focus { outline: none; border-color: #6644ff; box-shadow: 0 0 0 3px rgba(102, 68, 255, 0.1); }
+  textarea.inline-edit-input { min-height: 100px; resize: vertical; }
+  .inline-edit-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid #e5e7eb; }
+  .inline-edit-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; }
+  .inline-edit-btn-cancel { background: white; border: 1px solid #d1d5db; color: #374151; }
+  .inline-edit-btn-save { background: #6644ff; border: none; color: white; }
+</style>
+
+<script is:inline define:vars={{ directusUrl, articleId: article.id, currentLocale, otherLocale, slug }}>
+(function() {
+  var inIframe = window.self !== window.top;
+  if (!inIframe) {
+    console.log('[Article Edit] Not in iframe, editing disabled');
+    return;
+  }
+
+  var DIRECTUS_URL = directusUrl;
+  var ARTICLE_ID = articleId;
+  var CURRENT_LOCALE = currentLocale;
+  var OTHER_LOCALE = otherLocale;
+  var SLUG = slug;
+  var accessToken = null;
+  var hasUnsavedChanges = false;
+
+  // Create article toolbar with Save & Stay and Language switcher
+  var articleToolbar = document.createElement('div');
+  articleToolbar.className = 'article-toolbar';
+  articleToolbar.innerHTML =
+    '<button class="save-stay-btn" id="saveStayBtn">' +
+      '<span class="btn-icon">✓</span>' +
+      '<span>Save & Stay</span>' +
+    '</button>' +
+    '<div class="language-toolbar">' +
+      '<div class="lang-tabs">' +
+        '<button class="lang-tab ' + (CURRENT_LOCALE === 'nl' ? 'active' : '') + '" data-lang="nl">' +
+          '<span class="lang-flag">🇳🇱</span>' +
+          '<span class="lang-name">Nederlands</span>' +
+        '</button>' +
+        '<button class="lang-tab ' + (CURRENT_LOCALE === 'en' ? 'active' : '') + '" data-lang="en">' +
+          '<span class="lang-flag">🇬🇧</span>' +
+          '<span class="lang-name">English</span>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(articleToolbar);
+
+  // Save & Stay button handler
+  var saveStayBtn = document.getElementById('saveStayBtn');
+  saveStayBtn.addEventListener('click', async function() {
+    saveStayBtn.disabled = true;
+    saveStayBtn.innerHTML = '<span class="btn-icon">⏳</span><span>Saving...</span>';
+
+    // Notify parent that content was updated and refresh the preview
+    window.parent.postMessage({ type: 'directus:content-updated' }, '*');
+
+    // Wait a moment for Directus to process, then refresh to show latest data
+    setTimeout(function() {
+      window.location.reload();
+    }, 500);
+  });
+
+  // Language switch handler
+  articleToolbar.querySelectorAll('.lang-tab').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var lang = btn.getAttribute('data-lang');
+      if (lang !== CURRENT_LOCALE) {
+        window.location.href = '/' + lang + '/blog/' + SLUG;
+      }
+    });
+  });
+
+  // Request token from parent
+  window.parent.postMessage({ type: 'directus:request-token' }, '*');
+
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'directus:token') {
+      accessToken = event.data.token;
+      console.log('[Article Edit] Token received');
+    }
+  });
+
+  // Make elements editable on click
+  document.querySelectorAll('[data-directus]').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var attr = el.getAttribute('data-directus');
+      var parts = {};
+      attr.split(';').forEach(function(part) {
+        var kv = part.split(':');
+        if (kv.length === 2) parts[kv[0]] = kv[1];
+      });
+
+      if (parts.mode === 'drawer') {
+        window.open(DIRECTUS_URL + '/admin/content/' + parts.collection + '/' + parts.item, '_blank');
+        return;
+      }
+
+      if (!parts.fields) return;
+
+      showEditPopup(el, parts.collection, parts.item, parts.fields);
+    });
+  });
+
+  function showEditPopup(targetEl, collection, itemId, field) {
+    var existing = document.querySelector('.inline-edit-popup');
+    if (existing) existing.remove();
+
+    var currentValue = targetEl.textContent.trim();
+    var isTextarea = field.includes('excerpt') || field.includes('content');
+    var fieldLabel = field.replace('_nl', ' (NL)').replace('_en', ' (EN)');
+
+    var popup = document.createElement('div');
+    popup.className = 'inline-edit-popup';
+    popup.innerHTML =
+      '<div class="inline-edit-header">' +
+        '<h3>Edit ' + fieldLabel + '</h3>' +
+        '<button class="inline-edit-close">&times;</button>' +
+      '</div>' +
+      '<div class="inline-edit-body">' +
+        (isTextarea
+          ? '<textarea class="inline-edit-input">' + currentValue + '</textarea>'
+          : '<input type="text" class="inline-edit-input" value="' + currentValue.replace(/"/g, '&quot;') + '">') +
+      '</div>' +
+      '<div class="inline-edit-footer">' +
+        '<button class="inline-edit-btn inline-edit-btn-cancel">Cancel</button>' +
+        '<button class="inline-edit-btn inline-edit-btn-save">Save</button>' +
+      '</div>';
+
+    var rect = targetEl.getBoundingClientRect();
+    popup.style.top = Math.min(rect.bottom + 10, window.innerHeight - 300) + 'px';
+    popup.style.left = Math.max(10, Math.min(rect.left, window.innerWidth - 350)) + 'px';
+
+    document.body.appendChild(popup);
+
+    var input = popup.querySelector('.inline-edit-input');
+    input.focus();
+    if (!isTextarea) input.select();
+
+    popup.querySelector('.inline-edit-close').onclick = function() { popup.remove(); };
+    popup.querySelector('.inline-edit-btn-cancel').onclick = function() { popup.remove(); };
+
+    popup.querySelector('.inline-edit-btn-save').onclick = async function() {
+      var newValue = input.value;
+
+      try {
+        var response = await fetch(DIRECTUS_URL + '/items/' + collection + '/' + itemId, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + accessToken
+          },
+          body: JSON.stringify({ [field]: newValue })
+        });
+
+        if (response.ok) {
+          targetEl.textContent = newValue;
+          popup.remove();
+          window.parent.postMessage({ type: 'directus:content-updated' }, '*');
+        } else {
+          alert('Error saving. Make sure you are logged in.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error saving');
+      }
+    };
+  }
+
+  console.log('[Article Edit] Ready - ' + document.querySelectorAll('[data-directus]').length + ' editable elements');
+})();
+</script>

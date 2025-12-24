@@ -1,0 +1,336 @@
+---
+import { getSiteSettings, getNavigationItems, getAssetUrl, type NavigationItem, type SiteSettings, type Locale, defaultLocale } from '../lib/directus';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+
+interface Props {
+  currentLocale?: Locale;
+  currentSlug?: string;
+}
+
+const { currentLocale = defaultLocale, currentSlug = '' } = Astro.props;
+
+const settings = await getSiteSettings();
+const navItems = await getNavigationItems('header');
+
+function getItemUrl(item: NavigationItem): string {
+  if (item.url) return item.url;
+  if (item.page) return `/${currentLocale}/${item.page.slug}`;
+  return '#';
+}
+---
+
+<header class="navbar">
+  <div class="navbar-container">
+    <a href={`/${currentLocale}/`} class="navbar-brand">
+      {settings?.logo ? (
+        <img src={getAssetUrl(settings.logo)} alt={settings.site_name || 'Logo'} class="navbar-logo" />
+      ) : (
+        <span class="navbar-site-name">{settings?.site_name || 'My Website'}</span>
+      )}
+    </a>
+
+    <button class="navbar-toggle" aria-label="Open menu" aria-expanded="false">
+      <span class="navbar-toggle-icon"></span>
+    </button>
+
+    <nav class="navbar-nav">
+      <ul class="navbar-menu">
+        {navItems.map((item) => (
+          <li class={`navbar-item ${item.children && item.children.length > 0 ? 'has-dropdown' : ''}`}>
+            <a
+              href={getItemUrl(item)}
+              class="navbar-link"
+              target={item.open_in_new_tab ? '_blank' : undefined}
+              rel={item.open_in_new_tab ? 'noopener noreferrer' : undefined}
+            >
+              {item.label}
+              {item.children && item.children.length > 0 && (
+                <svg class="dropdown-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              )}
+            </a>
+            {item.children && item.children.length > 0 && (
+              <ul class="navbar-dropdown">
+                {item.children.map((child) => (
+                  <li class="dropdown-item">
+                    <a
+                      href={getItemUrl(child)}
+                      class="dropdown-link"
+                      target={child.open_in_new_tab ? '_blank' : undefined}
+                      rel={child.open_in_new_tab ? 'noopener noreferrer' : undefined}
+                    >
+                      {child.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+      <LanguageSwitcher currentLocale={currentLocale} currentSlug={currentSlug} />
+    </nav>
+  </div>
+</header>
+
+<style>
+  .navbar {
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .navbar-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+  }
+
+  .navbar-brand {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #1f2937;
+  }
+
+  .navbar-logo {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .navbar-site-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #6644ff;
+  }
+
+  .navbar-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    z-index: 1001;
+  }
+
+  .navbar-toggle-icon {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: #374151;
+    position: relative;
+    transition: background 0.2s;
+  }
+
+  .navbar-toggle-icon::before,
+  .navbar-toggle-icon::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    background: #374151;
+    left: 0;
+    transition: transform 0.2s;
+  }
+
+  .navbar-toggle-icon::before {
+    top: -7px;
+  }
+
+  .navbar-toggle-icon::after {
+    bottom: -7px;
+  }
+
+  .navbar-toggle[aria-expanded="true"] .navbar-toggle-icon {
+    background: transparent;
+  }
+
+  .navbar-toggle[aria-expanded="true"] .navbar-toggle-icon::before {
+    transform: rotate(45deg) translate(5px, 5px);
+  }
+
+  .navbar-toggle[aria-expanded="true"] .navbar-toggle-icon::after {
+    transform: rotate(-45deg) translate(5px, -5px);
+  }
+
+  .navbar-nav {
+    display: flex;
+    align-items: center;
+  }
+
+  .navbar-menu {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 0.5rem;
+  }
+
+  .navbar-item {
+    position: relative;
+  }
+
+  .navbar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.75rem 1rem;
+    color: #374151;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    border-radius: 8px;
+    transition: color 0.15s, background-color 0.15s;
+  }
+
+  .navbar-link:hover {
+    color: #6644ff;
+    background-color: rgba(102, 68, 255, 0.05);
+  }
+
+  .dropdown-arrow {
+    transition: transform 0.2s;
+  }
+
+  .navbar-item.has-dropdown:hover .dropdown-arrow {
+    transform: rotate(180deg);
+  }
+
+  .navbar-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    padding: 0.5rem;
+    list-style: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+  }
+
+  .navbar-item.has-dropdown:hover .navbar-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .dropdown-item {
+    margin: 0;
+  }
+
+  .dropdown-link {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: #374151;
+    text-decoration: none;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    transition: background-color 0.15s, color 0.15s;
+  }
+
+  .dropdown-link:hover {
+    background-color: rgba(102, 68, 255, 0.1);
+    color: #6644ff;
+  }
+
+  /* Mobile styles */
+  @media (max-width: 768px) {
+    .navbar-toggle {
+      display: block;
+    }
+
+    .navbar-nav {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 280px;
+      height: 100vh;
+      background: white;
+      box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+      padding: 80px 1.5rem 2rem;
+      transition: right 0.3s ease;
+      overflow-y: auto;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .navbar-nav.is-open {
+      right: 0;
+    }
+
+    .navbar-menu {
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .navbar-link {
+      padding: 1rem 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .navbar-dropdown {
+      position: static;
+      box-shadow: none;
+      padding: 0 0 0 1rem;
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      display: none;
+    }
+
+    .navbar-item.has-dropdown.is-open .navbar-dropdown {
+      display: block;
+    }
+
+    .dropdown-link {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+  }
+</style>
+
+<script>
+  // Mobile menu toggle
+  const toggle = document.querySelector('.navbar-toggle');
+  const nav = document.querySelector('.navbar-nav');
+  const dropdownItems = document.querySelectorAll('.navbar-item.has-dropdown');
+
+  toggle?.addEventListener('click', () => {
+    const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', (!isExpanded).toString());
+    nav?.classList.toggle('is-open');
+    document.body.style.overflow = isExpanded ? '' : 'hidden';
+  });
+
+  // Mobile dropdown toggle
+  dropdownItems.forEach(item => {
+    const link = item.querySelector('.navbar-link');
+    link?.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768) {
+        e.preventDefault();
+        item.classList.toggle('is-open');
+      }
+    });
+  });
+
+  // Close menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (nav?.classList.contains('is-open') && !nav.contains(e.target as Node) && !toggle?.contains(e.target as Node)) {
+      toggle?.setAttribute('aria-expanded', 'false');
+      nav.classList.remove('is-open');
+      document.body.style.overflow = '';
+    }
+  });
+</script>

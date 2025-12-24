@@ -1,0 +1,41 @@
+---
+interface Props {
+  title: string;
+  subtitle?: string;
+  background_color?: string;
+}
+
+const { title, subtitle, background_color = '#3b82f6' } = Astro.props;
+---
+
+<section class="hero" style={`background-color: ${background_color};`}>
+  <div class="hero-content">
+    <h1>{title}</h1>
+    {subtitle && <p class="subtitle">{subtitle}</p>}
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: white;
+  }
+
+  .hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+  }
+
+  .subtitle {
+    font-size: 1.25rem;
+    opacity: 0.9;
+    line-height: 1.6;
+  }
+</style>

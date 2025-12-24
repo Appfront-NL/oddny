@@ -1,0 +1,88 @@
+---
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import { type Locale, defaultLocale } from '../lib/directus';
+import '../styles/tailwind.css';
+import '../styles/fonts.css';
+
+interface Props {
+  title: string;
+  preview?: boolean;
+  hideNavbar?: boolean;
+  hideFooter?: boolean;
+  currentLocale?: Locale;
+  currentSlug?: string;
+}
+
+const { 
+  title, 
+  preview = false, 
+  hideNavbar = false, 
+  hideFooter = false,
+  currentLocale = defaultLocale,
+  currentSlug = ''
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang={currentLocale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    {preview && (
+      <div class="preview-banner">
+        Preview Mode - Changes are shown in real-time
+      </div>
+    )}
+    {!hideNavbar && <Navbar currentLocale={currentLocale} currentSlug={currentSlug} />}
+    <main>
+      <slot />
+    </main>
+    {!hideFooter && <Footer />}
+  </body>
+</html>
+
+<style is:global>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.5;
+    color: #1f2937;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .preview-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #f59e0b;
+    color: white;
+    text-align: center;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    z-index: 9999;
+  }
+
+  main {
+    flex: 1;
+  }
+
+  body:has(.preview-banner) main {
+    padding-top: 2rem;
+  }
+</style>
