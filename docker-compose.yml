@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  directus:
+    image: directus/directus:11
+    container_name: pagebuilder-directus
+    ports:
+      - "8055:8055"
+    volumes:
+      - ./directus/uploads:/directus/uploads
+      - ./directus/database:/directus/database
+      - ./directus/extensions:/directus/extensions
+      - ./directus/schema-snapshot.yaml:/directus/schema-snapshot.yaml
+    environment:
+      KEY: ${DIRECTUS_KEY:-replace-with-random-key}
+      SECRET: ${DIRECTUS_SECRET:-replace-with-random-secret}
+      DB_CLIENT: sqlite3
+      DB_FILENAME: /directus/database/database.sqlite
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      PUBLIC_URL: ${DIRECTUS_PUBLIC_URL:-http://localhost:8055}
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8055/server/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  astro:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pagebuilder-astro
+    ports:
+      - "4321:4321"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4321
+      DIRECTUS_URL: http://directus:8055
+    depends_on:
+      directus:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  directus-uploads:
+  directus-database:

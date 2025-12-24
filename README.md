@@ -7,7 +7,29 @@ Visual page builder met Directus CMS en Astro frontend.
 - **CMS:** Directus 11
 - **Database:** SQLite
 
-## Installatie
+## Quick Start (Docker)
+
+```bash
+# Clone repo
+git clone https://github.com/appfront/pagebuilder.git
+cd pagebuilder
+
+# Copy environment file
+cp .env.docker .env
+
+# Start services
+docker compose up -d
+
+# Apply Directus schema (first time only)
+docker compose exec directus npx directus schema apply /directus/schema-snapshot.yaml
+```
+
+**URLs:**
+- Frontend: http://localhost:4321
+- Directus Admin: http://localhost:8055/admin
+- Login: admin@example.com / admin
+
+## Manual Installation
 
 ### 1. Clone & Install
 ```bash
@@ -42,13 +64,10 @@ cd directus && npx directus start
 npm run dev
 ```
 
-## URLs
-- Frontend: http://localhost:4321
-- Directus Admin: http://localhost:8055/admin
-
 ## Features
 - Visual page editor met live preview
 - Block-based content (Hero, Rich Text, Image, Three Column, etc.)
 - Multi-language support (NL/EN)
 - Blog/Articles systeem
 - Inline editing in preview
+- Save & Stay functionality
