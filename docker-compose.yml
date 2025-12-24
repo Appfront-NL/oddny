@@ -1,16 +1,15 @@
-version: '3.8'
-
 services:
   directus:
     image: directus/directus:11
     container_name: oddny-directus
+    user: root
     ports:
       - "8055:8055"
     volumes:
-      - ./directus/uploads:/directus/uploads
-      - ./directus/database:/directus/database
+      - directus-uploads:/directus/uploads
+      - directus-database:/directus/database
       - ./directus/extensions:/directus/extensions
-      - ./directus/schema-snapshot.yaml:/directus/schema-snapshot.yaml
+      - ./directus/schema-snapshot.yaml:/directus/schema-snapshot.yaml:ro
     environment:
       KEY: ${DIRECTUS_KEY:-replace-with-random-key}
       SECRET: ${DIRECTUS_SECRET:-replace-with-random-secret}
@@ -22,10 +21,11 @@ services:
       CORS_ENABLED: "true"
       CORS_ORIGIN: "true"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8055/server/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8055/server/health"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     restart: unless-stopped
 
   astro:
