@@ -1,4 +1,4 @@
-# Pagebuilder - Directus + Astro
+# Oddny - Directus + Astro
 
 Visual page builder met Directus CMS en Astro frontend.
 
@@ -11,8 +11,8 @@ Visual page builder met Directus CMS en Astro frontend.
 
 ```bash
 # Clone repo
-git clone https://github.com/appfront/pagebuilder.git
-cd pagebuilder
+git clone git@github.com:Appfront-NL/oddny.git
+cd oddny
 
 # Copy environment file
 cp .env.docker .env
@@ -33,8 +33,8 @@ docker compose exec directus npx directus schema apply /directus/schema-snapshot
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/appfront/pagebuilder.git
-cd pagebuilder
+git clone git@github.com:Appfront-NL/oddny.git
+cd oddny
 npm install
 cd directus && npm install && cd ..
 ```

@@ -3,7 +3,7 @@ version: '3.8'
 services:
   directus:
     image: directus/directus:11
-    container_name: pagebuilder-directus
+    container_name: oddny-directus
     ports:
       - "8055:8055"
     volumes:
@@ -32,7 +32,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: pagebuilder-astro
+    container_name: oddny-astro
     ports:
       - "4321:4321"
     environment:
