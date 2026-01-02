@@ -1,0 +1,52 @@
+services:
+  directus:
+    image: directus/directus:11
+    container_name: oddny-directus
+    user: root
+    ports:
+      - "8055:8055"
+    volumes:
+      - directus-uploads:/directus/uploads
+      - ./directus/database.sqlite:/directus/database/database.sqlite
+      - ./directus/extensions:/directus/extensions
+      - ./directus/schema-snapshot.yaml:/directus/schema-snapshot.yaml:ro
+    environment:
+      KEY: ${DIRECTUS_KEY:-replace-with-random-key}
+      SECRET: ${DIRECTUS_SECRET:-replace-with-random-secret}
+      DB_CLIENT: sqlite3
+      DB_FILENAME: /directus/database/database.sqlite
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      PUBLIC_URL: https://oddny.appfront.nl/cms
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:8055/server/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  astro:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DIRECTUS_URL: http://directus:8055
+        PUBLIC_DIRECTUS_URL: /cms
+    container_name: oddny-astro
+    ports:
+      - "4321:4321"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4321
+      DIRECTUS_URL: http://directus:8055
+      PUBLIC_DIRECTUS_URL: /cms
+    depends_on:
+      directus:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  directus-uploads:

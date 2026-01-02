@@ -1,0 +1,50 @@
+/* ODDNY Design Tokens - Extracted from Figma */
+:root {
+  /* Colors */
+  --oddny-black: #423839;
+  --oddny-gray-dark: #898584;
+  --oddny-gray-light: #ACAAAA;
+  --oddny-gray-bg: #D9D9D9;
+  --oddny-white: #FFFFFF;
+  --oddny-pink: #FF40B4;
+  --oddny-green: #00FC26;
+
+  /* Typography */
+  --oddny-font-primary: 'Neue Haas Grotesk Display Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  /* Font Weights */
+  --oddny-weight-light: 300;
+  --oddny-weight-medium: 500;
+  --oddny-weight-bold: 700;
+
+  /* Font Sizes */
+  --oddny-text-xs: 14px;
+  --oddny-text-sm: 16px;
+  --oddny-text-base: 18px;
+  --oddny-text-lg: 22px;
+  --oddny-text-xl: 28px;
+  --oddny-text-2xl: 36px;
+  --oddny-text-3xl: 48px;
+  --oddny-text-4xl: 64px;
+
+  /* Line Heights */
+  --oddny-leading-tight: 1.1;
+  --oddny-leading-normal: 1.4;
+  --oddny-leading-relaxed: 1.6;
+
+  /* Spacing */
+  --oddny-space-xs: 8px;
+  --oddny-space-sm: 16px;
+  --oddny-space-md: 24px;
+  --oddny-space-lg: 40px;
+  --oddny-space-xl: 64px;
+  --oddny-space-2xl: 100px;
+
+  /* Border Radius */
+  --oddny-radius-sm: 4px;
+  --oddny-radius-md: 10px;
+  --oddny-radius-lg: 20px;
+
+  /* Max Width */
+  --oddny-max-width: 1280px;
+}

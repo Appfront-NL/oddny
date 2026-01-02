@@ -1,0 +1,149 @@
+---
+import { locales, type Locale, defaultLocale } from '../lib/directus';
+
+interface Props {
+  currentLocale?: Locale;
+  currentSlug?: string;
+  alternatePages?: { locale: Locale; slug: string }[];
+}
+
+const { currentLocale = defaultLocale, currentSlug = '', alternatePages = [] } = Astro.props;
+
+const languages: Record<Locale, { name: string; flag: string }> = {
+  en: { name: 'English', flag: '🇬🇧' },
+  nl: { name: 'Nederlands', flag: '🇳🇱' },
+};
+
+function getLocalePath(locale: Locale): string {
+  // Check if we have an alternate page for this locale
+  const alternate = alternatePages.find(p => p.locale === locale);
+  if (alternate) {
+    return `/${locale}/${alternate.slug}`;
+  }
+  // Fallback to same slug (might 404 if no translation exists)
+  if (currentSlug) {
+    return `/${locale}/${currentSlug}`;
+  }
+  return `/${locale}/`;
+}
+---
+
+<div class="language-switcher">
+  <button class="language-current" aria-label="Change language">
+    <span class="language-flag">{languages[currentLocale].flag}</span>
+    <span class="language-code">{currentLocale.toUpperCase()}</span>
+    <svg class="language-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none">
+      <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <div class="language-dropdown">
+    {locales.map((locale) => (
+      <a 
+        href={getLocalePath(locale)} 
+        class={`language-option ${locale === currentLocale ? 'active' : ''}`}
+      >
+        <span class="language-flag">{languages[locale].flag}</span>
+        <span class="language-name">{languages[locale].name}</span>
+      </a>
+    ))}
+  </div>
+</div>
+
+<style>
+  .language-switcher {
+    position: relative;
+    margin-left: 1rem;
+  }
+
+  .language-current {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    transition: all 0.15s ease;
+  }
+
+  .language-current:hover {
+    background: #e5e7eb;
+  }
+
+  .language-flag {
+    font-size: 1.1rem;
+  }
+
+  .language-code {
+    font-weight: 600;
+  }
+
+  .language-arrow {
+    margin-left: 0.25rem;
+    transition: transform 0.15s ease;
+  }
+
+  .language-switcher:hover .language-arrow {
+    transform: rotate(180deg);
+  }
+
+  .language-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: all 0.15s ease;
+    z-index: 100;
+  }
+
+  .language-switcher:hover .language-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .language-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    color: #374151;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: background 0.1s ease;
+  }
+
+  .language-option:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+
+  .language-option:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+
+  .language-option:hover {
+    background: #f3f4f6;
+  }
+
+  .language-option.active {
+    background: #eff6ff;
+    color: #6644ff;
+    font-weight: 500;
+  }
+
+  .language-name {
+    flex: 1;
+  }
+</style>

@@ -1,0 +1,176 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import BlockRenderer from '../../components/BlockRenderer.astro';
+import { getPageBySlug } from '../../lib/directus';
+
+const { slug } = Astro.params;
+const preview = Astro.url.searchParams.get('preview') === 'true';
+const token = Astro.url.searchParams.get('token');
+
+const validToken = import.meta.env.DIRECTUS_TOKEN || '90ce679e199f84430ca651a4a3460386';
+if (preview && token !== validToken) {
+  return new Response('Unauthorized', { status: 401 });
+}
+
+const page = await getPageBySlug(slug as string, preview);
+
+if (!page) {
+  return new Response('Page not found', { status: 404 });
+}
+
+const DIRECTUS_URL = import.meta.env.DIRECTUS_URL || 'http://localhost:8055';
+---
+
+<Layout title={page.title}>
+  <div id="preview-content">
+    <BlockRenderer blocks={page.blocks || []} />
+  </div>
+</Layout>
+
+{preview && (
+  <script define:vars={{ DIRECTUS_URL, initialBlocks: page.blocks || [], pageSlug: slug }}>
+    // Block templates voor rendering
+    const blockTemplates = {
+      hero: (block) => `
+        <section class="hero" style="background-color: #1f2937; padding: 4rem 2rem; text-align: center; color: white;">
+          <div style="max-width: 800px; margin: 0 auto;">
+            <h1 style="font-size: 2.5rem; margin-bottom: 1rem; font-weight: 700;">${block.heading || ''}</h1>
+            ${block.subheading ? `<p style="font-size: 1.25rem; opacity: 0.9; line-height: 1.6;">${block.subheading}</p>` : ''}
+          </div>
+        </section>
+      `,
+      richtext: (block) => `
+        <section class="richtext" style="background-color: #f9fafb; padding: 3rem 2rem; color: #1f2937;">
+          <div style="max-width: 800px; margin: 0 auto;">
+            ${block.heading ? `<h2 style="font-size: 2rem; margin-bottom: 1.5rem;">${block.heading}</h2>` : ''}
+            ${block.content ? `<div style="font-size: 1.1rem; line-height: 1.8;">${block.content}</div>` : ''}
+          </div>
+        </section>
+      `,
+      cta: (block) => `
+        <section class="cta" style="background-color: #10b981; padding: 4rem 2rem; text-align: center; color: white;">
+          <div style="max-width: 600px; margin: 0 auto;">
+            <h2 style="font-size: 2rem; margin-bottom: 1.5rem; font-weight: 600;">${block.heading || ''}</h2>
+            ${block.button_text ? `<a href="${block.button_link || '#'}" style="display: inline-block; padding: 1rem 2rem; background: white; color: #1f2937; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1.1rem;">${block.button_text}</a>` : ''}
+          </div>
+        </section>
+      `
+    };
+
+    // State
+    let currentBlocks = [...initialBlocks];
+    let currentBlockBeingEdited = null;
+
+    function renderBlocks() {
+      const container = document.getElementById('preview-content');
+      if (!container) return;
+
+      const sortedBlocks = [...currentBlocks].sort((a, b) => (a.sort || 0) - (b.sort || 0));
+      let html = '';
+
+      for (const block of sortedBlocks) {
+        if (!block || !block.block_type) continue;
+        const template = blockTemplates[block.block_type];
+        if (template) {
+          html += template(block);
+        }
+      }
+
+      if (html) {
+        container.innerHTML = html;
+      }
+    }
+
+    // Luister naar postMessage events van Directus
+    window.addEventListener('message', (event) => {
+      const data = event.data || {};
+      
+      // Debug logging
+      console.log('[Preview] Received message:', data);
+
+      if (data.type === 'directus-preview') {
+        const path = data.path || '';
+        const values = data.values || {};
+        
+        // Check of dit een pages update is of een blocks update
+        if (path.includes('/content/pages/')) {
+          // Dit is een update van de pages form
+          console.log('[Preview] Pages form update:', values);
+          
+          if (values.blocks && Array.isArray(values.blocks)) {
+            // Blocks array is bijgewerkt
+            currentBlocks = values.blocks.map(b => {
+              // Als block een object is met alle data, gebruik dat
+              if (typeof b === 'object' && b !== null) {
+                return b;
+              }
+              // Anders probeer bestaande block te vinden
+              const existing = currentBlocks.find(eb => eb && eb.id === b);
+              return existing || { id: b };
+            });
+            renderBlocks();
+          }
+        } else if (path.includes('/content/blocks/')) {
+          // Dit is een update van een individuele block
+          console.log('[Preview] Block edit update:', values);
+          
+          // Extract block ID from path (e.g., /admin/content/blocks/123)
+          const pathParts = path.split('/');
+          const blockId = pathParts[pathParts.length - 1];
+          
+          if (blockId && blockId !== 'blocks' && blockId !== '+') {
+            // Update de specifieke block in onze array
+            const blockIndex = currentBlocks.findIndex(b => b && String(b.id) === String(blockId));
+            if (blockIndex !== -1) {
+              currentBlocks[blockIndex] = { ...currentBlocks[blockIndex], ...values };
+              renderBlocks();
+            } else {
+              // Nieuwe block die nog niet in de array zit
+              if (values.block_type) {
+                currentBlocks.push({ id: blockId, ...values });
+                renderBlocks();
+              }
+            }
+          } else if (values.block_type) {
+            // Dit is waarschijnlijk een nieuwe block (path eindigt op + of blocks)
+            // Update de laatst toegevoegde block of voeg toe
+            currentBlockBeingEdited = values;
+            
+            // Zoek een block zonder block_type of met dezelfde temp data
+            const emptyBlockIndex = currentBlocks.findIndex(b => !b.block_type);
+            if (emptyBlockIndex !== -1) {
+              currentBlocks[emptyBlockIndex] = { ...currentBlocks[emptyBlockIndex], ...values };
+            } else {
+              // Voeg als nieuwe block toe met temp ID
+              const tempBlock = { id: 'temp-' + Date.now(), ...values };
+              currentBlocks.push(tempBlock);
+            }
+            renderBlocks();
+          }
+        }
+        
+        // Fallback: als values direct block velden bevat (block_type, heading, etc.)
+        if (values.block_type && !path.includes('/content/pages/')) {
+          console.log('[Preview] Direct block values update');
+          // Dit kan een inline block edit zijn
+          // Update de block die we aan het editen zijn
+          if (currentBlockBeingEdited) {
+            Object.assign(currentBlockBeingEdited, values);
+          }
+          
+          // Probeer te matchen op basis van id of positie
+          if (values.id) {
+            const idx = currentBlocks.findIndex(b => b && b.id === values.id);
+            if (idx !== -1) {
+              currentBlocks[idx] = { ...currentBlocks[idx], ...values };
+              renderBlocks();
+            }
+          }
+        }
+      }
+    }, false);
+
+    console.log('[Preview] Live preview initialized with', currentBlocks.length, 'blocks');
+    console.log('[Preview] Initial blocks:', currentBlocks);
+  </script>
+)}
