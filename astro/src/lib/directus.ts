@@ -5,7 +5,7 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL || 'http://localhost:8055';
 
 // Public Directus URL (for browser/client-side asset URLs)
 // In production with nginx proxy, this is '/cms'. In development, same as DIRECTUS_URL.
-export const PUBLIC_DIRECTUS_URL = import.meta.env.PUBLIC_DIRECTUS_URL || DIRECTUS_URL;
+export const PUBLIC_DIRECTUS_URL = import.meta.env.PUBLIC_DIRECTUS_URL || 'https://oddny.appfront.nl/cms';
 
 const DIRECTUS_TOKEN = import.meta.env.DIRECTUS_TOKEN || '90ce679e199f84430ca651a4a3460386';
 
