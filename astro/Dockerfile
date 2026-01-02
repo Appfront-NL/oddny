@@ -11,6 +11,10 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Build argument for Directus URL
+ARG DIRECTUS_URL=http://directus:8055
+ENV DIRECTUS_URL=$DIRECTUS_URL
+
 # Build the application
 RUN npm run build
 

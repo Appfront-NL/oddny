@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  oddny-network:
+    driver: bridge
+
 services:
   directus:
     build: ./directus
@@ -12,9 +16,14 @@ services:
       CORS_ENABLED: 'true'
       CORS_ORIGIN: 'https://oddny.appfront.nl,https://oddny.appfront.nl/cms,true'
     restart: unless-stopped
+    networks:
+      - oddny-network
 
   astro:
-    build: ./astro
+    build:
+      context: ./astro
+      args:
+        - DIRECTUS_URL=http://directus:8055
     ports:
       - '4321:4321'
     depends_on:
@@ -25,6 +34,8 @@ services:
       HOST: '0.0.0.0'
       PORT: '4321'
     restart: unless-stopped
+    networks:
+      - oddny-network
 
   nginx:
     image: nginx:1.27-alpine
@@ -37,3 +48,5 @@ services:
       - directus
       - astro
     restart: unless-stopped
+    networks:
+      - oddny-network
