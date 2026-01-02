@@ -13,10 +13,11 @@ services:
       CORS_ORIGIN: 'http://localhost,http://localhost:4321,true'
     restart: unless-stopped
     healthcheck:
-      test: ['CMD-SHELL', 'curl -f http://localhost:8055/server/health || exit 1']
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ['CMD-SHELL', 'curl -f http://localhost:8055/server/info || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   astro:
     build: ./astro
