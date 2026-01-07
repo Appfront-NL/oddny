@@ -11,12 +11,10 @@ dist/
 .env.production
 
 # Directus
-backend-directus/uploads/*
-!backend-directus/uploads/.gitkeep
+# Include database and uploads for full clone
 
 # Large files / archives
 *.tar
-*.tar.gz
 *.zip
 
 # OS files
@@ -34,6 +32,5 @@ Thumbs.db
 npm-debug.log*
 
 # Local directories
-local-copy/
 oddny-complete/
 oddny-update/
