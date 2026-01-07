@@ -388,3 +388,326 @@ export async function getSimilarBlogs(category: string, excludeId: number, limit
     return [];
   }
 }
+
+// ===== NEWS =====
+export interface News {
+  id: number;
+  status: string;
+  title_en: string;
+  title_nl: string;
+  slug: string;
+  featured_image: string | null;
+  intro_en: string;
+  intro_nl: string;
+  content_en: string;
+  content_nl: string;
+  author_name: string;
+  author_role: string;
+  category: string;
+  show_social_share: boolean;
+  published_date: string;
+  language: string;
+}
+
+export async function getNews(status: string = 'published'): Promise<News[]> {
+  try {
+    const response = await client.request(
+      readItems('news', {
+        filter: { status: { _eq: status } },
+        sort: ['-published_date'],
+        fields: ['*'],
+      })
+    );
+    return response as News[];
+  } catch (error) {
+    console.error('Error fetching news:', error);
+    return [];
+  }
+}
+
+export async function getNewsBySlug(slug: string): Promise<News | null> {
+  try {
+    const response = await client.request(
+      readItems('news', {
+        filter: { slug: { _eq: slug } },
+        fields: ['*'],
+        limit: 1,
+      })
+    );
+    return (response as News[])[0] || null;
+  } catch (error) {
+    console.error('Error fetching news item:', error);
+    return null;
+  }
+}
+
+export async function getSimilarNews(category: string, excludeId: number, limit: number = 6): Promise<News[]> {
+  try {
+    const response = await client.request(
+      readItems('news', {
+        filter: { 
+          status: { _eq: 'published' },
+          category: { _eq: category },
+          id: { _neq: excludeId }
+        },
+        sort: ['-published_date'],
+        fields: ['*'],
+        limit: limit,
+      })
+    );
+    return response as News[];
+  } catch (error) {
+    console.error('Error fetching similar news:', error);
+    return [];
+  }
+}
+
+// ===== ARTICLES (updated to use same structure as blogs) =====
+export interface Article {
+  id: number;
+  status: string;
+  title_en: string;
+  title_nl: string;
+  slug: string;
+  featured_image: string | null;
+  intro_en: string;
+  intro_nl: string;
+  content_en: string;
+  content_nl: string;
+  author_name: string;
+  author_role: string;
+  category: string;
+  show_social_share: boolean;
+  published_date: string;
+  language: string;
+}
+
+export async function getArticlesList(status: string = 'published'): Promise<Article[]> {
+  try {
+    const response = await client.request(
+      readItems('articles', {
+        filter: { status: { _eq: status } },
+        sort: ['-published_date'],
+        fields: ['*'],
+      })
+    );
+    return response as Article[];
+  } catch (error) {
+    console.error('Error fetching articles:', error);
+    return [];
+  }
+}
+
+export async function getArticleBySlugNew(slug: string): Promise<Article | null> {
+  try {
+    const response = await client.request(
+      readItems('articles', {
+        filter: { slug: { _eq: slug } },
+        fields: ['*'],
+        limit: 1,
+      })
+    );
+    return (response as Article[])[0] || null;
+  } catch (error) {
+    console.error('Error fetching article:', error);
+    return null;
+  }
+}
+
+export async function getSimilarArticlesList(category: string, excludeId: number, limit: number = 6): Promise<Article[]> {
+  try {
+    const response = await client.request(
+      readItems('articles', {
+        filter: { 
+          status: { _eq: 'published' },
+          category: { _eq: category },
+          id: { _neq: excludeId }
+        },
+        sort: ['-published_date'],
+        fields: ['*'],
+        limit: limit,
+      })
+    );
+    return response as Article[];
+  } catch (error) {
+    console.error('Error fetching similar articles:', error);
+    return [];
+  }
+}
+
+// ===== TOOLS =====
+export interface Tool {
+  id: number;
+  status: string;
+  title_en: string;
+  title_nl: string;
+  slug: string;
+  featured_image: string | null;
+  intro_en: string;
+  intro_nl: string;
+  content_en: string;
+  content_nl: string;
+  author_name: string;
+  author_role: string;
+  category: string;
+  show_social_share: boolean;
+  published_date: string;
+  language: string;
+  download_url: string;
+  more_info_url: string;
+}
+
+export async function getTools(status: string = 'published'): Promise<Tool[]> {
+  try {
+    const response = await client.request(
+      readItems('tools', {
+        filter: { status: { _eq: status } },
+        sort: ['-published_date'],
+        fields: ['*'],
+      })
+    );
+    return response as Tool[];
+  } catch (error) {
+    console.error('Error fetching tools:', error);
+    return [];
+  }
+}
+
+export async function getToolBySlug(slug: string): Promise<Tool | null> {
+  try {
+    const response = await client.request(
+      readItems('tools', {
+        filter: { slug: { _eq: slug } },
+        fields: ['*'],
+        limit: 1,
+      })
+    );
+    return (response as Tool[])[0] || null;
+  } catch (error) {
+    console.error('Error fetching tool:', error);
+    return null;
+  }
+}
+
+export async function getSimilarTools(category: string, excludeId: number, limit: number = 6): Promise<Tool[]> {
+  try {
+    const response = await client.request(
+      readItems('tools', {
+        filter: { 
+          status: { _eq: 'published' },
+          category: { _eq: category },
+          id: { _neq: excludeId }
+        },
+        sort: ['-published_date'],
+        fields: ['*'],
+        limit: limit,
+      })
+    );
+    return response as Tool[];
+  } catch (error) {
+    console.error('Error fetching similar tools:', error);
+    return [];
+  }
+}
+
+// ===== GUIDES =====
+export interface Guide {
+  id: number;
+  status: string;
+  title_en: string;
+  title_nl: string;
+  slug: string;
+  featured_image: string | null;
+  intro_en: string;
+  intro_nl: string;
+  content_en: string;
+  content_nl: string;
+  author_name: string;
+  author_role: string;
+  category: string;
+  show_social_share: boolean;
+  published_date: string;
+  language: string;
+  download_url: string;
+  more_info_url: string;
+}
+
+export async function getGuides(status: string = 'published'): Promise<Guide[]> {
+  try {
+    const response = await client.request(
+      readItems('guides', {
+        filter: { status: { _eq: status } },
+        sort: ['-published_date'],
+        fields: ['*'],
+      })
+    );
+    return response as Guide[];
+  } catch (error) {
+    console.error('Error fetching guides:', error);
+    return [];
+  }
+}
+
+export async function getGuideBySlug(slug: string): Promise<Guide | null> {
+  try {
+    const response = await client.request(
+      readItems('guides', {
+        filter: { slug: { _eq: slug } },
+        fields: ['*'],
+        limit: 1,
+      })
+    );
+    return (response as Guide[])[0] || null;
+  } catch (error) {
+    console.error('Error fetching guide:', error);
+    return null;
+  }
+}
+
+export async function getSimilarGuides(category: string, excludeId: number, limit: number = 6): Promise<Guide[]> {
+  try {
+    const response = await client.request(
+      readItems('guides', {
+        filter: { 
+          status: { _eq: 'published' },
+          category: { _eq: category },
+          id: { _neq: excludeId }
+        },
+        sort: ['-published_date'],
+        fields: ['*'],
+        limit: limit,
+      })
+    );
+    return response as Guide[];
+  } catch (error) {
+    console.error('Error fetching similar guides:', error);
+    return [];
+  }
+}
+
+// ===== FRIENDS AND FOES =====
+export interface FriendAndFoe {
+  id: string;
+  status: string;
+  sort: number | null;
+  name: string;
+  role_en: string;
+  role_nl: string;
+  link: string;
+}
+
+export async function getFriendsAndFoes(status: string = 'published'): Promise<FriendAndFoe[]> {
+  try {
+    const response = await client.request(
+      readItems('friends_and_foes', {
+        filter: { status: { _eq: status } },
+        sort: ['sort'],
+        fields: ['*'],
+      })
+    );
+    return response as FriendAndFoe[];
+  } catch (error) {
+    console.error('Error fetching friends and foes:', error);
+    return [];
+  }
+}

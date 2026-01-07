@@ -47,30 +47,6 @@ const buttonText = getLocalizedField(block, 'button_text');
       height: 636px;
       border-radius: 10px;
       overflow: hidden;
-      pointer-events: auto;
-      cursor: pointer;
-      transition: opacity 0.3s ease;
-    }
-    
-    .hero-image-overlay .bg-image:hover {
-      opacity: 0.95;
-    }
-    
-    .hero-image-overlay .bg-image::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255, 64, 180, 0.1);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-    }
-    
-    .hero-image-overlay .bg-image:hover::after {
-      opacity: 1;
     }
     
     .hero-image-overlay .bg-image img {

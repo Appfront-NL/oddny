@@ -12,6 +12,14 @@ import HowToBuy from './widgets/HowToBuy.astro';
 import CharacterCards from './widgets/CharacterCards.astro';
 import FriendsAndFoes from './widgets/FriendsAndFoes.astro';
 import ContactWidget from './widgets/ContactWidget.astro';
+import CreativeFlowCards from './widgets/CreativeFlowCards.astro';
+import NewsletterPopup from './widgets/NewsletterPopup.astro';
+import ToolsCollection from './widgets/ToolsCollection.astro';
+import ToolHero from './widgets/ToolHero.astro';
+import ColourCardsCTA from './widgets/ColourCardsCTA.astro';
+import GuidesCollection from './widgets/GuidesCollection.astro';
+import PopularResources from './widgets/PopularResources.astro';
+import AboutUs from './widgets/AboutUs.astro';
 
 interface Props {
   blocks: Block[];
@@ -1667,7 +1675,92 @@ const getImageUrl = (imageId: string | null) => {
       );
     }
 
+    if (variant === 'creative-flow-cards') {
+      return (
+        <CreativeFlowCards 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
 
+    if (variant === 'newsletter-popup') {
+      return (
+        <NewsletterPopup 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'tools-collection') {
+      return (
+        <ToolsCollection 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'tool-hero') {
+      return (
+        <ToolHero 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'colour-cards-green' || variant === 'colour-cards-pink' || variant === 'colour-cards-teal') {
+      const colorVariant = variant.replace('colour-cards-', '');
+      return (
+        <ColourCardsCTA 
+          block={{...block, variant: colorVariant}} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'guides-collection') {
+      return (
+        <GuidesCollection 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'popular-resources') {
+      return (
+        <PopularResources 
+          block={block} 
+          locale={locale} 
+          setAttr={setAttr}
+        />
+      );
+    }
+
+    if (variant === 'about-us') {
+      return (
+        <AboutUs 
+          block={block} 
+          locale={locale} 
+          setAttr={setAttr}
+        />
+      );
+    }
 
   }
 

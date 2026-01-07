@@ -36,28 +36,54 @@ const otherLocale = currentLocale === 'en' ? 'nl' : 'en';
     <!-- Navigation Menu -->
     <nav class="navbar-nav">
       <div class="navbar-menu">
-        <!-- Nav Links -->
-        <a href={`/${currentLocale}/creative-flow`} class="navbar-link">Creative Flow</a>
+        <!-- Nav Links with Dropdowns -->
+        <div class="navbar-dropdown">
+          <a href={`/${currentLocale}/creative-flow`} class="navbar-link">Creative Flow</a>
+          <div class="dropdown-menu">
+            <a href={`/${currentLocale}/creative-flow`} class="dropdown-item">The Source</a>
+            <a href={`/${currentLocale}/creative-flow`} class="dropdown-item">The Studio</a>
+            <a href={`/${currentLocale}/creative-flow`} class="dropdown-item">The Marketplace</a>
+          </div>
+        </div>
+        
         <a href={`/${currentLocale}/wunderkammer`} class="navbar-link">Wunderkammer</a>
-        <a href={`/${currentLocale}/hub`} class="navbar-link">Hub</a>
-        <a href={`/${currentLocale}/fans-friends-foes`} class="navbar-link">Soulmates</a>
+        
+        <div class="navbar-dropdown">
+          <a href={`/${currentLocale}/hub`} class="navbar-link">Hub</a>
+          <div class="dropdown-menu">
+            <a href={`/${currentLocale}/tools`} class="dropdown-item">Tools</a>
+            <a href={`/${currentLocale}/guides`} class="dropdown-item">Guides</a>
+            <a href={`/${currentLocale}/products`} class="dropdown-item">Financial Products</a>
+            <a href={`/${currentLocale}/products`} class="dropdown-item">Other Products</a>
+          </div>
+        </div>
+        
+        <div class="navbar-dropdown">
+          <a href={`/${currentLocale}/fans-friends-foes`} class="navbar-link">Soulmates</a>
+          <div class="dropdown-menu">
+            <a href={`/${currentLocale}/fans-friends-foes`} class="dropdown-item">Fans, Friends & Foes</a>
+            <a href={`/${currentLocale}/news`} class="dropdown-item">News</a>
+            <a href={`/${currentLocale}/about-us`} class="dropdown-item">About us</a>
+            <a href={`/${currentLocale}/contact`} class="dropdown-item">Contact</a>
+          </div>
+        </div>
 
         <!-- Subscribe Button -->
-        <a href={`/${currentLocale}/newsletter`} class="navbar-subscribe">
+        <button type="button" class="navbar-subscribe" data-newsletter-trigger>
           <span>Subscribe</span>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M2.5 6H9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M6 2.5L9.5 6L6 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-        </a>
+        </button>
 
         <!-- Search Icon -->
-        <button class="navbar-icon-btn" aria-label="Search">
+        <a href={`/${currentLocale}/search`} class="navbar-icon-btn" aria-label="Search">
           <svg width="22" height="26" viewBox="0 0 22.0958 26" fill="none">
             <circle cx="9.69547" cy="9.69545" r="8.19545" stroke="#42383E" stroke-width="3" />
             <line stroke="#42383E" stroke-width="3" x1="14.1125" x2="20.9106" y1="16.317" y2="25.0806" />
           </svg>
-        </button>
+        </a>
 
         <!-- Hamburger Menu Button -->
         <button class="navbar-icon-btn navbar-hamburger" aria-label="Open menu" aria-expanded="false">
@@ -111,8 +137,8 @@ const otherLocale = currentLocale === 'en' ? 'nl' : 'en';
       <div class="menu-section">
         <a href={`/${currentLocale}/hub`} class="menu-title">Hub</a>
         <div class="menu-subitems">
-          <a href={`/${currentLocale}/hub`} class="menu-subitem">Tools</a>
-          <a href={`/${currentLocale}/articles`} class="menu-subitem">Guides</a>
+          <a href={`/${currentLocale}/tools`} class="menu-subitem">Tools</a>
+          <a href={`/${currentLocale}/guides`} class="menu-subitem">Guides</a>
           <a href={`/${currentLocale}/products`} class="menu-subitem">Financial Products</a>
           <a href={`/${currentLocale}/products`} class="menu-subitem">Other Products</a>
         </div>
@@ -212,6 +238,47 @@ const otherLocale = currentLocale === 'en' ? 'nl' : 'en';
   }
 
   .navbar-link:hover {
+    background-color: rgba(66, 56, 62, 0.05);
+  }
+
+  .navbar-dropdown {
+    position: relative;
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    min-width: 180px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+    z-index: 100;
+  }
+
+  .navbar-dropdown:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .dropdown-item {
+    display: block;
+    padding: 10px 20px;
+    color: #42383e;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+  }
+
+  .dropdown-item:hover {
     background-color: rgba(66, 56, 62, 0.05);
   }
 
@@ -455,6 +522,10 @@ const otherLocale = currentLocale === 'en' ? 'nl' : 'en';
     }
 
     .navbar-link {
+      display: none;
+    }
+
+    .navbar-dropdown {
       display: none;
     }
 

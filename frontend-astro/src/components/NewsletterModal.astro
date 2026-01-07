@@ -1,0 +1,451 @@
+---
+interface Props {
+  locale?: string;
+}
+
+const { locale = 'en' } = Astro.props;
+
+const texts = {
+  en: {
+    title: 'Join our community of creatives',
+    subtitle: 'Get tips, opportunities, and advice delivered straight to your inbox',
+    placeholder: 'Enter your email',
+    button: 'Join now',
+    success: 'Thanks for subscribing!',
+    error: 'Something went wrong. Please try again.',
+    already: 'This email is already subscribed.',
+    invalid: 'Please enter a valid email address.'
+  },
+  nl: {
+    title: 'Word lid van onze creatieve community',
+    subtitle: 'Ontvang tips, kansen en advies rechtstreeks in je inbox',
+    placeholder: 'Vul je e-mail in',
+    button: 'Word lid',
+    success: 'Bedankt voor je inschrijving!',
+    error: 'Er ging iets mis. Probeer het opnieuw.',
+    already: 'Dit e-mailadres is al ingeschreven.',
+    invalid: 'Vul een geldig e-mailadres in.'
+  }
+};
+
+const t = texts[locale as keyof typeof texts] || texts.en;
+---
+
+<div id="newsletter-modal" class="newsletter-modal" data-locale={locale}>
+  <div class="modal-overlay"></div>
+  <div class="modal-content">
+    <button class="close-btn" aria-label="Close" data-close-modal>
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <path d="M12 1L1 12M1 1L12 12" stroke="#FF40B4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    
+    <h2 class="modal-title">{t.title}</h2>
+    <p class="modal-subtitle">{t.subtitle}</p>
+    
+    <form class="newsletter-form" id="newsletter-form">
+      <div class="input-row">
+        <input 
+          type="email" 
+          class="email-input"
+          name="email"
+          placeholder={t.placeholder}
+          required
+        />
+        <button type="submit" class="join-btn">
+          <span class="btn-text">{t.button}</span>
+          <span class="btn-loading" style="display: none;">...</span>
+        </button>
+      </div>
+      <p class="form-message" style="display: none;"></p>
+    </form>
+    
+    <div class="decorative-elements">
+      <svg class="feather feather-1" width="24" height="16" viewBox="0 0 24 16" fill="none">
+        <path d="M23.0469 15.1112C23.1136 14.9873 23.1555 14.8502 23.165 14.7016L23.9974 2.53946C24.0069 2.40803 23.9898 2.28041 23.9517 2.16041L15.6087 8.10339L23.0469 15.1112Z" fill="#91DBD4"/>
+        <path d="M14.8105 8.671L11.7533 10.8501L9.01989 8.2748L0.745436 14.1683C0.812104 14.1873 0.88068 14.1987 0.951157 14.2044L22.0735 15.6502C22.1211 15.654 22.1687 15.6521 22.2145 15.6502L14.8086 8.6729L14.8105 8.671Z" fill="#91DBD4"/>
+        <path d="M9.39135 7.30515L11.8371 9.60996L14.5743 7.65944L23.245 1.48218C23.1821 1.46503 23.1154 1.4536 23.0469 1.44789L1.92453 0.00214454C1.835 -0.00356986 1.74547 0.00214384 1.66166 0.0192871L9.39326 7.30325L9.39135 7.30515Z" fill="#91DBD4"/>
+        <path d="M0.909283 0.634679C0.869283 0.733729 0.842613 0.840399 0.834993 0.954688L0.00259602 13.1168C-0.00692798 13.2464 0.0102173 13.3721 0.0464085 13.4883L8.30753 7.60435L0.911184 0.634679H0.909283Z" fill="#91DBD4"/>
+      </svg>
+      <svg class="feather feather-2" width="23" height="15" viewBox="0 0 23 15" fill="none">
+        <path d="M21.7984 14.641C21.8615 14.521 21.9011 14.3882 21.9101 14.2442L22.6974 2.46047C22.7064 2.33313 22.6902 2.20948 22.6542 2.09321L14.7631 7.85127L21.7984 14.641Z" fill="#91DBD4"/>
+        <path d="M14.0082 8.40121L11.1166 10.5125L8.53129 8.01734L0.705089 13.7274C0.768146 13.7459 0.833007 13.757 0.899667 13.7625L20.8777 15.1632C20.9228 15.1669 20.9678 15.1651 21.011 15.1632L14.0064 8.40306L14.0082 8.40121Z" fill="#91DBD4"/>
+        <path d="M8.88259 7.07785L11.1958 9.31094L13.7848 7.42112L21.9857 1.43606C21.9262 1.41945 21.8632 1.40837 21.7983 1.40284L1.82027 0.00207633C1.73559 -0.00346027 1.65092 0.00207565 1.57165 0.0186855L8.88439 7.076L8.88259 7.07785Z" fill="#91DBD4"/>
+        <path d="M0.860024 0.614947C0.82219 0.710915 0.796965 0.814266 0.789759 0.924998L0.00245539 12.7087C-0.00655267 12.8342 0.00966381 12.956 0.0438944 13.0686L7.85748 7.36776L0.861822 0.614947H0.860024Z" fill="#91DBD4"/>
+      </svg>
+      <svg class="feather feather-3" width="39" height="26" viewBox="0 0 40 26" fill="none">
+        <path d="M37.7712 24.7654C37.8804 24.5624 37.9491 24.3377 37.9647 24.0942L39.3289 4.16186C39.3445 3.94646 39.3164 3.73731 39.254 3.54064L25.5808 13.2805L37.7712 24.7654Z" fill="#91DBD4"/>
+        <path d="M24.2727 14.2107L19.2623 17.782L14.7826 13.5614L1.22171 23.2201C1.33097 23.2513 1.44336 23.27 1.55886 23.2794L36.1759 25.6488C36.2539 25.655 36.3319 25.6519 36.4069 25.6488L24.2695 14.2138L24.2727 14.2107Z" fill="#91DBD4"/>
+        <path d="M15.3913 11.9723L19.3996 15.7496L23.8855 12.5529L38.0957 2.42911C37.9927 2.40101 37.8834 2.38228 37.771 2.37291L3.15405 0.00351214C3.00733 -0.00585309 2.86061 0.00351099 2.72325 0.0316067L15.3944 11.9691L15.3913 11.9723Z" fill="#91DBD4"/>
+        <path d="M1.49021 1.04011C1.42465 1.20244 1.38094 1.37726 1.36845 1.56456L0.00425457 21.4969C-0.0113541 21.7092 0.016745 21.9152 0.0760581 22.1056L13.615 12.4626L1.49332 1.04011H1.49021Z" fill="#91DBD4"/>
+      </svg>
+      <svg class="feather feather-4" width="54" height="35" viewBox="0 0 54 36" fill="none">
+        <path d="M51.8556 34.0001C52.0056 33.7215 52.0999 33.4129 52.1213 33.0786L53.9942 5.71379C54.0156 5.41807 53.977 5.13092 53.8913 4.86092L35.1195 18.2326L51.8556 34.0001Z" fill="#91DBD4"/>
+        <path d="M33.3236 19.5097L26.4449 24.4127L20.2948 18.6183L1.67723 31.8786C1.82723 31.9214 1.98153 31.9471 2.1401 31.96L49.6654 35.2129C49.7725 35.2215 49.8797 35.2172 49.9825 35.2129L33.3193 19.514L33.3236 19.5097Z" fill="#91DBD4"/>
+        <path d="M21.1305 16.4366L26.6335 21.6224L32.7922 17.2337L52.3012 3.33489C52.1597 3.29632 52.0097 3.2706 51.8555 3.25774L4.33018 0.00482177C4.12875 -0.00803563 3.92732 0.0048202 3.73874 0.0433924L21.1348 16.4323L21.1305 16.4366Z" fill="#91DBD4"/>
+        <path d="M2.04589 1.42803C1.95589 1.65089 1.89588 1.8909 1.87873 2.14804L0.00584105 29.5129C-0.015588 29.8043 0.022989 30.0872 0.104419 30.3486L18.6919 17.1098L2.05016 1.42803H2.04589Z" fill="#91DBD4"/>
+      </svg>
+    </div>
+    
+    <div class="bird-container">
+      <svg class="oddny-bird" width="118" height="112" viewBox="0 0 118 112" fill="none">
+        <path d="M24.2986 28.5693L24.9285 27.928L35.8633 37.2551L24.2839 35.6772L24.2986 28.5693Z" fill="#FF40B4"/>
+        <path d="M35.8412 29.2857C35.8094 29.2857 35.775 29.2857 35.7407 29.2905C35.4981 29.3171 35.2799 29.4333 35.1279 29.6221C34.9759 29.8084 34.9049 30.0456 34.9318 30.2828C34.9588 30.5199 35.0764 30.7377 35.2676 30.8878C35.4564 31.0378 35.6966 31.108 35.9368 31.0814C36.1795 31.0548 36.3976 30.9386 36.5496 30.7498C36.7016 30.5635 36.7727 30.3287 36.7457 30.0892C36.7187 29.8496 36.6011 29.6342 36.4099 29.4841C36.2457 29.3534 36.0471 29.2857 35.8388 29.2857H35.8412Z" fill="#FF40B4"/>
+        <path d="M44.8934 29.3801C38.0546 23.0781 30.9168 24.2809 27.2351 25.5781L25.2693 27.5795L35.3657 36.1927L50.4576 36.9211C48.6241 33.6104 46.8029 31.1395 44.8934 29.3801ZM36.932 31.0523C36.6967 31.3403 36.3633 31.5219 35.9907 31.5606C35.9393 31.5654 35.8878 31.5678 35.8388 31.5678C35.5201 31.5678 35.2137 31.4613 34.9612 31.2605C34.6696 31.0281 34.4857 30.699 34.4465 30.3312C34.4073 29.9633 34.5127 29.6027 34.748 29.3147C34.9833 29.0267 35.3167 28.8452 35.6892 28.8065C36.0618 28.7678 36.427 28.8718 36.7187 29.1042C37.0104 29.3365 37.1943 29.6656 37.2335 30.0335C37.2727 30.4013 37.1673 30.7619 36.932 31.0499V31.0523Z" fill="#FF40B4"/>
+        <path d="M19.7026 22.098L24.0829 28.0974L26.6885 25.4426L19.7026 22.098Z" fill="#FF40B4"/>
+        <path d="M24.2961 36.3112C24.4089 39.5663 24.98 47.0396 27.7131 54.7403C31.2403 64.6821 37.0349 71.4778 44.9351 74.9409C49.6291 76.998 56.6812 77.1626 62.0885 75.3451C64.2382 74.6215 65.9442 73.651 67.16 72.4579C68.7704 70.8776 70.7755 67.1458 68.1674 63.1333L46.4597 60.3453L43.2928 53.7166L48.6045 49.888C41.6211 46.0304 26.8527 37.7464 24.2986 36.3112H24.2961Z" fill="#FF40B4"/>
+        <path d="M25.2693 36.2991C29.2108 38.5087 42.6334 46.0352 49.0408 49.5734L60.4683 41.3402L71.7535 45.9917L77.8104 38.7265L35.9687 36.7057L37.4369 37.9569L25.2693 36.2991Z" fill="#FF40B4"/>
+        <path d="M68.7925 63.2131C71.2437 67.3539 69.1749 71.1632 67.5056 72.8016C67.0203 73.2783 66.459 73.7212 65.829 74.1302C67.7434 73.4018 69.7215 72.5257 71.0451 71.7827C74.3983 69.9047 77.6094 67.3902 80.139 64.67L68.7949 63.2131H68.7925Z" fill="#FF40B4"/>
+        <path d="M72.2266 46.1853L75.6852 47.6107L84.2913 55.0937L87.6911 28.2862L93.7112 30.5369L93.0739 21.1856L72.2291 46.1853H72.2266Z" fill="#FF40B4"/>
+        <path d="M84.735 55.4809L85.6076 56.2408L98.1086 32.698L88.098 28.9565L84.735 55.4809Z" fill="#FF40B4"/>
+        <path d="M46.7882 59.8976L96.3953 66.2697L75.4205 48.027L60.5344 41.892L43.9081 53.8715L46.7882 59.9V59.8976Z" fill="#FF40B4"/>
+        <path d="M54.3501 92.69L53.7079 91.9567L58.7353 87.6828L62.2454 72.3079L63.2013 72.5208L59.6202 88.208L54.3501 92.69Z" fill="#FF40B4"/>
+        <path d="M52.7274 77.0585L50.2738 83.8445L45.6067 86.7389L46.1288 87.5594L51.0851 84.4858L53.7618 77.0803C53.4162 77.0803 53.073 77.0706 52.7299 77.0561L52.7274 77.0585Z" fill="#FF40B4"/>
+        <path d="M32.9528 100.74C33.0339 100.59 33.0849 100.425 33.0965 100.246L34.1096 85.587C34.1212 85.4286 34.1004 85.2747 34.054 85.1301L23.8996 92.2932L32.9528 100.74Z" fill="#91DBD4"/>
+        <path d="M22.9282 92.9773L19.2072 95.6037L15.8803 92.4998L5.80938 99.6031C5.89053 99.6261 5.97399 99.6399 6.05977 99.6468L31.7681 101.389C31.826 101.394 31.884 101.392 31.9396 101.389L22.9258 92.9796L22.9282 92.9773Z" fill="#91DBD4"/>
+        <path d="M16.3324 91.3312L19.3092 94.1092L22.6407 91.7582L33.1939 84.3128C33.1173 84.2921 33.0362 84.2783 32.9527 84.2714L7.24446 82.5289C7.1355 82.522 7.02654 82.5289 6.92453 82.5495L16.3348 91.3289L16.3324 91.3312Z" fill="#91DBD4"/>
+        <path d="M6.00878 83.2911C5.96009 83.4105 5.92763 83.5391 5.91836 83.6768L4.90524 98.3358C4.89365 98.492 4.91451 98.6435 4.95856 98.7835L15.0133 91.6917L6.01109 83.2911H6.00878Z" fill="#91DBD4"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+document.addEventListener('DOMContentLoaded', function() {
+  var modal = document.getElementById('newsletter-modal');
+  var form = document.getElementById('newsletter-form');
+  if (!modal) return;
+  
+  var overlay = modal.querySelector('.modal-overlay');
+  var closeBtn = modal.querySelector('[data-close-modal]');
+  var message = modal.querySelector('.form-message');
+  var btnText = modal.querySelector('.btn-text');
+  var btnLoading = modal.querySelector('.btn-loading');
+  var locale = modal.dataset.locale || 'en';
+
+  var messages = {
+    en: {
+      success: 'Thanks for subscribing!',
+      error: 'Something went wrong. Please try again.',
+      already: 'This email is already subscribed.',
+      invalid: 'Please enter a valid email address.'
+    },
+    nl: {
+      success: 'Bedankt voor je inschrijving!',
+      error: 'Er ging iets mis. Probeer het opnieuw.',
+      already: 'Dit e-mailadres is al ingeschreven.',
+      invalid: 'Vul een geldig e-mailadres in.'
+    }
+  };
+
+  var t = messages[locale] || messages.en;
+
+  function openModal() {
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+    if (message) {
+      message.style.display = 'none';
+      message.textContent = '';
+    }
+  }
+
+  if (overlay) overlay.addEventListener('click', closeModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.classList.contains('open')) {
+      closeModal();
+    }
+  });
+
+  var triggers = document.querySelectorAll('[data-newsletter-trigger]');
+  for (var i = 0; i < triggers.length; i++) {
+    triggers[i].addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      openModal();
+      return false;
+    });
+  }
+
+  window.openNewsletterModal = openModal;
+  window.closeNewsletterModal = closeModal;
+
+  var hasVisited = localStorage.getItem('oddny_visited');
+  if (!hasVisited) {
+    localStorage.setItem('oddny_visited', 'true');
+    setTimeout(function() {
+      if (!modal.classList.contains('open')) {
+        openModal();
+      }
+    }, 12000);
+  }
+
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var emailInput = form.querySelector('input[name="email"]');
+      var email = emailInput ? emailInput.value.trim() : '';
+
+      if (!email || email.indexOf('@') === -1) {
+        message.textContent = t.invalid;
+        message.style.display = 'block';
+        message.style.color = '#e74c3c';
+        return;
+      }
+
+      btnText.style.display = 'none';
+      btnLoading.style.display = 'inline';
+
+      fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, source: 'popup' })
+      })
+      .then(function(response) {
+        return response.json().then(function(data) {
+          return { status: response.status, data: data };
+        });
+      })
+      .then(function(result) {
+        if (result.data.success) {
+          message.textContent = t.success;
+          message.style.color = '#27ae60';
+          emailInput.value = '';
+          setTimeout(closeModal, 2000);
+        } else if (result.status === 409) {
+          message.textContent = t.already;
+          message.style.color = '#f39c12';
+        } else {
+          message.textContent = t.error;
+          message.style.color = '#e74c3c';
+        }
+        message.style.display = 'block';
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+      })
+      .catch(function(err) {
+        message.textContent = t.error;
+        message.style.color = '#e74c3c';
+        message.style.display = 'block';
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+      });
+    });
+  }
+});
+</script>
+
+<style>
+  .newsletter-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+  }
+
+  .newsletter-modal.open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+  }
+
+  .modal-content {
+    position: relative;
+    width: 397px;
+    height: 350px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    animation: modalIn 0.3s ease;
+  }
+
+  @keyframes modalIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .close-btn {
+    position: absolute;
+    top: 15px;
+    right: 17px;
+    width: 24px;
+    height: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .close-btn:hover svg path {
+    stroke: #d63a99;
+  }
+
+  .modal-title {
+    position: absolute;
+    top: 26px;
+    left: 39px;
+    width: 300px;
+    font-size: 33px;
+    font-weight: 500;
+    line-height: 38px;
+    color: #42383e;
+    margin: 0;
+  }
+
+  .modal-subtitle {
+    position: absolute;
+    top: 135px;
+    left: 39px;
+    width: 316px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 18px;
+    color: #acaaaa;
+    margin: 0;
+  }
+
+  .newsletter-form {
+    position: absolute;
+    top: 190px;
+    left: 40px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .email-input {
+    width: 232px;
+    height: 32px;
+    padding: 0 12px;
+    background: rgba(217, 217, 217, 0.72);
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    color: #42383e;
+    outline: none;
+  }
+
+  .email-input::placeholder {
+    color: #888;
+  }
+
+  .join-btn {
+    width: 75px;
+    height: 32px;
+    background: #42383e;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .join-btn:hover {
+    background: #33292f;
+  }
+
+  .form-message {
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .decorative-elements {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .feather {
+    position: absolute;
+  }
+
+  .feather-1 {
+    top: 260px;
+    left: 25px;
+    transform: rotate(-18deg);
+  }
+
+  .feather-2 {
+    top: 310px;
+    left: 55px;
+    transform: rotate(-23deg);
+  }
+
+  .feather-3 {
+    top: 287px;
+    left: 150px;
+    transform: rotate(-7deg);
+  }
+
+  .feather-4 {
+    top: 277px;
+    left: 195px;
+    transform: rotate(-11deg);
+  }
+
+  .bird-container {
+    position: absolute;
+    bottom: 7px;
+    right: 30px;
+    pointer-events: none;
+  }
+
+  @media (max-width: 440px) {
+    .modal-content {
+      width: calc(100% - 40px);
+      max-width: 397px;
+    }
+    .modal-title {
+      left: 20px;
+      width: calc(100% - 60px);
+      font-size: 28px;
+      line-height: 32px;
+    }
+    .modal-subtitle {
+      left: 20px;
+      width: calc(100% - 40px);
+    }
+    .newsletter-form {
+      left: 20px;
+    }
+    .input-row {
+      flex-wrap: wrap;
+    }
+    .email-input {
+      width: 100%;
+      max-width: 200px;
+    }
+  }
+</style>

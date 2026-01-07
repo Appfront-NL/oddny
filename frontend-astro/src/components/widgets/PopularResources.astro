@@ -1,0 +1,146 @@
+---
+interface Props {
+  block: any;
+  locale?: string;
+  setAttr?: (opts: { collection: string; item: string | number; fields?: string | string[]; mode?: string }) => string;
+}
+
+const { block, locale = 'en', setAttr } = Astro.props;
+
+const heading = block[`pr_heading_${locale}`] || block.pr_heading_en || 'Popular Resources';
+
+const card1Type = block[`pr_card1_type_${locale}`] || block.pr_card1_type_en || 'Tools';
+const card1Text = block[`pr_card1_text_${locale}`] || block.pr_card1_text_en || 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim';
+const card1Link = block.pr_card1_link || '#';
+
+const card2Type = block[`pr_card2_type_${locale}`] || block.pr_card2_type_en || 'Guide';
+const card2Text = block[`pr_card2_text_${locale}`] || block.pr_card2_text_en || 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim';
+const card2Link = block.pr_card2_link || '#';
+
+const card3Type = block[`pr_card3_type_${locale}`] || block.pr_card3_type_en || 'Product';
+const card3Text = block[`pr_card3_text_${locale}`] || block.pr_card3_text_en || 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim';
+const card3Link = block.pr_card3_link || '#';
+---
+
+<section class="popular-resources">
+  <h2 
+    class="pr-heading"
+    data-directus={setAttr?.({ collection: 'blocks', item: block.id, fields: [`pr_heading_${locale}`], mode: 'popover' })}
+  >{heading}</h2>
+  
+  <div class="pr-grid">
+    <a href={card1Link} class="pr-card" style="background-color: #00FC26;">
+      <span 
+        class="pr-card-type"
+        data-directus={setAttr?.({ collection: 'blocks', item: block.id, fields: [`pr_card1_type_${locale}`], mode: 'popover' })}
+      >{card1Type}</span>
+      <p 
+        class="pr-card-text"
+        data-directus={setAttr?.({ collection: 'blocks', item: block.id, fields: [`pr_card1_text_${locale}`], mode: 'popover' })}
+      >{card1Text}</p>
+    </a>
+    
+    <a href={card2Link} class="pr-card" style="background-color: #FF40B4;">
+      <span 
+        class="pr-card-type"
+        data-directus={setAttr?.({ collection: 'blocks', item: block.id, fields: [`pr_card2_type_${locale}`], mode: 'popover' })}
+      >{card2Type}</span>
+      <p 
+        class="pr-card-text"
+        data-directus={setAttr?.({ collection: 'blocks', item: block.id, fields: [`pr_card2_text_${locale}`], mode: 'popover' })}
+      >{card2Text}</p>
+    </a>
+    
+    <a href={card3Link} class="pr-card" style="background-color: #91DBD4;">
+      <span 
+        class="pr-card-type"
+        data-directus={setAttr?.({ collection: 'blocks', item: block.id, fields: [`pr_card3_type_${locale}`], mode: 'popover' })}
+      >{card3Type}</span>
+      <p 
+        class="pr-card-text"
+        data-directus={setAttr?.({ collection: 'blocks', item: block.id, fields: [`pr_card3_text_${locale}`], mode: 'popover' })}
+      >{card3Text}</p>
+    </a>
+  </div>
+</section>
+
+<style>
+  .popular-resources {
+    padding: 60px 80px;
+    max-width: 1440px;
+    margin: 0 auto;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+  }
+
+  .pr-heading {
+    font-size: 28px;
+    font-weight: 500;
+    color: #42383e;
+    margin: 0 0 40px 0;
+  }
+
+  .pr-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+  }
+
+  .pr-card {
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
+    border-radius: 10px;
+    min-height: 350px;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .pr-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .pr-card-type {
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    text-align: right;
+    margin-bottom: auto;
+  }
+
+  .pr-card-text {
+    font-size: 24px;
+    font-weight: 500;
+    color: white;
+    line-height: 1.3;
+    margin: 0;
+  }
+
+  @media (max-width: 1024px) {
+    .popular-resources {
+      padding: 40px;
+    }
+
+    .pr-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .popular-resources {
+      padding: 30px 20px;
+    }
+
+    .pr-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .pr-card {
+      min-height: 280px;
+    }
+
+    .pr-card-text {
+      font-size: 20px;
+    }
+  }
+</style>

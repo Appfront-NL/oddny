@@ -1,0 +1,179 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getNews, locales, type Locale, defaultLocale, PUBLIC_DIRECTUS_URL } from '../../../lib/directus';
+
+export async function getStaticPaths() {
+  return [];
+}
+
+const { locale } = Astro.params;
+const currentLocale = (locales.includes(locale as Locale) ? locale : defaultLocale) as Locale;
+const newsItems = await getNews('published');
+const directusUrl = PUBLIC_DIRECTUS_URL;
+
+function getImageUrl(image: any) {
+  if (!image) return '/images/7e155a058b2f08a228fca03af573b81922e39990.png';
+  if (typeof image === 'string') return `${directusUrl}/assets/${image}`;
+  return `${directusUrl}/assets/${image.id}`;
+}
+---
+
+<Layout title="News" currentLocale={currentLocale} currentSlug="news">
+  <div class="news-page">
+    <div class="news-header">
+      <h1 class="news-title">{currentLocale === 'nl' ? 'Nieuws' : 'News'}</h1>
+      <p class="news-subtitle">{currentLocale === 'nl' ? 'Het laatste nieuws en updates' : 'The latest news and updates'}</p>
+    </div>
+
+    {newsItems.length === 0 ? (
+      <p class="no-results">{currentLocale === 'nl' ? 'Nog geen nieuws gepubliceerd.' : 'No news published yet.'}</p>
+    ) : (
+      <div class="results-grid">
+        {newsItems.map((item: any, index: number) => {
+          const title = item[`title_${currentLocale}`] || item.title_nl || item.title_en;
+          const intro = item[`intro_${currentLocale}`] || item.intro_nl || item.intro_en;
+          const imageUrl = item.featured_image ? getImageUrl(item.featured_image) : `/images/${index % 3 === 0 ? '7e155a058b2f08a228fca03af573b81922e39990' : index % 3 === 1 ? 'a68bee1ed41d916baeacb8282ff859fc0a335b75' : '0c59031718f023dc2a1306f1c3f4a839a4d90a93'}.png`;
+          
+          return (
+            <a href={`/${currentLocale}/news/${item.slug}`} class="result-card">
+              <div class="result-image">
+                <img src={imageUrl} alt={title} />
+              </div>
+              <div class="result-content">
+                {item.category && <span class="result-type">{item.category}</span>}
+                <h3 class="result-title">{title}</h3>
+                {intro && <p class="result-excerpt">{intro}</p>}
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</Layout>
+
+<style>
+  .news-page {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 40px 80px 80px;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+  }
+
+  .news-header {
+    margin-bottom: 50px;
+  }
+
+  .news-title {
+    font-size: 80px;
+    font-weight: 500;
+    line-height: 85px;
+    color: #42383e;
+    margin: 0 0 20px 0;
+    letter-spacing: -0.02em;
+  }
+
+  .news-subtitle {
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 30px;
+    color: #888484;
+    margin: 0;
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+  }
+
+  .result-card {
+    text-decoration: none;
+    display: block;
+  }
+
+  .result-image {
+    width: 100%;
+    height: 350px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .result-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+  }
+
+  .result-card:hover .result-image img {
+    transform: scale(1.05);
+  }
+
+  .result-content {
+    padding: 0;
+  }
+
+  .result-type {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #888484;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+
+  .result-title {
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 32px;
+    color: #42383e;
+    margin: 0 0 12px 0;
+  }
+
+  .result-excerpt {
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 22px;
+    color: #888484;
+    margin: 0;
+  }
+
+  .no-results {
+    font-size: 18px;
+    color: #888484;
+    text-align: center;
+    padding: 60px 0;
+  }
+
+  @media (max-width: 1200px) {
+    .results-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .news-page {
+      padding: 30px 20px 60px;
+    }
+
+    .news-title {
+      font-size: 48px;
+      line-height: 52px;
+    }
+
+    .news-subtitle {
+      font-size: 20px;
+    }
+
+    .results-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .result-image {
+      height: 250px;
+    }
+  }
+</style>

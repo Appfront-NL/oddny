@@ -1,6 +1,7 @@
 ---
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
+import NewsletterModal from '../components/NewsletterModal.astro';
 import { type Locale, defaultLocale } from '../lib/directus';
 import '../styles/tailwind.css';
 import '../styles/fonts.css';
@@ -40,6 +41,8 @@ const {
       <slot />
     </main>
     {!hideFooter && <Footer locale={currentLocale} />}
+    
+    <NewsletterModal locale={currentLocale} />
 
     <!-- Rich Text Editor Modal (hidden by default, shown only in iframe/preview) -->
     <div id="richtext-modal" class="richtext-modal">
@@ -269,6 +272,11 @@ const {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background: white;
+  }
+  
+  html {
+    background: white;
   }
 
   .preview-banner {
@@ -287,6 +295,7 @@ const {
 
   main {
     flex: 1;
+    background: white;
   }
 
   body:has(.preview-banner) main {

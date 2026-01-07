@@ -1,0 +1,171 @@
+---
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading');
+const category = getLocalizedField(block, 'th_category');
+const bgColor = block.th_bg_color || '#FF40B4';
+---
+
+<section 
+  class="hero hero-tool"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <div 
+    class="tool-bg"
+    style={`background-color: ${bgColor};`}
+    data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'th_bg_color', mode: 'popover' })}
+  >
+    <span 
+      class="category-label"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`th_category_${locale}`], mode: 'popover' })}
+    >
+      {category || 'Guide'}
+    </span>
+    
+    <h1 
+      class="tool-heading"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`heading_${locale}`], mode: 'popover' })}
+    >
+      {heading || 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit ectetuer'}
+    </h1>
+  </div>
+</section>
+
+<style>
+  .hero-tool {
+    position: relative;
+    width: 100vw;
+    height: 711px;
+    background: white;
+    overflow: hidden;
+    font-family: 'Neue Haas Grotesk Display Pro', 'Inter', sans-serif;
+    padding: 0;
+    margin: 0;
+    margin-left: calc(-50vw + 50%);
+    max-width: 1440px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .tool-bg {
+    position: absolute;
+    left: 80px;
+    top: 35px;
+    width: 1280px;
+    height: 636px;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .category-label {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    font-family: 'Neue Haas Grotesk Display Pro', 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
+  }
+  
+  .tool-heading {
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 550px;
+    font-family: 'Neue Haas Grotesk Display Pro', 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 55px;
+    font-style: italic;
+    line-height: 60px;
+    color: white;
+    margin: 0;
+  }
+  
+  @media (max-width: 1440px) and (min-width: 769px) {
+    .hero-tool {
+      height: calc(711px * 100vw / 1440px);
+      min-height: 400px;
+    }
+    .tool-bg {
+      left: calc(80px * 100vw / 1440px);
+      top: calc(35px * 100vw / 1440px);
+      width: calc(1280px * 100vw / 1440px);
+      height: calc(636px * 100vw / 1440px);
+    }
+    .category-label {
+      top: calc(30px * 100vw / 1440px);
+      right: calc(40px * 100vw / 1440px);
+      font-size: clamp(12px, calc(16px * 100vw / 1440px), 16px);
+    }
+    .tool-heading {
+      right: calc(40px * 100vw / 1440px);
+      width: calc(550px * 100vw / 1440px);
+      font-size: clamp(30px, calc(55px * 100vw / 1440px), 55px);
+      line-height: clamp(34px, calc(60px * 100vw / 1440px), 60px);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .hero-tool {
+      height: 400px;
+    }
+    .tool-bg {
+      left: 20px;
+      top: 20px;
+      width: calc(100vw - 40px);
+      height: 360px;
+    }
+    .category-label {
+      top: 20px;
+      right: 20px;
+      font-size: 14px;
+    }
+    .tool-heading {
+      right: 20px;
+      left: 20px;
+      width: auto;
+      font-size: 32px;
+      line-height: 36px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .hero-tool {
+      height: 350px;
+    }
+    .tool-bg {
+      left: 15px;
+      top: 15px;
+      width: calc(100vw - 30px);
+      height: 320px;
+    }
+    .category-label {
+      top: 15px;
+      right: 15px;
+      font-size: 12px;
+    }
+    .tool-heading {
+      right: 15px;
+      left: 15px;
+      font-size: 26px;
+      line-height: 30px;
+    }
+  }
+</style>

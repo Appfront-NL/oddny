@@ -1,0 +1,225 @@
+---
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading');
+const ctaText = getLocalizedField(block, 'cta_text');
+const ctaLink = block.cta_link || '#';
+
+const card1Label = getLocalizedField(block, 'cc_card1_label') || 'Tools';
+const card1Text = getLocalizedField(block, 'cc_card1_text');
+const card1Link = block.cc_card1_link || '#';
+
+const card2Label = getLocalizedField(block, 'cc_card2_label') || 'Tools';
+const card2Text = getLocalizedField(block, 'cc_card2_text');
+const card2Link = block.cc_card2_link || '#';
+
+const card3Label = getLocalizedField(block, 'cc_card3_label') || 'Tools';
+const card3Text = getLocalizedField(block, 'cc_card3_text');
+const card3Link = block.cc_card3_link || '#';
+
+const colorVariant = block.variant || 'green';
+
+const colorMap: Record<string, string> = {
+  green: '#00FC26',
+  pink: '#FF40B4',
+  teal: '#91DBD4'
+};
+
+const bgColor = colorMap[colorVariant] || colorMap.green;
+
+const defaultText = 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim';
+
+const cards = [
+  { label: card1Label, text: card1Text || defaultText, link: card1Link },
+  { label: card2Label, text: card2Text || defaultText, link: card2Link },
+  { label: card3Label, text: card3Text || defaultText, link: card3Link },
+];
+---
+
+<section 
+  class="colour-cards-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <div class="colour-cards-container">
+    <h2 
+      class="section-title"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`heading_${locale}`], mode: 'popover' })}
+    >
+      {heading || 'The Source'}
+    </h2>
+
+    <div class="cards-grid">
+      {cards.map((card, index) => (
+        <a 
+          href={card.link} 
+          class="colour-card"
+          style={`background-color: ${bgColor};`}
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`cc_card${index + 1}_label_${locale}`, `cc_card${index + 1}_text_${locale}`, `cc_card${index + 1}_link`], mode: 'popover' })}
+        >
+          <span class="card-label">{card.label}</span>
+          <p class="card-text">{card.text}</p>
+        </a>
+      ))}
+    </div>
+
+    {ctaText && (
+      <a 
+        href={ctaLink} 
+        class="cta-button"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`cta_text_${locale}`, 'cta_link'], mode: 'popover' })}
+      >
+        <span>{ctaText}</span>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    )}
+  </div>
+</section>
+
+<style>
+  .colour-cards-section {
+    width: 100%;
+    background: white;
+    padding: 60px 0;
+    font-family: 'Neue Haas Grotesk Display Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+
+  .colour-cards-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 80px;
+  }
+
+  .section-title {
+    font-size: 36px;
+    font-weight: 500;
+    color: #42383e;
+    margin: 0 0 40px 0;
+    line-height: 1.2;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+
+  .colour-card {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    border-radius: 10px;
+    overflow: hidden;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .colour-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-label {
+    align-self: flex-end;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
+  }
+
+  .card-text {
+    margin-top: auto;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: white;
+  }
+
+  .cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    float: right;
+    font-size: 20px;
+    font-weight: 500;
+    color: #42383e;
+    text-decoration: none;
+    transition: opacity 0.2s;
+    cursor: pointer;
+  }
+
+  .cta-button:hover {
+    opacity: 0.7;
+  }
+
+  .cta-button svg {
+    transition: transform 0.2s;
+  }
+
+  .cta-button:hover svg {
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 1200px) {
+    .colour-cards-container {
+      padding: 0 40px;
+    }
+    .cards-grid {
+      gap: 30px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .cards-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .colour-card:last-child {
+      grid-column: 1 / -1;
+      max-width: calc(50% - 15px);
+      margin: 0 auto;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .colour-cards-container {
+      padding: 0 20px;
+    }
+    .section-title {
+      font-size: 28px;
+    }
+    .cards-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .colour-card {
+      height: 240px;
+    }
+    .colour-card:last-child {
+      max-width: none;
+    }
+    .cta-button {
+      float: none;
+      justify-content: flex-end;
+      width: 100%;
+    }
+  }
+</style>

@@ -1,0 +1,303 @@
+---
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading') || 'Creative Flow';
+
+const defaultCards = [
+  { title: 'EQPT', price: '€12, 61', desc: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation' },
+  { title: 'MBIL', price: '€12, 61', desc: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation' },
+  { title: 'HME', price: '€12, 61', desc: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation' },
+  { title: 'STDO', price: '€12, 61', desc: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation' },
+  { title: 'CYBR', price: '€12, 61', desc: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation' },
+  { title: 'LBTY', price: '€12, 61', desc: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation' },
+];
+
+const cards = [];
+for (let i = 1; i <= 6; i++) {
+  const title = getLocalizedField(block, `cf_card${i}_title`);
+  const price = getLocalizedField(block, `cf_card${i}_price`);
+  const desc = getLocalizedField(block, `cf_card${i}_desc`);
+  cards.push({
+    index: i,
+    title: title || defaultCards[i-1].title,
+    price: price || defaultCards[i-1].price,
+    desc: desc || defaultCards[i-1].desc,
+  });
+}
+
+const fromLabel = getLocalizedField(block, 'cf_from_label') || 'From';
+const checkPricesLabel = getLocalizedField(block, 'cf_check_prices_label') || 'Check our Prices';
+
+const navItems = [
+  getLocalizedField(block, 'cf_nav1') || 'Creative Flow',
+  getLocalizedField(block, 'cf_nav2') || 'Discipline',
+  getLocalizedField(block, 'cf_nav3') || 'Topic',
+];
+---
+
+<section 
+  class="creative-flow-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <div class="creative-flow-bg"></div>
+  
+  <div class="creative-flow-container">
+    <header class="creative-flow-header">
+      <h2 
+        class="creative-flow-title"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`heading_${locale}`], mode: 'popover' })}
+      >
+        {heading}
+      </h2>
+      
+      <nav class="creative-flow-nav">
+        {navItems.map((item, index) => (
+          <span 
+            class="nav-item"
+            data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`cf_nav${index + 1}_${locale}`], mode: 'popover' })}
+          >
+            {item}
+          </span>
+        ))}
+        <div class="search-icon">
+          <svg fill="none" viewBox="0 0 22 26">
+            <circle cx="9.7" cy="9.7" r="8.2" stroke="#00FC26" stroke-width="3" />
+            <line stroke="#00FC26" stroke-width="3" x1="14.1" x2="20.9" y1="16.3" y2="25.1" />
+          </svg>
+        </div>
+      </nav>
+    </header>
+
+    <div class="cards-grid">
+      {cards.map((card) => (
+        <div 
+          class="product-card"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`cf_card${card.index}_title_${locale}`, `cf_card${card.index}_price_${locale}`, `cf_card${card.index}_desc_${locale}`], mode: 'popover' })}
+        >
+          <p class="card-title">{card.title}</p>
+          <p class="card-description">{card.desc}</p>
+          <p class="card-from">{fromLabel}</p>
+          <p class="card-price">{card.price}</p>
+          <a href="#" class="check-price-btn">
+            <span>{checkPricesLabel}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .creative-flow-section {
+    position: relative;
+    width: 100%;
+    min-height: 433px;
+    background: rgba(217, 217, 217, 0.72);
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    overflow: hidden;
+  }
+
+  .creative-flow-bg {
+    display: none;
+  }
+
+  .creative-flow-container {
+    position: relative;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 26px 80px;
+    z-index: 1;
+  }
+
+  .creative-flow-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 48px;
+  }
+
+  .creative-flow-title {
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 40px;
+    color: #42383e;
+    margin: 0;
+  }
+
+  .creative-flow-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .nav-item {
+    padding: 8px 16px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #42383e;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+
+  .nav-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .search-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+
+  .search-icon:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .search-icon svg {
+    width: 20px;
+    height: 26px;
+  }
+
+  .cards-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 24px 24px;
+  }
+
+  .product-card {
+    position: relative;
+    width: 180px;
+    height: 262px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  .product-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .card-title {
+    position: absolute;
+    left: 17px;
+    top: 46px;
+    font-size: 55px;
+    font-weight: 500;
+    line-height: 16px;
+    color: #42383e;
+    margin: 0;
+  }
+
+  .card-description {
+    position: absolute;
+    left: 20px;
+    top: 94px;
+    width: 137px;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 22px;
+    color: #42383e;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .card-from {
+    position: absolute;
+    left: 19px;
+    top: 178px;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 16px;
+    color: #42383e;
+    margin: 0;
+  }
+
+  .card-price {
+    position: absolute;
+    left: 19px;
+    top: 202px;
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 16px;
+    color: #ff40b4;
+    margin: 0;
+  }
+
+  .check-price-btn {
+    position: absolute;
+    left: 51px;
+    top: 235px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+
+  .check-price-btn span {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #ff40b4;
+  }
+
+  .check-price-btn svg {
+    color: #ff40b4;
+    transition: transform 0.2s;
+  }
+
+  .check-price-btn:hover svg {
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 1200px) {
+    .creative-flow-container {
+      padding: 26px 40px;
+    }
+    .cards-grid {
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .creative-flow-container {
+      padding: 20px;
+    }
+    .creative-flow-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .creative-flow-nav {
+      flex-wrap: wrap;
+    }
+    .cards-grid {
+      justify-content: center;
+      gap: 20px;
+    }
+  }
+</style>

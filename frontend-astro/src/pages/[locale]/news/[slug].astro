@@ -1,6 +1,6 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { getBlogBySlug, getSimilarBlogs, getBlogs, locales, type Locale, defaultLocale, PUBLIC_DIRECTUS_URL } from '../../../lib/directus';
+import { getNewsBySlug, getSimilarNews, getNews, locales, type Locale, defaultLocale, PUBLIC_DIRECTUS_URL } from '../../../lib/directus';
 
 export async function getStaticPaths() {
   return [];
@@ -8,18 +8,18 @@ export async function getStaticPaths() {
 
 const { locale, slug } = Astro.params;
 const currentLocale = (locales.includes(locale as Locale) ? locale : defaultLocale) as Locale;
-const blog = await getBlogBySlug(slug as string);
+const news = await getNewsBySlug(slug as string);
 
-if (!blog) {
+if (!news) {
   return Astro.redirect('/404');
 }
 
-const similarBlogs = blog.category ? await getSimilarBlogs(blog.category, blog.id, 6) : await getBlogs('published');
+const similarNews = news.category ? await getSimilarNews(news.category, news.id, 6) : await getNews('published');
 const directusUrl = PUBLIC_DIRECTUS_URL;
 
-const title = blog[`title_${currentLocale}`] || blog.title_nl || blog.title_en || 'Untitled';
-const intro = blog[`intro_${currentLocale}`] || blog.intro_nl || blog.intro_en || '';
-const content = blog[`content_${currentLocale}`] || blog.content_nl || blog.content_en || '';
+const title = news[`title_${currentLocale}`] || news.title_nl || news.title_en || 'Untitled';
+const intro = news[`intro_${currentLocale}`] || news.intro_nl || news.intro_en || '';
+const content = news[`content_${currentLocale}`] || news.content_nl || news.content_en || '';
 
 function getImageUrl(imageId: string | null) {
   if (!imageId) return null;
@@ -37,15 +37,15 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
 ---
 
 <Layout title={title} currentLocale={currentLocale} currentSlug={`blog/${slug}`}>
-  <article class="blog-article" data-directus={setAttr({ collection: 'blogs', item: blog.id, mode: 'drawer' })}>
+  <article class="blog-article" data-directus={setAttr({ collection: 'news', item: news.id, mode: 'drawer' })}>
     
     <!-- Hero Image -->
     <div class="blog-hero">
-      {getImageUrl(blog.featured_image) ? (
+      {getImageUrl(news.featured_image) ? (
         <img 
-          src={getImageUrl(blog.featured_image)} 
+          src={getImageUrl(news.featured_image)} 
           alt={title}
-          data-directus={setAttr({ collection: 'blogs', item: blog.id, fields: ['featured_image'], mode: 'popover' })}
+          data-directus={setAttr({ collection: 'news', item: news.id, fields: ['featured_image'], mode: 'popover' })}
         />
       ) : (
         <div class="blog-hero-placeholder"></div>
@@ -63,13 +63,13 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
       <div class="blog-header">
         <h1 
           class="blog-title"
-          data-directus={setAttr({ collection: 'blogs', item: blog.id, fields: [`title_${currentLocale}`], mode: 'popover' })}
+          data-directus={setAttr({ collection: 'news', item: news.id, fields: [`title_${currentLocale}`], mode: 'popover' })}
         >
           {title}
         </h1>
         <p 
           class="blog-intro"
-          data-directus={setAttr({ collection: 'blogs', item: blog.id, fields: [`intro_${currentLocale}`], mode: 'popover' })}
+          data-directus={setAttr({ collection: 'news', item: news.id, fields: [`intro_${currentLocale}`], mode: 'popover' })}
         >
           {intro}
         </p>
@@ -80,12 +80,12 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     <div class="blog-main-content">
       <div 
         class="content-column"
-        data-directus={setAttr({ collection: 'blogs', item: blog.id, fields: [`content_${currentLocale}`], mode: 'richtext' })}
+        data-directus={setAttr({ collection: 'news', item: news.id, fields: [`content_${currentLocale}`], mode: 'richtext' })}
         set:html={content}
       />
       <div 
         class="content-column"
-        data-directus={setAttr({ collection: 'blogs', item: blog.id, fields: [`content_${currentLocale}`], mode: 'richtext' })}
+        data-directus={setAttr({ collection: 'news', item: news.id, fields: [`content_${currentLocale}`], mode: 'richtext' })}
         set:html={content}
       />
     </div>
@@ -94,7 +94,7 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     <div class="blog-author-section">
       <!-- Row 1: Share + All News -->
       <div class="author-row-1">
-        {blog.show_social_share && (
+        {news.show_social_share && (
           <div class="share-section">
             <span class="share-label">Share News:</span>
             <div class="share-buttons">
@@ -130,9 +130,9 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
       <!-- Row 2: Author + CTA -->
       <div class="author-row-2">
         <div class="author-info">
-          <div class="author-card" data-directus={setAttr({ collection: 'blogs', item: blog.id, fields: ['author_name', 'author_role'], mode: 'popover' })}>
-            <span class="author-name">{blog.author_name || 'Ina Sok'}</span>
-            <span class="author-role">{blog.author_role || 'Artist'}</span>
+          <div class="author-card" data-directus={setAttr({ collection: 'news', item: news.id, fields: ['author_name', 'author_role'], mode: 'popover' })}>
+            <span class="author-name">{news.author_name || 'Ina Sok'}</span>
+            <span class="author-role">{news.author_role || 'Artist'}</span>
           </div>
           <p class="author-description">
             Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh
@@ -148,12 +148,12 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     </div>
 
     <!-- Similar Articles -->
-    {similarBlogs.length > 0 && (
+    {similarNews.length > 0 && (
       <div class="similar-articles">
         <h2 class="similar-title">Similar Articles</h2>
         <div class="similar-grid">
-          {similarBlogs.slice(0, 6).map((similar) => (
-            <a href={`/${currentLocale}/blog/${similar.slug}`} class="similar-card">
+          {similarNews.slice(0, 6).map((similar) => (
+            <a href={`/${currentLocale}/news/${similar.slug}`} class="similar-card">
               <div class="similar-image">
                 {getImageUrl(similar.featured_image) ? (
                   <img src={getImageUrl(similar.featured_image)} alt={similar[`title_${currentLocale}`] || similar.title_nl} />
@@ -623,13 +623,13 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
   }
 </style>
 
-<script is:inline define:vars={{ directusUrl, blogId: blog.id, currentLocale, otherLocale, slug }}>
+<script is:inline define:vars={{ directusUrl, newsId: news.id, currentLocale, otherLocale, slug }}>
 (function() {
   var inIframe = window.self !== window.top;
   if (!inIframe) return;
 
   var DIRECTUS_URL = directusUrl;
-  var BLOG_ID = blogId;
+  var NEWS_ID = newsId;
   var CURRENT_LOCALE = currentLocale;
   var accessToken = null;
 

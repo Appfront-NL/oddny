@@ -314,32 +314,81 @@ const placeholder = getLocalizedField(block, 'placeholder');
       >
       </div>
       
-      <form class="newsletter-form">
-        <div style="position: relative;">
-          <input
-            type="email"
-            placeholder=""
-            class="newsletter-email"
-          />
-          <span 
-            style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #42383e; opacity: 0.7; pointer-events: auto; cursor: pointer; font-family: 'Neue Haas Grotesk Display Pro', sans-serif; font-size: 16px; z-index: 10;"
-            data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'text', mode: 'popover' })}
-          >
-            {getLocalizedField(block, 'text') || 'Enter your email'}
-          </span>
-        </div>
+      <form class="newsletter-form" id="cta-newsletter-form">
+        <input
+          type="email"
+          name="email"
+          placeholder={getLocalizedField(block, 'text') || 'Enter your email'}
+          class="newsletter-email"
+          required
+        />
         <button 
           type="submit"
           class="newsletter-button"
           data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
         >
-          <span>{buttonText || 'Join now'}</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <span class="btn-text">{buttonText || 'Join now'}</span>
+          <span class="btn-loading" style="display: none;">...</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M5 12h14" />
             <path d="M12 5l7 7-7 7" />
           </svg>
         </button>
       </form>
+      <p class="cta-form-message" style="display: none; margin-top: 10px; font-size: 14px;"></p>
+      
+      <script is:inline>
+        (function() {
+          const form = document.getElementById('cta-newsletter-form');
+          const message = document.querySelector('.cta-form-message');
+          const btnText = form?.querySelector('.btn-text');
+          const btnLoading = form?.querySelector('.btn-loading');
+          const locale = document.documentElement.lang || 'en';
+          
+          const messages = {
+            en: { success: 'Thanks for subscribing!', error: 'Something went wrong.', already: 'Already subscribed.' },
+            nl: { success: 'Bedankt voor je inschrijving!', error: 'Er ging iets mis.', already: 'Al ingeschreven.' }
+          };
+          const t = messages[locale] || messages.en;
+          
+          form?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = form.querySelector('input[name="email"]')?.value?.trim();
+            if (!email) return;
+            
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'inline';
+            
+            try {
+              const res = await fetch('/api/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, source: 'cta-widget' })
+              });
+              const data = await res.json();
+              
+              if (data.success) {
+                message.textContent = t.success;
+                message.style.color = '#27ae60';
+                form.querySelector('input[name="email"]').value = '';
+              } else if (res.status === 409) {
+                message.textContent = t.already;
+                message.style.color = '#f39c12';
+              } else {
+                message.textContent = t.error;
+                message.style.color = '#e74c3c';
+              }
+            } catch (err) {
+              message.textContent = t.error;
+              message.style.color = '#e74c3c';
+            }
+            
+            message.style.display = 'block';
+            btnText.style.display = 'inline';
+            btnLoading.style.display = 'none';
+          });
+        })();
+      </script>
     </div>
   </div>
 </section>

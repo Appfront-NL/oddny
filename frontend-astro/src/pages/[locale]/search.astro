@@ -1,0 +1,385 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getArticlesList, getBlogs, getNews, getTools, getAssetUrl, type Locale, defaultLocale } from '../../lib/directus';
+
+export function getStaticPaths() {
+  return [
+    { params: { locale: 'en' } },
+    { params: { locale: 'nl' } }
+  ];
+}
+
+const { locale } = Astro.params as { locale: Locale };
+
+const [articles, blogs, news, tools] = await Promise.all([
+  getArticlesList('published'),
+  getBlogs('published'),
+  getNews('published'),
+  getTools('published')
+]);
+
+const texts = {
+  en: {
+    title: 'Search',
+    subtitle: 'Explore our collection of articles and tools',
+    placeholder: 'Search...',
+    filters: ['Creative Flow', 'Discipline', 'Topic'],
+    noResults: 'No results found'
+  },
+  nl: {
+    title: 'Zoeken',
+    subtitle: 'Ontdek onze collectie artikelen en tools',
+    placeholder: 'Zoeken...',
+    filters: ['Creatieve Flow', 'Discipline', 'Onderwerp'],
+    noResults: 'Geen resultaten gevonden'
+  }
+};
+
+const t = texts[locale] || texts.en;
+---
+
+<Layout title={t.title} currentLocale={locale} currentSlug="search">
+  <div class="search-page">
+    <div class="search-header">
+      <h1 class="search-title">{t.title}</h1>
+      <p class="search-subtitle">{t.subtitle}</p>
+    </div>
+
+    <div class="search-controls">
+      <div class="search-filters">
+        {t.filters.map((filter) => (
+          <button class="filter-btn" data-filter={filter.toLowerCase().replace(' ', '-')}>
+            {filter}
+          </button>
+        ))}
+      </div>
+      
+      <div class="search-input-wrapper">
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder={t.placeholder}
+          id="search-input"
+        />
+        <svg class="search-icon" width="20" height="24" viewBox="0 0 22.0958 26" fill="none">
+          <circle cx="9.69547" cy="9.69545" r="8.19545" stroke="#42383E" stroke-width="3" />
+          <line stroke="#42383E" stroke-width="3" x1="14.1125" x2="20.9106" y1="16.317" y2="25.0806" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="search-results" id="search-results">
+      <div class="results-grid">
+        {articles && articles.map((item, index) => {
+          const imageUrl = item.featured_image ? getAssetUrl(item.featured_image) : `/images/${index % 3 === 0 ? '7e155a058b2f08a228fca03af573b81922e39990' : index % 3 === 1 ? 'a68bee1ed41d916baeacb8282ff859fc0a335b75' : '0c59031718f023dc2a1306f1c3f4a839a4d90a93'}.png`;
+          const title = item[`title_${locale}`] || item.title_en || 'Untitled';
+          const intro = item[`intro_${locale}`] || item.intro_en || '';
+          
+          return (
+            <a href={`/${locale}/articles/${item.slug}`} class="result-card" data-title={title.toLowerCase()} data-type="article">
+              <div class="result-image">
+                <img src={imageUrl} alt={title} />
+              </div>
+              <div class="result-content">
+                <span class="result-type">Article</span>
+                <h3 class="result-title">{title}</h3>
+                <p class="result-excerpt">{intro}</p>
+              </div>
+            </a>
+          );
+        })}
+        
+        {blogs && blogs.map((item, index) => {
+          const imageUrl = item.featured_image ? getAssetUrl(item.featured_image) : `/images/${index % 3 === 0 ? '7e155a058b2f08a228fca03af573b81922e39990' : index % 3 === 1 ? 'a68bee1ed41d916baeacb8282ff859fc0a335b75' : '0c59031718f023dc2a1306f1c3f4a839a4d90a93'}.png`;
+          const title = item[`title_${locale}`] || item.title_en || 'Untitled';
+          const intro = item[`intro_${locale}`] || item.intro_en || '';
+          
+          return (
+            <a href={`/${locale}/blogs/${item.slug}`} class="result-card" data-title={title.toLowerCase()} data-type="blog">
+              <div class="result-image">
+                <img src={imageUrl} alt={title} />
+              </div>
+              <div class="result-content">
+                <span class="result-type">Blog</span>
+                <h3 class="result-title">{title}</h3>
+                <p class="result-excerpt">{intro}</p>
+              </div>
+            </a>
+          );
+        })}
+        
+        {news && news.map((item, index) => {
+          const imageUrl = item.featured_image ? getAssetUrl(item.featured_image) : `/images/${index % 3 === 0 ? '7e155a058b2f08a228fca03af573b81922e39990' : index % 3 === 1 ? 'a68bee1ed41d916baeacb8282ff859fc0a335b75' : '0c59031718f023dc2a1306f1c3f4a839a4d90a93'}.png`;
+          const title = item[`title_${locale}`] || item.title_en || 'Untitled';
+          const intro = item[`intro_${locale}`] || item.intro_en || '';
+          
+          return (
+            <a href={`/${locale}/news/${item.slug}`} class="result-card" data-title={title.toLowerCase()} data-type="news">
+              <div class="result-image">
+                <img src={imageUrl} alt={title} />
+              </div>
+              <div class="result-content">
+                <span class="result-type">News</span>
+                <h3 class="result-title">{title}</h3>
+                <p class="result-excerpt">{intro}</p>
+              </div>
+            </a>
+          );
+        })}
+        
+        {tools && tools.map((item, index) => {
+          const imageUrl = item.featured_image ? getAssetUrl(item.featured_image) : `/images/${index % 3 === 0 ? '7e155a058b2f08a228fca03af573b81922e39990' : index % 3 === 1 ? 'a68bee1ed41d916baeacb8282ff859fc0a335b75' : '0c59031718f023dc2a1306f1c3f4a839a4d90a93'}.png`;
+          const title = item[`title_${locale}`] || item.title_en || 'Untitled';
+          const intro = item[`intro_${locale}`] || item.intro_en || '';
+          
+          return (
+            <a href={`/${locale}/tools/${item.slug}`} class="result-card" data-title={title.toLowerCase()} data-type="tool">
+              <div class="result-image">
+                <img src={imageUrl} alt={title} />
+              </div>
+              <div class="result-content">
+                <span class="result-type">Tool</span>
+                <h3 class="result-title">{title}</h3>
+                <p class="result-excerpt">{intro}</p>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+      
+      {(!articles || articles.length === 0) && (!blogs || blogs.length === 0) && (!news || news.length === 0) && (!tools || tools.length === 0) && (
+        <p class="no-results">{t.noResults}</p>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const resultsContainer = document.getElementById('search-results');
+  const cards = document.querySelectorAll('.result-card');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase().trim();
+      
+      cards.forEach((card) => {
+        const title = card.getAttribute('data-title') || '';
+        const matches = title.includes(query) || query === '';
+        (card as HTMLElement).style.display = matches ? 'block' : 'none';
+      });
+    });
+  }
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+
+<style>
+  .search-page {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 40px 80px 80px;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+  }
+
+  .search-header {
+    margin-bottom: 40px;
+  }
+
+  .search-title {
+    font-size: 80px;
+    font-weight: 500;
+    line-height: 85px;
+    color: #42383e;
+    margin: 0 0 20px 0;
+    letter-spacing: -0.02em;
+  }
+
+  .search-subtitle {
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 30px;
+    color: #888484;
+    margin: 0;
+  }
+
+  .search-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 50px;
+    gap: 20px;
+  }
+
+  .search-filters {
+    display: flex;
+    gap: 10px;
+  }
+
+  .filter-btn {
+    height: 36px;
+    padding: 0 16px;
+    background: none;
+    border: none;
+    border-radius: 18px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #42383e;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+  }
+
+  .filter-btn:hover {
+    background: rgba(217, 217, 217, 0.5);
+  }
+
+  .filter-btn.active {
+    background: rgba(217, 217, 217, 0.72);
+  }
+
+  .search-input-wrapper {
+    position: relative;
+    width: 350px;
+  }
+
+  .search-input {
+    width: 100%;
+    height: 50px;
+    padding: 0 50px 0 16px;
+    background: rgba(217, 217, 217, 0.72);
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    color: #42383e;
+    outline: none;
+  }
+
+  .search-input::placeholder {
+    color: #888;
+  }
+
+  .search-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+  }
+
+  .result-card {
+    text-decoration: none;
+    display: block;
+  }
+
+  .result-image {
+    width: 100%;
+    height: 350px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .result-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+  }
+
+  .result-card:hover .result-image img {
+    transform: scale(1.05);
+  }
+
+  .result-content {
+    padding: 0;
+  }
+
+  .result-type {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #888484;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+
+  .result-title {
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 32px;
+    color: #42383e;
+    margin: 0 0 12px 0;
+  }
+
+  .result-excerpt {
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 22px;
+    color: #888484;
+    margin: 0;
+  }
+
+  .no-results {
+    font-size: 18px;
+    color: #888484;
+    text-align: center;
+    padding: 60px 0;
+  }
+
+  @media (max-width: 1200px) {
+    .results-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .search-page {
+      padding: 30px 20px 60px;
+    }
+
+    .search-title {
+      font-size: 48px;
+      line-height: 52px;
+    }
+
+    .search-subtitle {
+      font-size: 20px;
+    }
+
+    .search-controls {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .search-filters {
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrapper {
+      width: 100%;
+    }
+
+    .results-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .result-image {
+      height: 250px;
+    }
+  }
+</style>

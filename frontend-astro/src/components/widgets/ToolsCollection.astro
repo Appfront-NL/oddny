@@ -1,0 +1,332 @@
+---
+import { getTools, type Tool } from '../../lib/directus';
+
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading') || 'Tools Collection';
+
+const navItems = [
+  getLocalizedField(block, 'tc_nav1') || 'Creative Flow',
+  getLocalizedField(block, 'tc_nav2') || 'Discipline',
+  getLocalizedField(block, 'tc_nav3') || 'Topic',
+];
+
+const tools = await getTools('published');
+
+const designColors = ['#00FC26', '#FF40B4', '#91DBD4'];
+
+const getColorByIndex = (index: number) => {
+  return designColors[index % 3];
+};
+---
+
+<section 
+  class="tools-collection-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <div class="tools-collection-container">
+    <header class="tools-header">
+      <div class="bird-icon">
+        <img src="/images/oddny-bird-pink.png" alt="" />
+      </div>
+      
+      <nav class="tools-nav">
+        <span 
+          class="nav-item"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`tc_nav1_${locale}`], mode: 'popover' })}
+        >
+          {navItems[0]}
+        </span>
+        {navItems.slice(1).map((item, index) => (
+          <span 
+            class="nav-item"
+            data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`tc_nav${index + 2}_${locale}`], mode: 'popover' })}
+          >
+            {item}
+          </span>
+        ))}
+      </nav>
+      
+      <div class="search-bar">
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder={locale === 'nl' ? 'Zoek tools...' : 'Search tools...'}
+          id="tools-search-input"
+        />
+        <svg class="search-icon" width="20" height="26" viewBox="0 0 22 26" fill="none">
+          <circle cx="9.7" cy="9.7" r="8.2" stroke="#42383E" stroke-width="3" />
+          <line stroke="#42383E" stroke-width="3" x1="14.1" x2="20.9" y1="16.3" y2="25.1" />
+        </svg>
+      </div>
+    </header>
+
+    <div class="cards-grid" id="tools-grid">
+      {tools.length === 0 ? (
+        <div class="no-tools">
+          {locale === 'nl' ? 'Nog geen tools beschikbaar.' : 'No tools available yet.'}
+        </div>
+      ) : (
+        tools.map((tool: Tool, index: number) => {
+          const title = tool[`title_${locale}` as keyof Tool] || tool.title_nl || tool.title_en;
+          const intro = tool[`intro_${locale}` as keyof Tool] || tool.intro_nl || tool.intro_en;
+          const bgColor = getColorByIndex(index);
+          return (
+            <a 
+              href={`/${locale}/tools/${tool.slug}`} 
+              class="tool-card"
+              data-title={String(title).toLowerCase()}
+              data-category={tool.category?.toLowerCase() || ''}
+              data-intro={String(intro).toLowerCase()}
+            >
+              <div class="card-bg" style={`background-color: ${bgColor};`}></div>
+              <div class="card-overlay">
+                <span class="card-type">{tool.category || 'Tool'}</span>
+                <p class="card-text">{title}</p>
+              </div>
+            </a>
+          );
+        })
+      )}
+    </div>
+    
+    <div class="no-results" id="no-results" style="display: none;">
+      {locale === 'nl' ? 'Geen tools gevonden.' : 'No tools found.'}
+    </div>
+  </div>
+</section>
+
+<script>
+  const searchInput = document.getElementById('tools-search-input') as HTMLInputElement;
+  const toolsGrid = document.getElementById('tools-grid');
+  const noResults = document.getElementById('no-results');
+  
+  if (searchInput && toolsGrid) {
+    searchInput.addEventListener('input', (e) => {
+      const query = (e.target as HTMLInputElement).value.toLowerCase().trim();
+      const cards = toolsGrid.querySelectorAll('.tool-card') as NodeListOf<HTMLElement>;
+      let visibleCount = 0;
+      
+      cards.forEach((card) => {
+        const title = card.dataset.title || '';
+        const category = card.dataset.category || '';
+        const intro = card.dataset.intro || '';
+        
+        const matches = !query || 
+          title.includes(query) || 
+          category.includes(query) || 
+          intro.includes(query);
+        
+        card.style.display = matches ? 'block' : 'none';
+        if (matches) visibleCount++;
+      });
+      
+      if (noResults) {
+        noResults.style.display = visibleCount === 0 && query ? 'block' : 'none';
+      }
+    });
+  }
+</script>
+
+<style>
+  .tools-collection-section {
+    width: 100%;
+    background: white;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    padding: 40px 0 80px;
+  }
+
+  .tools-collection-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 80px;
+  }
+
+  .tools-header {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+
+  .bird-icon {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+  }
+
+  .bird-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transform: scaleX(-1);
+  }
+
+  .tools-nav {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+  }
+
+  .nav-item {
+    font-size: 16px;
+    font-weight: 500;
+    color: #42383e;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: opacity 0.2s;
+  }
+
+  .nav-item:hover {
+    opacity: 0.7;
+  }
+
+  .search-bar {
+    margin-left: auto;
+    width: 400px;
+    height: 50px;
+    background: rgba(217, 217, 217, 0.72);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    font-family: inherit;
+    color: #42383e;
+  }
+
+  .search-input::placeholder {
+    color: #888484;
+  }
+
+  .search-icon {
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+  }
+
+  .no-tools,
+  .no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px;
+    font-size: 18px;
+    color: #888484;
+  }
+
+  .tool-card {
+    position: relative;
+    width: 100%;
+    height: 350px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    display: block;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .tool-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-bg {
+    position: absolute;
+    inset: 0;
+  }
+
+  .card-overlay {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-type {
+    margin-left: auto;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
+  }
+
+  .card-text {
+    margin-top: auto;
+    margin-bottom: 60px;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 30px;
+    color: white;
+  }
+
+  @media (max-width: 1200px) {
+    .tools-collection-container {
+      padding: 0 40px;
+    }
+    .cards-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+    }
+    .search-bar {
+      width: 300px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .tools-collection-container {
+      padding: 0 20px;
+    }
+    .tools-header {
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .bird-icon {
+      width: 60px;
+      height: 60px;
+    }
+    .tools-nav {
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .search-bar {
+      width: 100%;
+      order: 3;
+    }
+    .cards-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .tool-card {
+      height: 300px;
+    }
+  }
+</style>

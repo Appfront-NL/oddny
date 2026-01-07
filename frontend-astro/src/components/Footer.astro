@@ -43,7 +43,7 @@ const getLocalized = (fieldPrefix: string) => {
         <!-- Column 1: Newsletter -->
         <div class="footer-column">
           <p class="footer-label">{getLocalized('footer_newsletter_label') || 'Keep in touch with us:'}</p>
-          <a href={`/${locale}/newsletter`} class="footer-newsletter-btn">
+          <a href="#" class="footer-newsletter-btn" data-newsletter-trigger>
             <span>Sign up to<br/>our Newsletter</span>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
@@ -62,7 +62,8 @@ const getLocalized = (fieldPrefix: string) => {
         <!-- Column 3: Wunderkrammer -->
         <div class="footer-column">
           <p class="footer-column-title">{getLocalized('footer_col2_title') || 'Wunderkrammer'}</p>
-          <a href={`/${locale}/wunderkammer`} class="footer-link">Tools</a>
+          <a href={`/${locale}/tools`} class="footer-link">Tools</a>
+          <a href={`/${locale}/guides`} class="footer-link">Guides</a>
           <a href={`/${locale}/products`} class="footer-link">Financial Products</a>
           <a href={`/${locale}/products`} class="footer-link">Other Products</a>
         </div>

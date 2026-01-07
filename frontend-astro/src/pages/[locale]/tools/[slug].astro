@@ -1,6 +1,6 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { getBlogBySlug, getSimilarBlogs, getBlogs, locales, type Locale, defaultLocale, PUBLIC_DIRECTUS_URL } from '../../../lib/directus';
+import { getToolBySlug, getSimilarTools, getTools, locales, type Locale, defaultLocale, PUBLIC_DIRECTUS_URL } from '../../../lib/directus';
 
 export async function getStaticPaths() {
   return [];
@@ -8,18 +8,18 @@ export async function getStaticPaths() {
 
 const { locale, slug } = Astro.params;
 const currentLocale = (locales.includes(locale as Locale) ? locale : defaultLocale) as Locale;
-const blog = await getBlogBySlug(slug as string);
+const tool = await getToolBySlug(slug as string);
 
-if (!blog) {
+if (!tool) {
   return Astro.redirect('/404');
 }
 
-const similarBlogs = blog.category ? await getSimilarBlogs(blog.category, blog.id, 6) : await getBlogs('published');
+const similarTools = tool.category ? await getSimilarTools(tool.category, tool.id, 6) : await getTools('published');
 const directusUrl = PUBLIC_DIRECTUS_URL;
 
-const title = blog[`title_${currentLocale}`] || blog.title_nl || blog.title_en || 'Untitled';
-const intro = blog[`intro_${currentLocale}`] || blog.intro_nl || blog.intro_en || '';
-const content = blog[`content_${currentLocale}`] || blog.content_nl || blog.content_en || '';
+const title = tool[`title_${currentLocale}`] || tool.title_nl || tool.title_en || 'Untitled';
+const intro = tool[`intro_${currentLocale}`] || tool.intro_nl || tool.intro_en || '';
+const content = tool[`content_${currentLocale}`] || tool.content_nl || tool.content_en || '';
 
 function getImageUrl(imageId: string | null) {
   if (!imageId) return null;
@@ -36,40 +36,43 @@ function setAttr(opts: { collection: string; item: any; fields?: string[]; mode?
 const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
 ---
 
-<Layout title={title} currentLocale={currentLocale} currentSlug={`blog/${slug}`}>
-  <article class="blog-article" data-directus={setAttr({ collection: 'blogs', item: blog.id, mode: 'drawer' })}>
+<Layout title={title} currentLocale={currentLocale} currentSlug={`tools/${slug}`}>
+  <article class="tool-article" data-directus={setAttr({ collection: 'tools', item: tool.id, mode: 'drawer' })}>
     
-    <!-- Hero Image -->
-    <div class="blog-hero">
-      {getImageUrl(blog.featured_image) ? (
-        <img 
-          src={getImageUrl(blog.featured_image)} 
-          alt={title}
-          data-directus={setAttr({ collection: 'blogs', item: blog.id, fields: ['featured_image'], mode: 'popover' })}
-        />
-      ) : (
-        <div class="blog-hero-placeholder"></div>
-      )}
-    </div>
+    <!-- Tool Hero (colored background instead of image) -->
+    <section class="tool-hero">
+      <div 
+        class="tool-bg"
+        data-directus={setAttr({ collection: 'tools', item: tool.id, fields: ['category'], mode: 'popover' })}
+      >
+        <span class="category-label">{tool.category || 'Guide'}</span>
+        <h1 
+          class="tool-heading"
+          data-directus={setAttr({ collection: 'tools', item: tool.id, fields: [`title_${currentLocale}`], mode: 'popover' })}
+        >
+          {title}
+        </h1>
+      </div>
+    </section>
 
     <!-- Content Section -->
-    <div class="blog-content-wrapper">
+    <div class="tool-content-wrapper">
       <!-- Left Column: Harrison illustration -->
-      <div class="blog-illustration">
+      <div class="tool-illustration">
         <img src="/images/oddny-jumping-partner.png" alt="Harrison" class="harrison-img" />
       </div>
 
       <!-- Right Column: Title and Intro -->
-      <div class="blog-header">
-        <h1 
-          class="blog-title"
-          data-directus={setAttr({ collection: 'blogs', item: blog.id, fields: [`title_${currentLocale}`], mode: 'popover' })}
+      <div class="tool-header">
+        <h2 
+          class="tool-title"
+          data-directus={setAttr({ collection: 'tools', item: tool.id, fields: [`title_${currentLocale}`], mode: 'popover' })}
         >
           {title}
-        </h1>
+        </h2>
         <p 
-          class="blog-intro"
-          data-directus={setAttr({ collection: 'blogs', item: blog.id, fields: [`intro_${currentLocale}`], mode: 'popover' })}
+          class="tool-intro"
+          data-directus={setAttr({ collection: 'tools', item: tool.id, fields: [`intro_${currentLocale}`], mode: 'popover' })}
         >
           {intro}
         </p>
@@ -77,32 +80,50 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     </div>
 
     <!-- Main Content: Two Columns -->
-    <div class="blog-main-content">
+    <div class="tool-main-content">
       <div 
         class="content-column"
-        data-directus={setAttr({ collection: 'blogs', item: blog.id, fields: [`content_${currentLocale}`], mode: 'richtext' })}
+        data-directus={setAttr({ collection: 'tools', item: tool.id, fields: [`content_${currentLocale}`], mode: 'richtext' })}
         set:html={content}
       />
       <div 
         class="content-column"
-        data-directus={setAttr({ collection: 'blogs', item: blog.id, fields: [`content_${currentLocale}`], mode: 'richtext' })}
+        data-directus={setAttr({ collection: 'tools', item: tool.id, fields: [`content_${currentLocale}`], mode: 'richtext' })}
         set:html={content}
       />
     </div>
 
-    <!-- Author Section with Share (Footer) -->
-    <div class="blog-author-section">
-      <!-- Row 1: Share + All News -->
+    <!-- Download/Info Buttons -->
+    {(tool.more_info_url || tool.download_url) && (
+      <div class="tool-actions">
+        {tool.more_info_url && (
+          <a href={tool.more_info_url} class="tool-btn tool-btn-info" target="_blank" rel="noopener noreferrer">
+            More info
+            <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
+              <path d="M18 1L23 6L18 11M0 6H23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        )}
+        {tool.download_url && (
+          <a href={tool.download_url} class="tool-btn tool-btn-download" target="_blank" rel="noopener noreferrer">
+            Download
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1V11M8 11L4 7M8 11L12 7M1 15H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        )}
+      </div>
+    )}
+
+    <!-- Author Section -->
+    <div class="tool-author-section">
       <div class="author-row-1">
-        {blog.show_social_share && (
+        {tool.show_social_share && (
           <div class="share-section">
-            <span class="share-label">Share News:</span>
+            <span class="share-label">Share Tool:</span>
             <div class="share-buttons">
               <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener noreferrer" class="share-btn">
                 <svg viewBox="0 0 21 20" fill="currentColor"><path d="M10.8 10.82H8.1v8.6h2.7v-8.6zm5.3 0v8.6h2.7v-5.6c0-2-1-3.1-2.7-3.3-.1 0-.2 0-.3 0-1.5.1-2.4 1-2.7 1.4v-1h-2.6v8.6h2.7v-2.7c0-.5 0-1 0-1.4 0-.6 0-1.2.3-1.7.2-.4.7-.7 1.2-.7 1.5 0 1.5 1.3 1.5 1.5v5h0zm-6.7-1.1c.9 0 1.6-.7 1.6-1.6s-.7-1.6-1.6-1.6-1.6.7-1.6 1.6.7 1.6 1.6 1.6z"/></svg>
-              </a>
-              <a href={`https://www.instagram.com/`} target="_blank" class="share-btn">
-                <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 5.2c-1.5 0-2.8 1.3-2.8 2.8s1.3 2.8 2.8 2.8 2.8-1.3 2.8-2.8-1.3-2.8-2.8-2.8zm0 4.6c-1 0-1.8-.8-1.8-1.8s.8-1.8 1.8-1.8 1.8.8 1.8 1.8-.8 1.8-1.8 1.8zm3.5-4.7c0 .4-.3.7-.7.7s-.7-.3-.7-.7.3-.7.7-.7.7.3.7.7zm2 .7c0-.9-.2-1.7-.6-2.2-.4-.5-1-.8-1.9-.9-.9 0-1.1 0-3.4 0s-2.5 0-3.4 0c-.9 0-1.5.3-1.9.9-.4.5-.6 1.3-.6 2.2 0 .9 0 1.1 0 3.4s0 2.5 0 3.4c0 .9.2 1.7.6 2.2.4.5 1 .8 1.9.9.9 0 1.1 0 3.4 0s2.5 0 3.4 0c.9 0 1.5-.3 1.9-.9.4-.5.6-1.3.6-2.2 0-.9 0-1.1 0-3.4s0-2.5 0-3.4z"/></svg>
               </a>
               <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(Astro.url.href)}`} target="_blank" class="share-btn">
                 <svg viewBox="0 0 11 19" fill="currentColor"><path d="M6.8 11V19H3.1v-8H0V7.8h3.1V6.6c0-4.4 1.8-6.6 5.7-6.6 1.2 0 1.5.2 2.2.3v3.2c-.7-.1-.9-.2-1.7-.2-.9 0-1.4.3-1.8.8-.4.5-.6 1.4-.6 2.6v1.2h4.1l-1.1 3.2H6.8z"/></svg>
@@ -110,29 +131,22 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
               <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(Astro.url.href)}&text=${encodeURIComponent(title)}`} target="_blank" class="share-btn">
                 <svg viewBox="0 0 14 13" fill="currentColor"><path d="M4.4 0H0l5.2 7.1L.3 13h2.3l4-4.5 3.3 4.5H14L8.6 5.7l4.6-5.6h-2.3L7.6 4.3 4.4 0z"/></svg>
               </a>
-              <a href={`https://www.youtube.com/`} target="_blank" class="share-btn">
-                <svg viewBox="0 0 18 12" fill="currentColor"><path d="M15 0H3C1.3 0 0 1.4 0 3.2v5.7C0 10.6 1.3 12 3 12h12c1.6 0 3-1.4 3-3.2V3.2C18 1.4 16.6 0 15 0zm-3 5.9l-5 2.9V3l5 2.9z"/></svg>
-              </a>
-              <a href={`https://wa.me/?text=${encodeURIComponent(title + ' ' + Astro.url.href)}`} target="_blank" class="share-btn">
-                <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 0C4.6 0 1 3.6 1 8c0 1.4.4 2.8 1 4l-.7 4 4-1.5c1.1.5 2.4.8 3.7.8 4.4 0 8-3.6 8-8s-3.6-8-8-8z"/></svg>
-              </a>
             </div>
           </div>
         )}
-        <a href={`/${currentLocale}/blog`} class="all-articles-link">
-          All News
+        <a href={`/${currentLocale}/tools`} class="all-tools-link">
+          All Tools
           <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
             <path d="M18 1L23 6L18 11M0 6H23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </a>
       </div>
 
-      <!-- Row 2: Author + CTA -->
       <div class="author-row-2">
         <div class="author-info">
-          <div class="author-card" data-directus={setAttr({ collection: 'blogs', item: blog.id, fields: ['author_name', 'author_role'], mode: 'popover' })}>
-            <span class="author-name">{blog.author_name || 'Ina Sok'}</span>
-            <span class="author-role">{blog.author_role || 'Artist'}</span>
+          <div class="author-card" data-directus={setAttr({ collection: 'tools', item: tool.id, fields: ['author_name', 'author_role'], mode: 'popover' })}>
+            <span class="author-name">{tool.author_name || 'Oddny Team'}</span>
+            <span class="author-role">{tool.author_role || 'Creator'}</span>
           </div>
           <p class="author-description">
             Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh
@@ -147,19 +161,17 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
       </div>
     </div>
 
-    <!-- Similar Articles -->
-    {similarBlogs.length > 0 && (
-      <div class="similar-articles">
-        <h2 class="similar-title">Similar Articles</h2>
+    <!-- Similar Tools -->
+    {similarTools.length > 0 && (
+      <div class="similar-tools">
+        <h2 class="similar-title">Popular Resources</h2>
         <div class="similar-grid">
-          {similarBlogs.slice(0, 6).map((similar) => (
-            <a href={`/${currentLocale}/blog/${similar.slug}`} class="similar-card">
-              <div class="similar-image">
-                {getImageUrl(similar.featured_image) ? (
-                  <img src={getImageUrl(similar.featured_image)} alt={similar[`title_${currentLocale}`] || similar.title_nl} />
-                ) : (
-                  <div class="similar-placeholder"></div>
-                )}
+          {similarTools.slice(0, 6).map((similar) => (
+            <a href={`/${currentLocale}/tools/${similar.slug}`} class="similar-card">
+              <div class="similar-image" style="background: #FF40B4;">
+                <span style="color: white; font-size: 14px; font-weight: 500; padding: 10px; text-align: center;">
+                  {similar[`title_${currentLocale}`] || similar.title_nl}
+                </span>
               </div>
               <div class="similar-info">
                 <h3 class="similar-card-title">{similar[`title_${currentLocale}`] || similar.title_nl || 'Lorem ipsum dolor sit'}</h3>
@@ -174,7 +186,7 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
 </Layout>
 
 <style>
-  .blog-article {
+  .tool-article {
     width: 100%;
     max-width: 1440px;
     margin: 0 auto;
@@ -182,27 +194,49 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
   }
 
-  .blog-hero {
-    width: calc(100% - 160px);
+  .tool-hero {
+    position: relative;
+    width: 100%;
+    padding: 49px 81px 0;
+  }
+
+  .tool-bg {
+    width: 100%;
     height: 636px;
-    margin: 49px 81px 0;
     border-radius: 10px;
     overflow: hidden;
+    background: #FF40B4;
+    position: relative;
+    display: flex;
+    flex-direction: column;
   }
 
-  .blog-hero img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  .category-label {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
   }
 
-  .blog-hero-placeholder {
-    width: 100%;
-    height: 100%;
-    background: #f0f0f0;
+  .tool-heading {
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 550px;
+    font-weight: 700;
+    font-size: 55px;
+    font-style: italic;
+    line-height: 60px;
+    color: white;
+    margin: 0;
   }
 
-  .blog-content-wrapper {
+  .tool-content-wrapper {
     display: grid;
     grid-template-columns: 220px 1fr;
     gap: 40px;
@@ -210,7 +244,7 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     align-items: start;
   }
 
-  .blog-illustration {
+  .tool-illustration {
     position: relative;
   }
 
@@ -221,12 +255,12 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     transform: scaleY(-1) rotate(180deg);
   }
 
-  .blog-header {
+  .tool-header {
     max-width: 612px;
     margin-left: auto;
   }
 
-  .blog-title {
+  .tool-title {
     font-size: 80px;
     font-weight: 500;
     line-height: 85px;
@@ -234,7 +268,7 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     margin: 0 0 40px;
   }
 
-  .blog-intro {
+  .tool-intro {
     font-size: 28px;
     font-weight: 500;
     line-height: 30px;
@@ -242,7 +276,65 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     margin: 0;
   }
 
-  .blog-author-section {
+  .tool-main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    padding: 120px 80px 60px;
+  }
+
+  .content-column {
+    font-size: 22px;
+    line-height: 30px;
+    color: #888484;
+  }
+
+  .content-column :global(p) {
+    margin-bottom: 20px;
+  }
+
+  .tool-actions {
+    display: flex;
+    gap: 20px;
+    padding: 0 80px 60px;
+    justify-content: flex-start;
+  }
+
+  .tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 32px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .tool-btn-info {
+    background: white;
+    color: #42383e;
+    border: 2px solid #42383e;
+  }
+
+  .tool-btn-info:hover {
+    background: #42383e;
+    color: white;
+  }
+
+  .tool-btn-download {
+    background: #ff40b4;
+    color: white;
+    border: 2px solid #ff40b4;
+  }
+
+  .tool-btn-download:hover {
+    background: #e0369e;
+    border-color: #e0369e;
+  }
+
+  .tool-author-section {
     display: flex;
     flex-direction: column;
     gap: 40px;
@@ -260,6 +352,52 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .share-label {
+    font-size: 22px;
+    font-weight: 500;
+    color: #42383e;
+  }
+
+  .share-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .share-btn {
+    width: 28px;
+    height: 28px;
+    background: #ff40b4;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+  }
+
+  .share-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .share-btn:hover {
+    opacity: 0.8;
+  }
+
+  .all-tools-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ff40b4;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .all-tools-link:hover {
+    opacity: 0.8;
   }
 
   .author-row-2 {
@@ -338,70 +476,7 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     object-fit: contain;
   }
 
-  .all-articles-link {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #ff40b4;
-    text-decoration: none;
-    font-size: 18px;
-    font-weight: 600;
-  }
-
-  .all-articles-link:hover {
-    opacity: 0.8;
-  }
-
-  .share-label {
-    font-size: 22px;
-    font-weight: 500;
-    color: #42383e;
-  }
-
-  .share-buttons {
-    display: flex;
-    gap: 8px;
-  }
-
-  .share-btn {
-    width: 28px;
-    height: 28px;
-    background: #ff40b4;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    text-decoration: none;
-  }
-
-  .share-btn svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  .share-btn:hover {
-    opacity: 0.8;
-  }
-
-  .blog-main-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    padding: 120px 80px 60px;
-  }
-
-  .content-column {
-    font-size: 22px;
-    line-height: 30px;
-    color: #888484;
-  }
-
-  .content-column :global(p) {
-    margin-bottom: 20px;
-  }
-
-  .similar-articles {
+  .similar-tools {
     padding: 60px 80px;
     background: white;
   }
@@ -431,18 +506,9 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 12px;
-  }
-
-  .similar-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .similar-placeholder {
-    width: 100%;
-    height: 100%;
-    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .similar-card-title {
@@ -464,143 +530,108 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
     color: #ff40b4;
   }
 
-  /* Responsive */
   @media (max-width: 1200px) {
-    .blog-hero {
-      margin: 30px 40px 0;
-      width: calc(100% - 80px);
+    .tool-hero {
+      padding: 30px 40px 0;
+    }
+    .tool-bg {
       height: 400px;
     }
-    .blog-content-wrapper {
+    .tool-heading {
+      font-size: 40px;
+      line-height: 44px;
+      width: 400px;
+    }
+    .tool-content-wrapper {
       padding: 40px;
       grid-template-columns: 1fr;
     }
-    .blog-illustration {
+    .tool-illustration {
       display: none;
     }
-    .blog-title {
+    .tool-title {
       font-size: 48px;
       line-height: 52px;
     }
-    .blog-author-section {
-      padding: 40px;
-      gap: 30px;
-    }
-    .author-row-2 {
-      flex-wrap: wrap;
-      gap: 30px;
-    }
-    .community-cta {
-      width: 100%;
-      justify-content: flex-end;
-    }
-    .cta-bird {
-      width: 120px;
-      height: 120px;
-    }
-    .blog-main-content {
+    .tool-main-content {
       grid-template-columns: 1fr;
       padding: 60px 40px;
+    }
+    .tool-actions {
+      padding: 0 40px 40px;
+    }
+    .tool-author-section {
+      padding: 40px;
     }
     .similar-grid {
       grid-template-columns: repeat(3, 1fr);
     }
-    .similar-articles {
+    .similar-tools {
       padding: 40px;
     }
   }
 
   @media (max-width: 768px) {
-    .blog-hero {
-      margin: 20px;
-      width: calc(100% - 40px);
-      height: 300px;
-    }
-    .blog-content-wrapper {
+    .tool-hero {
       padding: 20px;
     }
-    .blog-title {
+    .tool-bg {
+      height: 300px;
+    }
+    .tool-heading {
+      font-size: 28px;
+      line-height: 32px;
+      width: auto;
+      left: 20px;
+      right: 20px;
+    }
+    .category-label {
+      font-size: 14px;
+      top: 20px;
+      right: 20px;
+    }
+    .tool-content-wrapper {
+      padding: 20px;
+    }
+    .tool-title {
       font-size: 32px;
       line-height: 38px;
     }
-    .blog-intro {
+    .tool-intro {
       font-size: 18px;
       line-height: 24px;
     }
-    .blog-author-section {
+    .tool-main-content {
+      padding: 40px 20px;
+    }
+    .tool-actions {
+      padding: 0 20px 30px;
+      flex-direction: column;
+    }
+    .tool-btn {
+      width: 100%;
+      justify-content: center;
+    }
+    .tool-author-section {
       padding: 30px 20px;
-      gap: 24px;
     }
     .author-row-1 {
       flex-direction: column;
       gap: 20px;
-    }
-    .all-articles-link {
-      align-self: flex-start;
-    }
-    .share-label {
-      font-size: 18px;
-    }
-    .share-buttons {
-      gap: 10px;
-    }
-    .share-btn {
-      width: 32px;
-      height: 32px;
-    }
-    .share-btn svg {
-      width: 14px;
-      height: 14px;
     }
     .author-row-2 {
       flex-direction: column;
       align-items: flex-start;
       gap: 24px;
     }
-    .author-info {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 16px;
-    }
-    .author-description {
-      font-size: 16px;
-      line-height: 24px;
-    }
-    .community-cta {
-      width: 100%;
-      justify-content: space-between;
-    }
-    .cta-bubble::after {
-      display: none;
-    }
-    .cta-bird {
-      width: 100px;
-      height: 100px;
-    }
-    .all-articles-link {
-      font-size: 16px;
-    }
-    .blog-main-content {
-      padding: 40px 20px;
-    }
     .similar-grid {
       grid-template-columns: repeat(2, 1fr);
       gap: 20px;
     }
-    .similar-articles {
+    .similar-tools {
       padding: 20px;
     }
   }
-
-  @media (max-width: 480px) {
-    .share-buttons {
-      flex-wrap: wrap;
-    }
-    .similar-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
 </style>
 
 <script is:inline>
@@ -623,13 +654,13 @@ const otherLocale = currentLocale === 'nl' ? 'en' : 'nl';
   }
 </style>
 
-<script is:inline define:vars={{ directusUrl, blogId: blog.id, currentLocale, otherLocale, slug }}>
+<script is:inline define:vars={{ directusUrl, toolId: tool.id, currentLocale, otherLocale, slug }}>
 (function() {
   var inIframe = window.self !== window.top;
   if (!inIframe) return;
 
   var DIRECTUS_URL = directusUrl;
-  var BLOG_ID = blogId;
+  var TOOL_ID = toolId;
   var CURRENT_LOCALE = currentLocale;
   var accessToken = null;
 
