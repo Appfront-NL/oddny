@@ -1,0 +1,25 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import BlockRenderer from '../../components/BlockRenderer.astro';
+import { getPageBySlug, locales, type Locale, defaultLocale } from '../../lib/directus';
+
+const { locale } = Astro.params;
+const currentLocale = (locales.includes(locale as Locale) ? locale : defaultLocale) as Locale;
+
+// Try to get home page for this locale
+const page = await getPageBySlug('home', currentLocale);
+
+if (!page) {
+  // If no home page for this locale, try default locale
+  if (currentLocale !== defaultLocale) {
+    return Astro.redirect(`/${defaultLocale}/`);
+  }
+  return Astro.redirect('/404');
+}
+---
+
+<Layout title={page.title || 'Home'} currentLocale={currentLocale} currentSlug="home">
+  <div data-directus-page={page.id}>
+    <BlockRenderer blocks={page.blocks || []} />
+  </div>
+</Layout>

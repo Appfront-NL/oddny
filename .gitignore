@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.astro/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Directus
+backend-directus/uploads/*
+!backend-directus/uploads/.gitkeep
+
+# Large files / archives
+*.tar
+*.tar.gz
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local directories
+local-copy/
+oddny-complete/
+oddny-update/

@@ -1,0 +1,16 @@
+{
+  "name": "directus",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx directus start",
+    "bootstrap": "npx directus bootstrap"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "directus": "^11.14.0"
+  }
+}

@@ -1,0 +1,280 @@
+---
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+// Get localized text values
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading');
+const buttonText = getLocalizedField(block, 'button_text');
+
+// Card data structure
+const cards = [
+  {
+    title: block.card1_label || 'EQPT',
+    description: getLocalizedField(block, 'card1_text') || 'Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit.',
+    price: getLocalizedField(block, 'card1_price') || '€12, 61',
+    id: 'eqpt',
+    titleField: 'card1_label',
+    descField: `card1_text_${locale}`,
+    priceField: `card1_price_${locale}`
+  },
+  {
+    title: block.card2_label || 'CYBR',
+    description: getLocalizedField(block, 'card2_text') || 'Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit.',
+    price: getLocalizedField(block, 'card2_price') || '€24, 86',
+    id: 'cybr',
+    titleField: 'card2_label',
+    descField: `card2_text_${locale}`,
+    priceField: `card2_price_${locale}`
+  },
+  {
+    title: block.card3_label || 'HME',
+    description: getLocalizedField(block, 'card3_text') || 'Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit.',
+    price: getLocalizedField(block, 'card3_price') || '€36, 12',
+    id: 'hme',
+    titleField: 'card3_label',
+    descField: `card3_text_${locale}`,
+    priceField: `card3_price_${locale}`
+  }
+];
+---
+
+<section 
+  class="pricing-cards-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <style>
+    .pricing-cards-section {
+      position: relative;
+      width: 100%;
+      min-height: 600px;
+      background: rgba(217, 217, 217, 0.72);
+      padding: 60px 20px;
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    }
+    
+    .pricing-content {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+    
+    .pricing-title {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      color: #42383e;
+      font-size: 1.75rem;
+      margin-bottom: 2rem;
+    }
+    
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    
+    .pricing-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 1px 1px 4px 1px rgba(0,0,0,0.1);
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 380px;
+      transition: transform 0.3s ease;
+    }
+    
+    .pricing-card:hover {
+      transform: translateY(-4px);
+    }
+    
+    .pricing-card-title {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      color: #42383e;
+      font-size: 3.75rem;
+      line-height: 1;
+      margin-bottom: 1.5rem;
+    }
+    
+    .pricing-card-desc {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 300;
+      color: #42383e;
+      font-size: 1rem;
+      line-height: 1.375;
+      margin-bottom: 2rem;
+      flex: 1;
+    }
+    
+    .pricing-card-footer {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .pricing-from-label {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      color: #42383e;
+      font-size: 1.375rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .pricing-price {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      color: #ff40b4;
+      font-size: 2.1875rem;
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+    
+    .pricing-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      cursor: pointer;
+      width: fit-content;
+    }
+    
+    .pricing-button span {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: #ff40b4;
+      line-height: 1;
+      white-space: nowrap;
+      margin-top: 0.125rem;
+      transition: text-decoration 0.2s ease;
+    }
+    
+    .pricing-button:hover span {
+      text-decoration: underline;
+    }
+    
+    .pricing-button svg {
+      color: #ff40b4;
+      transition: transform 0.2s ease;
+    }
+    
+    .pricing-button:hover svg {
+      transform: translateX(4px);
+    }
+    
+    /* Responsive breakpoints */
+    @media (min-width: 640px) {
+      .pricing-content {
+        padding: 0 2.5rem;
+      }
+      .pricing-card-footer {
+        flex-direction: row;
+        align-items: end;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .pricing-content {
+        padding: 0 2.5rem;
+      }
+      .pricing-title {
+        font-size: 2.25rem;
+        margin-bottom: 3rem;
+      }
+      .pricing-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2.5rem;
+      }
+      .pricing-card {
+        padding: 2rem;
+      }
+      .pricing-card-title {
+        font-size: 5rem;
+      }
+    }
+    
+    @media (min-width: 1536px) {
+      .pricing-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+  
+    <div class="pricing-content">
+      {/* Header Title */}
+      <h2 
+        class="pricing-title"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+      >
+        {heading || 'Popular Bundles'}
+      </h2>
+
+      {/* Cards Grid */}
+      <div class="pricing-grid">
+        {cards.map((card) => (
+          <div class="pricing-card">
+            {/* Card Title */}
+            <h3 
+              class="pricing-card-title"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [card.titleField], mode: 'popover' })}
+            >
+              {card.title}
+            </h3>
+            
+            {/* Description */}
+            <p 
+              class="pricing-card-desc"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [card.descField], mode: 'popover' })}
+            >
+              {card.description}
+            </p>
+
+            {/* Footer Section */}
+            <div class="pricing-card-footer">
+              <div>
+                <span 
+                  class="pricing-from-label"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`from_label_${locale}`], mode: 'popover' })}
+                >
+                  {getLocalizedField(block, 'from_label') || 'From'}
+                </span>
+                <span 
+                  class="pricing-price"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [card.priceField], mode: 'popover' })}
+                >
+                  {card.price}
+                </span>
+              </div>
+              
+              {/* Button */}
+              <a 
+                href={block.button_link || '#'}
+                class="pricing-button"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                <span>{buttonText || 'Check our Prices'}</span>
+                <svg width="24" height="14" viewBox="0 0 24 14" fill="none">
+                  <path d="M17 1L23 7L17 13M0 7H23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+</section>

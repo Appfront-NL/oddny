@@ -1,0 +1,374 @@
+---
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+// Get localized text values
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading');
+const content = getLocalizedField(block, 'content');
+
+// Vector path for decorative line
+const vectorPath = "M1217.83 306.912C1244.18 219.797 1220.45 104.01 1057.68 63.3015C944.191 34.9047 828.163 103.934 707.927 147.942C549.504 205.927 434.554 167.158 442.198 58.9938C449.364 -42.5257 632.291 -4.87211 564.221 124.601C525.262 198.701 444.556 280.241 257.761 299.656C150.408 310.807 25.2721 236.554 1 211.93";
+---
+
+<section 
+  class="how-to-buy-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <style>
+    .how-to-buy-section {
+      min-height: 700px;
+      background: white;
+      overflow-x: hidden;
+      width: 100%;
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    }
+    
+    .how-to-buy-container {
+      position: relative;
+      width: 100%;
+      max-width: 1440px;
+      margin: 0 auto;
+      min-height: 800px;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem;
+    }
+    
+    /* Decorative Line - Desktop Only */
+    .how-to-buy-vector {
+      position: absolute;
+      left: -798px;
+      top: 63px;
+      width: 1226px;
+      height: 306px;
+      pointer-events: none;
+      z-index: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Bird Image */
+    .how-to-buy-bird {
+      position: relative;
+      width: 100%;
+      max-width: 230px;
+      height: 221px;
+      margin: 0 auto 2rem;
+      flex: none;
+    }
+    
+    .how-to-buy-bird img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      transform: rotate(180deg) scaleY(-1);
+    }
+    
+    /* Text Content */
+    .how-to-buy-text {
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+      position: relative;
+    }
+    
+    .how-to-buy-title {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      line-height: 1.2;
+      color: #42383e;
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    
+    .how-to-buy-intro {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      color: #888484;
+      font-size: 1.125rem;
+      line-height: 1.67;
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    
+    /* Steps Section */
+    .how-to-buy-steps {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-top: 3rem;
+      z-index: 10;
+    }
+    
+    .how-to-buy-step {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .how-to-buy-step-number {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      color: #42383e;
+      font-size: 1.75rem;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    
+    .how-to-buy-step-number ol {
+      list-style: decimal;
+      margin: 0;
+      padding: 0;
+      margin-left: 1.5em;
+    }
+    
+    .how-to-buy-step-number li {
+      margin: 0;
+    }
+    
+    .how-to-buy-step-desc {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      color: #888484;
+      font-size: 1.125rem;
+      line-height: 1.67;
+    }
+    
+    /* Desktop Layout */
+    @media (min-width: 1280px) {
+      .how-to-buy-container {
+        display: block;
+        padding: 0;
+      }
+      
+      .how-to-buy-vector {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .how-to-buy-vector svg {
+        transform: rotate(180deg) scaleY(-1);
+      }
+      
+      .how-to-buy-bird {
+        position: absolute;
+        left: 384px;
+        top: 89px;
+        width: 230px;
+        margin: 0;
+      }
+      
+      .how-to-buy-text {
+        position: absolute;
+        left: 737px;
+        top: 77px;
+        width: 615px;
+      }
+      
+      .how-to-buy-title {
+        font-size: 5rem;
+        line-height: 1.0625;
+        margin-bottom: 3.125rem;
+        text-align: left;
+      }
+      
+      .how-to-buy-intro {
+        width: 612px;
+        font-size: 1.75rem;
+        line-height: 1.07;
+        text-align: left;
+      }
+      
+      .how-to-buy-steps {
+        position: absolute;
+        top: 463px;
+        width: 100%;
+        height: auto;
+        display: block;
+        margin: 0;
+      }
+      
+      .how-to-buy-step {
+        position: absolute;
+      }
+      
+      .how-to-buy-step:nth-child(1) {
+        left: 63px;
+        width: 417px;
+      }
+      
+      .how-to-buy-step:nth-child(2) {
+        left: 508px;
+        width: 401px;
+        margin-top: 0;
+      }
+      
+      .how-to-buy-step:nth-child(3) {
+        left: 946px;
+        width: 397px;
+        margin-top: 6px;
+      }
+      
+      .how-to-buy-step-number {
+        font-size: 2.1875rem;
+        line-height: 1.14;
+        height: 3rem;
+        margin-bottom: 0;
+      }
+      
+      .how-to-buy-step-number ol {
+        margin-left: 52.5px;
+      }
+      
+      .how-to-buy-step-desc {
+        font-size: 1.75rem;
+        line-height: 1.07;
+        margin-top: 1rem;
+      }
+      
+      .how-to-buy-step:nth-child(2) .how-to-buy-step-desc {
+        margin-top: 16px;
+      }
+      
+      .how-to-buy-step:nth-child(3) .how-to-buy-step-desc {
+        margin-top: 16px;
+      }
+    }
+    
+    /* Medium screens */
+    @media (min-width: 768px) and (max-width: 1279px) {
+      .how-to-buy-steps {
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 2rem;
+      }
+      
+      .how-to-buy-title {
+        font-size: 3.75rem;
+      }
+      
+      .how-to-buy-intro {
+        font-size: 1.5rem;
+      }
+      
+      .how-to-buy-step-number {
+        font-size: 2rem;
+      }
+      
+      .how-to-buy-step-desc {
+        font-size: 1.25rem;
+      }
+    }
+  </style>
+  
+  <div class="how-to-buy-container">
+    {/* Decorative Line Vector - Desktop Only */}
+    <div class="how-to-buy-vector">
+      <svg width="1226" height="306" viewBox="0 0 1228 307.912" fill="none">
+        <path d={vectorPath} stroke="#FF40B4" stroke-dasharray="7 8" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" />
+      </svg>
+    </div>
+
+    {/* Top Section: Bird & Title */}
+    <div style="display: flex; flex-direction: column; align-items: start; z-index: 10; position: relative;">
+      
+      {/* Bird Image */}
+      <div class="how-to-buy-bird">
+        <img 
+          alt="Decorative Bird" 
+          src="/images/oddny-jumping-partner.png"
+          loading="lazy"
+        />
+      </div>
+
+      {/* Text Content */}
+      <div class="how-to-buy-text">
+        <h1 
+          class="how-to-buy-title"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+        >
+          {heading || 'How to purchase'}
+        </h1>
+        
+        <div 
+          class="how-to-buy-intro"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'popover' })}
+        >
+          <p>{content || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem'}</p>
+        </div>
+      </div>
+    </div>
+
+    {/* Steps Section */}
+    <div class="how-to-buy-steps">
+      
+      {/* Step 1 */}
+      <div class="how-to-buy-step">
+        <div 
+          class="how-to-buy-step-number"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`step1_title_${locale}`], mode: 'popover' })}
+        >
+          <ol start="1">
+            <li>{getLocalizedField(block, 'step1_title') || 'Step one'}</li>
+          </ol>
+        </div>
+        <p 
+          class="how-to-buy-step-desc"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`step1_desc_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'step1_desc') || 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem'}
+        </p>
+      </div>
+
+      {/* Step 2 */}
+      <div class="how-to-buy-step">
+        <div 
+          class="how-to-buy-step-number"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`step2_title_${locale}`], mode: 'popover' })}
+        >
+          <ol start="2">
+            <li>{getLocalizedField(block, 'step2_title') || 'Step two'}</li>
+          </ol>
+        </div>
+        <p 
+          class="how-to-buy-step-desc"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`step2_desc_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'step2_desc') || 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem'}
+        </p>
+      </div>
+
+      {/* Step 3 */}
+      <div class="how-to-buy-step">
+        <div 
+          class="how-to-buy-step-number"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`step3_title_${locale}`], mode: 'popover' })}
+        >
+          <ol start="3">
+            <li>{getLocalizedField(block, 'step3_title') || 'Step three'}</li>
+          </ol>
+        </div>
+        <p 
+          class="how-to-buy-step-desc"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`step3_desc_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'step3_desc') || 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem'}
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>

@@ -1,0 +1,183 @@
+---
+/**
+ * Visual Editor Test Page v5
+ */
+import { client, readItems, PUBLIC_DIRECTUS_URL } from '../lib/directus';
+
+const DIRECTUS_URL = PUBLIC_DIRECTUS_URL;
+
+// Fetch first block
+let block = {
+  id: 5,
+  heading: 'Welcome to the Visual Editor',
+  subheading: 'Click on any text to edit it directly',
+  content: 'This is editable content.',
+  button_text: 'Learn More',
+  button_link: '#'
+};
+
+try {
+  const pages = await client.request(
+    readItems('pages', {
+      fields: ['id', 'title', 'slug', 'blocks.*'],
+      limit: 1
+    })
+  ) as any[];
+
+  if (pages?.[0]?.blocks?.[0]) {
+    const b = pages[0].blocks[0];
+    block = {
+      id: b.id,
+      heading: b.heading || block.heading,
+      subheading: b.subheading || block.subheading,
+      content: b.content || block.content,
+      button_text: b.button_text || block.button_text,
+      button_link: b.button_link || block.button_link
+    };
+  }
+} catch (e) {
+  console.error('Error:', e);
+}
+---
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Editor Test v5</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- CRITICAL: Polyfill MUST be first, before any other scripts -->
+  <script>
+    // Polyfill crypto.randomUUID for non-HTTPS contexts
+    (function() {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID !== 'function') {
+        crypto.randomUUID = function randomUUID() {
+          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0;
+            var v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
+        };
+        console.log('[Polyfill] crypto.randomUUID installed');
+      }
+    })();
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+
+    .hero {
+      background: linear-gradient(135deg, #6644ff, #4422cc);
+      color: white;
+      padding: 5rem 2rem;
+      text-align: center;
+    }
+    .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+    .hero p { font-size: 1.2rem; opacity: 0.9; }
+
+    .content {
+      padding: 4rem 2rem;
+      max-width: 700px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .content .text { font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem; }
+
+    .btn {
+      display: inline-block;
+      padding: 1rem 2rem;
+      background: #6644ff;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    .debug {
+      padding: 2rem;
+      background: #f0f0f0;
+      max-width: 700px;
+      margin: 2rem auto;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .debug h3 { margin-bottom: 1rem; }
+    .debug p { margin: 0.3rem 0; }
+    .debug .ok { color: green; font-weight: bold; }
+    .debug .err { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <h1 data-directus={`collection:blocks;item:${block.id};fields:heading;mode:popover`}>
+      {block.heading}
+    </h1>
+    <p data-directus={`collection:blocks;item:${block.id};fields:subheading;mode:popover`}>
+      {block.subheading}
+    </p>
+  </header>
+
+  <section class="content">
+    <div class="text" data-directus={`collection:blocks;item:${block.id};fields:content;mode:modal`}>
+      <Fragment set:html={block.content} />
+    </div>
+    <a href={block.button_link} class="btn" data-directus={`collection:blocks;item:${block.id};fields:button_text,button_link;mode:popover`}>
+      {block.button_text}
+    </a>
+  </section>
+
+  <div class="debug" id="debug">
+    <h3>Debug Status</h3>
+    <p>Block ID: <strong>{block.id}</strong></p>
+    <p>Polyfill: <span id="s-poly">...</span></p>
+    <p>In Iframe: <span id="s-iframe">...</span></p>
+    <p>Library: <span id="s-lib">...</span></p>
+    <p>Apply: <span id="s-apply">...</span></p>
+  </div>
+
+  <script is:inline define:vars={{ directusUrl: DIRECTUS_URL }}>
+    // Status updates
+    const $ = (id) => document.getElementById(id);
+
+    // Check polyfill
+    $('s-poly').textContent = typeof crypto.randomUUID === 'function' ? 'OK' : 'MISSING';
+    $('s-poly').className = typeof crypto.randomUUID === 'function' ? 'ok' : 'err';
+
+    // Check iframe
+    const inIframe = window.self !== window.top;
+    $('s-iframe').textContent = inIframe ? 'Yes' : 'No';
+    if (inIframe) $('debug').style.display = 'none';
+
+    // Load library dynamically AFTER polyfill is confirmed
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/@directus/visual-editing@1.1.0';
+    script.onload = async function() {
+      $('s-lib').textContent = 'Loaded';
+      $('s-lib').className = 'ok';
+
+      if (window.DirectusVisualEditing) {
+        try {
+          const result = await window.DirectusVisualEditing.apply({
+            directusUrl: directusUrl
+          });
+          $('s-apply').textContent = 'Success';
+          $('s-apply').className = 'ok';
+          console.log('[VE] Success:', result);
+        } catch (e) {
+          $('s-apply').textContent = 'Error: ' + e.message;
+          $('s-apply').className = 'err';
+          console.error('[VE] Error:', e);
+        }
+      }
+    };
+    script.onerror = function() {
+      $('s-lib').textContent = 'Failed to load';
+      $('s-lib').className = 'err';
+    };
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+---
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading');
+
+const defaultCards = [
+  { name: 'Merlijin Poolman', role: 'Music night mayor, EU' },
+  { name: 'Anthony Michael', role: 'Designer' },
+  { name: 'Jos de Krieger', role: 'Architect' },
+  { name: 'Ina Sok', role: 'Artist' },
+  { name: 'Merlijin Poolman', role: 'Designer' },
+  { name: 'Anthony Michael', role: 'Architect' },
+  { name: 'Merlijin Poolman', role: 'Music night mayor, EU' },
+  { name: 'Anthony Michael', role: 'Designer' },
+  { name: 'Jos de Krieger', role: 'Architect' },
+  { name: 'Ina Sok', role: 'Artist' },
+  { name: 'Merlijin Poolman', role: 'Designer' },
+  { name: 'Anthony Michael', role: 'Architect' },
+];
+
+const cards = [];
+for (let i = 1; i <= 20; i++) {
+  const name = getLocalizedField(block, `ff_name_${i}`);
+  const role = getLocalizedField(block, `ff_role_${i}`);
+  if (name || role || i <= 12) {
+    cards.push({
+      index: i,
+      name: name || (defaultCards[i-1]?.name || ''),
+      role: role || (defaultCards[i-1]?.role || ''),
+    });
+  }
+}
+---
+
+<section 
+  class="friends-foes-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <style>
+    .friends-foes-section {
+      width: 100%;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      font-family: 'Neue Haas Grotesk Display Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    
+    .friends-foes-container {
+      position: relative;
+      background: rgba(217, 217, 217, 0.72);
+      width: 100%;
+      max-width: 1440px;
+      min-height: 587px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .friends-foes-header {
+      padding: 39px 20px 47px 80px;
+    }
+    
+    .friends-foes-title {
+      color: #42383e;
+      font-size: 28px;
+      font-weight: 500;
+      line-height: 32px;
+      margin: 0;
+    }
+    
+    .friends-foes-grid {
+      padding: 0 80px 40px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 33px 40px;
+    }
+    
+    .friends-foes-card {
+      width: 100%;
+      max-width: 400px;
+      height: 78px;
+      background: white;
+      border-radius: 10px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    
+    .friends-foes-card-content {
+      position: absolute;
+      left: 18px;
+      top: 23px;
+    }
+    
+    .friends-foes-name {
+      margin: 0;
+      font-size: 28px;
+      color: #42383e;
+      line-height: 20px;
+      font-weight: 500;
+    }
+    
+    .friends-foes-role {
+      margin: 0;
+      font-size: 14px;
+      color: #42383e;
+      line-height: 20px;
+      font-weight: 400;
+    }
+    
+    @media (max-width: 1200px) {
+      .friends-foes-header {
+        padding-left: 40px;
+      }
+      .friends-foes-grid {
+        padding: 0 40px 40px;
+      }
+    }
+    
+    @media (max-width: 1024px) {
+      .friends-foes-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .friends-foes-header {
+        padding: 30px 20px;
+      }
+      .friends-foes-grid {
+        grid-template-columns: 1fr;
+        padding: 0 20px 30px;
+        gap: 20px;
+      }
+      .friends-foes-card {
+        max-width: none;
+      }
+    }
+  </style>
+  
+  <div class="friends-foes-container">
+    <div class="friends-foes-header">
+      <h2 
+        class="friends-foes-title"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`heading_${locale}`], mode: 'popover' })}
+      >
+        {heading || 'Friends and Foes'}
+      </h2>
+    </div>
+    
+    <div class="friends-foes-grid">
+      {cards.map((card) => (
+        <div 
+          class="friends-foes-card"
+          data-directus={`collection:blocks;item:${block.id};fields:ff_name_${card.index}_${locale},ff_role_${card.index}_${locale};mode:popover`}
+        >
+          <div class="friends-foes-card-content">
+            <p class="friends-foes-name">{card.name || 'Name'}</p>
+            <p class="friends-foes-role">{card.role || 'Role'}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

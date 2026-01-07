@@ -1,0 +1,335 @@
+---
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+// Get localized text values
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading');
+---
+
+<section 
+  class="dynamic-cards-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <style>
+    .dynamic-cards-section {
+      position: relative;
+      width: 100%;
+      min-height: 500px;
+      background: white;
+      overflow-x: auto;
+      font-family: 'Neue Haas Grotesk Display Pro', 'Inter', sans-serif;
+      padding: 40px 0;
+    }
+    
+    
+    .dynamic-card-title {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      font-size: 22px;
+      line-height: 24px;
+      color: #42383e;
+      margin: 0 0 8px 0;
+    }
+    
+    .dynamic-card-excerpt {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 20px;
+      color: #888484;
+      margin: 0 0 4px 0;
+    }
+    
+    /* Always use grid layout for better responsiveness */
+    .dynamic-cards-container {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    .dynamic-cards-title {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      font-size: 28px;
+      line-height: 24px;
+      color: #42383e;
+      margin: 0;
+      grid-column: 1 / -1;
+      margin-bottom: 30px;
+    }
+    
+    .dynamic-card-item {
+      width: 100%;
+      height: auto;
+      min-width: 150px;
+    }
+    
+    .dynamic-card-image {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 180 / 177;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+    
+    .dynamic-card-image:hover {
+      opacity: 0.9;
+    }
+    
+    .dynamic-card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    
+    .dynamic-card-content {
+      width: 100%;
+      height: auto;
+    }
+    
+    /* Responsive grid adjustments */
+    @media (max-width: 1200px) {
+      .dynamic-cards-container {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px 20px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .dynamic-cards-section {
+        padding: 20px 0;
+        min-height: auto;
+      }
+      .dynamic-cards-container {
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .dynamic-cards-title {
+        position: relative;
+        left: 0;
+        top: 0;
+        margin-bottom: 20px;
+        font-size: 24px;
+      }
+      .dynamic-card-item {
+        position: relative;
+        top: 0;
+        width: 100%;
+        height: auto;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .dynamic-card-image {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
+      }
+      .dynamic-card-content {
+        position: relative;
+        top: 0;
+        flex: 1;
+        height: auto;
+      }
+      .card-4, .card-5, .card-6 { display: none; }
+    }
+  </style>
+  
+  <div class="dynamic-cards-container">
+    <h2 
+      class="dynamic-cards-title"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+    >
+      {heading || 'Similar Articles'}
+    </h2>
+    
+    {/* Card 1 */}
+    <div class="dynamic-card-item card-1">
+      <div 
+        class="dynamic-card-image"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image', mode: 'popover' })}
+      >
+        <img 
+          src={block.image ? getImageUrl(block.image) : '/images/peter-bellerby-globes.png'}
+          alt="Article image"
+          loading="lazy"
+        />
+      </div>
+      <div class="dynamic-card-content">
+        <h3 
+          class="dynamic-card-title"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`card1_title_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'card1_title') || 'Lorem ipsum dolor sit'}
+        </h3>
+        <p 
+          class="dynamic-card-excerpt"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`card1_excerpt_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'card1_excerpt') || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...'}
+        </p>
+      </div>
+    </div>
+    
+    {/* Card 2 */}
+    <div class="dynamic-card-item card-2">
+      <div 
+        class="dynamic-card-image"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image_2', mode: 'popover' })}
+      >
+        <img 
+          src={block.image_2 ? getImageUrl(block.image_2) : '/images/peter-bellerby-globes.png'}
+          alt="Article image"
+          loading="lazy"
+        />
+      </div>
+      <div class="dynamic-card-content">
+        <h3 
+          class="dynamic-card-title"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`card2_title_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'card2_title') || 'Lorem ipsum dolor sit'}
+        </h3>
+        <p 
+          class="dynamic-card-excerpt"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`card2_excerpt_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'card2_excerpt') || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...'}
+        </p>
+      </div>
+    </div>
+    
+    {/* Card 3 */}
+    <div class="dynamic-card-item card-3">
+      <div 
+        class="dynamic-card-image"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image_3', mode: 'popover' })}
+      >
+        <img 
+          src={block.image_3 ? getImageUrl(block.image_3) : '/images/peter-bellerby-globes.png'}
+          alt="Article image"
+          loading="lazy"
+        />
+      </div>
+      <div class="dynamic-card-content">
+        <h3 
+          class="dynamic-card-title"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`card3_title_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'card3_title') || 'Lorem ipsum dolor sit'}
+        </h3>
+        <p 
+          class="dynamic-card-excerpt"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`card3_excerpt_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'card3_excerpt') || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...'}
+        </p>
+      </div>
+    </div>
+    
+    {/* Card 4 */}
+    <div class="dynamic-card-item card-4">
+      <div 
+        class="dynamic-card-image"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image_4', mode: 'popover' })}
+      >
+        <img 
+          src={block.image_4 ? getImageUrl(block.image_4) : '/images/peter-bellerby-globes.png'}
+          alt="Article image"
+          loading="lazy"
+        />
+      </div>
+      <div class="dynamic-card-content">
+        <h3 
+          class="dynamic-card-title"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`card4_title_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'card4_title') || 'Lorem ipsum dolor sit'}
+        </h3>
+        <p 
+          class="dynamic-card-excerpt"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`card4_excerpt_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'card4_excerpt') || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...'}
+        </p>
+      </div>
+    </div>
+    
+    {/* Card 5 */}
+    <div class="dynamic-card-item card-5">
+      <div 
+        class="dynamic-card-image"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image_5', mode: 'popover' })}
+      >
+        <img 
+          src={block.image_5 ? getImageUrl(block.image_5) : '/images/peter-bellerby-globes.png'}
+          alt="Article image"
+          loading="lazy"
+        />
+      </div>
+      <div class="dynamic-card-content">
+        <h3 
+          class="dynamic-card-title"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`card5_title_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'card5_title') || 'Lorem ipsum dolor sit'}
+        </h3>
+        <p 
+          class="dynamic-card-excerpt"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`card5_excerpt_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'card5_excerpt') || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...'}
+        </p>
+      </div>
+    </div>
+    
+    {/* Card 6 */}
+    <div class="dynamic-card-item card-6">
+      <div 
+        class="dynamic-card-image"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image_6', mode: 'popover' })}
+      >
+        <img 
+          src={block.image_6 ? getImageUrl(block.image_6) : '/images/peter-bellerby-globes.png'}
+          alt="Article image"
+          loading="lazy"
+        />
+      </div>
+      <div class="dynamic-card-content">
+        <h3 
+          class="dynamic-card-title"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`card6_title_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'card6_title') || 'Lorem ipsum dolor sit'}
+        </h3>
+        <p 
+          class="dynamic-card-excerpt"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`card6_excerpt_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'card6_excerpt') || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...'}
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

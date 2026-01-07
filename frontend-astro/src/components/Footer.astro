@@ -1,0 +1,345 @@
+---
+import { getSiteSettings, getNavigationItems, getAssetUrl, type NavigationItem, type SiteSettings, type Locale, defaultLocale } from '../lib/directus';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+
+const settings = await getSiteSettings();
+const navItems = await getNavigationItems('footer');
+
+function getItemUrl(item: NavigationItem): string {
+  if (item.url) return item.url;
+  if (item.page) return `/${locale}/${item.page.slug}`;
+  return '#';
+}
+
+// Helper to get localized field
+const getLocalized = (fieldPrefix: string) => {
+  const field = `${fieldPrefix}_${locale}` as keyof typeof settings;
+  return settings?.[field] || settings?.[`${fieldPrefix}_en` as keyof typeof settings] || '';
+};
+---
+
+<footer class="footer">
+  <div class="footer-container">
+    <!-- Top section with logo and navigation columns -->
+    <div class="footer-top">
+      <!-- Logo -->
+      <div class="footer-logo-section">
+        <svg class="footer-oddny-logo" viewBox="0 0 141 45.027" fill="none">
+          <path d="M112.579 30.0827C112.579 29.0181 112.579 17.8896 112.579 17.8896L112.556 17.8662C112.272 13.0869 108.675 9.27894 104.264 9.27894C101.947 9.27894 99.8453 10.3358 98.3418 12.03V9.27894H86.5131V35.7169H98.3418V24.332C98.3418 24.332 98.3494 24.3397 98.3571 24.3475L98.5182 28.373C98.5182 28.373 98.5182 28.4197 98.5182 28.443C98.5182 32.6861 101.617 35.6781 105.46 35.7247H114.374C114.374 35.7247 112.571 33.8285 112.571 30.0827H112.579Z" fill="#00FC26"/>
+          <path d="M134.51 9.27894C130.92 9.27894 128.013 13.1879 128.013 17.1357L127.737 22.5057L127.476 17.1357C127.476 13.1879 124.569 9.27894 120.979 9.27894H114.466V22.4979H114.481C114.474 22.7078 114.466 22.9331 114.466 23.174C114.466 28.8005 117.358 33.269 121.6 35.4527V45.0192H133.874V35.4527C138.108 33.269 141.008 28.8082 141.008 23.174C141.008 22.9331 141.008 22.7078 140.992 22.4979H141.008V9.27894H134.51Z" fill="#00FC26"/>
+          <path d="M12.7645 9.34111C5.71487 9.34111 0 14.7966 0 22.5601C0 30.3236 5.71487 35.7791 12.7645 35.7791C19.8141 35.7791 25.529 30.3159 25.529 22.5601C25.529 14.7966 19.8141 9.34111 12.7645 9.34111ZM12.7645 24.2154C11.8516 24.2154 11.1076 23.5082 11.1076 22.4979C11.1076 21.4877 11.8516 20.7805 12.7645 20.7805C13.6773 20.7805 14.4214 21.4877 14.4214 22.4979C14.4214 23.5082 13.6773 24.2154 12.7645 24.2154Z" fill="#00FC26"/>
+          <path d="M43.1262 0V9.96282C41.8681 9.55871 40.5257 9.34111 39.1219 9.34111C32.0723 9.34111 26.3574 14.8043 26.3574 22.5601C26.3574 30.3236 32.0723 35.7791 39.1219 35.7791H54.9471V0H43.1185L43.1262 0ZM37.465 22.4979C37.465 21.4877 38.2091 20.7805 39.1219 20.7805C40.0348 20.7805 40.7788 21.4877 40.7788 22.4979C40.7788 23.5082 40.0348 24.2154 39.1219 24.2154C38.2091 24.2154 37.465 23.5082 37.465 22.4979Z" fill="#00FC26"/>
+          <path d="M72.575 0V9.96282C71.317 9.55871 69.9745 9.34111 68.5708 9.34111C61.5211 9.34111 55.8063 14.8043 55.8063 22.5601C55.8063 30.3236 61.5211 35.7791 68.5708 35.7791H84.3959V0H72.5673L72.575 0ZM68.5708 24.2154C67.6579 24.2154 66.9138 23.5082 66.9138 22.4979C66.9138 21.4877 67.6579 20.7805 68.5708 20.7805C69.4836 20.7805 70.2277 21.4877 70.2277 22.4979C70.2277 23.5082 69.4836 24.2154 68.5708 24.2154Z" fill="#00FC26"/>
+        </svg>
+      </div>
+
+      <!-- Navigation columns -->
+      <div class="footer-nav-columns">
+        <!-- Column 1: Newsletter -->
+        <div class="footer-column">
+          <p class="footer-label">{getLocalized('footer_newsletter_label') || 'Keep in touch with us:'}</p>
+          <a href={`/${locale}/newsletter`} class="footer-newsletter-btn">
+            <span>Sign up to<br/>our Newsletter</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Column 2: Creative Flow -->
+        <div class="footer-column">
+          <p class="footer-column-title">{getLocalized('footer_col1_title') || 'Creative Flow'}</p>
+          <a href={`/${locale}/creative-flow`} class="footer-link">The Source</a>
+          <a href={`/${locale}/creative-flow`} class="footer-link">The Studio</a>
+          <a href={`/${locale}/creative-flow`} class="footer-link">The Marketplace</a>
+        </div>
+
+        <!-- Column 3: Wunderkrammer -->
+        <div class="footer-column">
+          <p class="footer-column-title">{getLocalized('footer_col2_title') || 'Wunderkrammer'}</p>
+          <a href={`/${locale}/wunderkammer`} class="footer-link">Tools</a>
+          <a href={`/${locale}/products`} class="footer-link">Financial Products</a>
+          <a href={`/${locale}/products`} class="footer-link">Other Products</a>
+        </div>
+
+        <!-- Column 4: Fans, Friends and Foes -->
+        <div class="footer-column">
+          <p class="footer-column-title">{getLocalized('footer_col3_title') || 'Fans, Friends and Foes'}</p>
+          <a href={`/${locale}/news`} class="footer-link">News</a>
+          <a href={`/${locale}/about-us`} class="footer-link">About Us</a>
+          <a href={`/${locale}/contact`} class="footer-link">Contact</a>
+        </div>
+      </div>
+
+      <!-- Social icons -->
+      <div class="footer-social">
+        <a href={settings?.linkedin_url || '#'} class="footer-social-btn" aria-label="LinkedIn">
+          <svg viewBox="0 0 9.82355 9.82273" fill="white">
+            <path d="M2.21824 3.22949H0.165558V9.77537H2.21824V3.22949Z"/>
+            <path d="M7.77087 3.08767C7.69519 3.07821 7.61479 3.07348 7.53438 3.06875C6.38507 3.02145 5.73711 3.70253 5.51009 3.99577C5.4486 4.07617 5.42022 4.12347 5.42022 4.12347V3.24848H3.45741V9.79435H5.42022H5.51009C5.51009 9.12747 5.51009 8.46531 5.51009 7.79843C5.51009 7.43897 5.51009 7.07952 5.51009 6.72006C5.51009 6.27547 5.47698 5.8025 5.69927 5.39575C5.88846 5.05521 6.22899 4.88495 6.6121 4.88495C7.74722 4.88495 7.77087 5.91128 7.77087 6.00588C7.77087 6.01061 7.77087 6.01534 7.77087 6.01534V9.82273H9.82355V5.55183C9.82355 4.09036 9.08099 3.22956 7.77087 3.08767Z"/>
+            <path d="M1.19188 2.38376C1.85013 2.38376 2.38376 1.85013 2.38376 1.19188C2.38376 0.533622 1.85013 0 1.19188 0C0.53362 0 0 0.533622 0 1.19188C0 1.85013 0.53362 2.38376 1.19188 2.38376Z"/>
+          </svg>
+        </a>
+        <a href={settings?.instagram_url || '#'} class="footer-social-btn" aria-label="Instagram">
+          <svg viewBox="0 0 12.1234 12.1234" fill="white">
+            <path d="M6.06168 1.09158C7.68128 1.09158 7.87308 1.09868 8.51003 1.12709C9.10199 1.15314 9.42165 1.25259 9.63475 1.33546C9.91652 1.44438 10.1202 1.57698 10.3309 1.78772C10.544 2.00083 10.6742 2.20209 10.7832 2.48387C10.866 2.69697 10.9655 3.019 10.9915 3.60859C11.0199 4.24791 11.027 4.4397 11.027 6.05694C11.027 7.67655 11.0199 7.86834 10.9915 8.50529C10.9655 9.09725 10.866 9.41691 10.7832 9.63002C10.6742 9.91179 10.5416 10.1154 10.3309 10.3262C10.1178 10.5393 9.91652 10.6695 9.63475 10.7784C9.42165 10.8613 9.09962 10.9607 8.51003 10.9868C7.87071 11.0152 7.67891 11.0223 6.06168 11.0223C4.44207 11.0223 4.25028 11.0152 3.61333 10.9868C3.02137 10.9607 2.70171 10.8613 2.4886 10.7784C2.20683 10.6695 2.00319 10.5369 1.79246 10.3262C1.57935 10.1131 1.44912 9.91179 1.3402 9.63002C1.25732 9.41691 1.15788 9.09488 1.13183 8.50529C1.10341 7.86597 1.09631 7.67418 1.09631 6.05694C1.09631 4.43734 1.10341 4.24554 1.13183 3.60859C1.15788 3.01663 1.25732 2.69697 1.3402 2.48387C1.44912 2.20209 1.58172 1.99846 1.79246 1.78772C2.00556 1.57462 2.20683 1.44438 2.4886 1.33546C2.70171 1.25259 3.02374 1.15314 3.61333 1.12709C4.25028 1.09868 4.44207 1.09158 6.06168 1.09158ZM6.06168 0C4.41603 0 4.21002 0.00710353 3.5636 0.0355176C2.91955 0.0639317 2.47676 0.168117 2.09317 0.317291C1.69301 0.473568 1.35441 0.679571 1.01817 1.01817C0.679571 1.35441 0.473568 1.69301 0.317291 2.09081C0.168117 2.47676 0.0639318 2.91718 0.0355176 3.56123C0.00710353 4.21002 0 4.41603 0 6.06168C0 7.70733 0.00710353 7.91333 0.0355176 8.55975C0.0639318 9.2038 0.168117 9.64659 0.317291 10.0302C0.473568 10.4303 0.679571 10.7689 1.01817 11.1052C1.35441 11.4414 1.69301 11.6498 2.09081 11.8037C2.47676 11.9529 2.91718 12.0571 3.56124 12.0855C4.20766 12.1139 4.41366 12.121 6.05931 12.121C7.70496 12.121 7.91096 12.1139 8.55738 12.0855C9.20144 12.0571 9.64422 11.9529 10.0278 11.8037C10.4256 11.6498 10.7642 11.4414 11.1004 11.1052C11.4367 10.7689 11.645 10.4303 11.799 10.0325C11.9481 9.64659 12.0523 9.20617 12.0807 8.56212C12.1091 7.9157 12.1163 7.7097 12.1163 6.06404C12.1163 4.41839 12.1091 4.21239 12.0807 3.56597C12.0523 2.92192 11.9481 2.47913 11.799 2.09554C11.6498 1.69301 11.4438 1.35441 11.1052 1.01817C10.7689 0.681939 10.4303 0.473568 10.0325 0.319659C9.64659 0.170485 9.20617 0.0662996 8.56212 0.0378855C7.91333 0.00710353 7.70733 0 6.06168 0Z"/>
+            <path d="M6.06168 2.94796C4.34262 2.94796 2.94796 4.34262 2.94796 6.06168C2.94796 7.78073 4.34262 9.17539 6.06168 9.17539C7.78073 9.17539 9.17539 7.78073 9.17539 6.06168C9.17539 4.34262 7.78073 2.94796 6.06168 2.94796ZM6.06168 8.08145C4.94642 8.08145 4.04191 7.17693 4.04191 6.06168C4.04191 4.94642 4.94642 4.04191 6.06168 4.04191C7.17693 4.04191 8.08145 4.94642 8.08145 6.06168C8.08145 7.17693 7.17693 8.08145 6.06168 8.08145Z"/>
+            <path d="M10.0254 2.82484C10.0254 3.22738 9.69868 3.55177 9.29852 3.55177C8.89598 3.55177 8.57159 3.22501 8.57159 2.82484C8.57159 2.42231 8.89835 2.09792 9.29852 2.09792C9.69868 2.09792 10.0254 2.42468 10.0254 2.82484Z"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Green Bear -->
+      <div class="footer-bear">
+        <svg viewBox="0 0 201 285" fill="none">
+          <path d="M23.3277 220.453L31.3097 237.348L49.8224 236.434L55.4471 227.792C55.4759 227.749 55.5238 227.72 55.5717 227.72L58.6955 227.553L49.1756 193.005L23.3182 220.448L23.3277 220.453Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M164.185 219.419C164.238 219.419 164.286 219.443 164.315 219.486C164.348 219.529 164.353 219.586 164.334 219.639L153.113 247.987L189.061 230.799L195.615 217.015L187.959 160.693L182.751 126.811L165.733 106.985L128.612 233.537L134.15 236.817L140.46 220.874C140.484 220.817 140.537 220.773 140.599 220.773L164.176 219.414C164.176 219.414 164.181 219.414 164.185 219.414V219.419Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M121.214 229.549C121.243 229.549 121.267 229.554 121.291 229.568L128.319 233.379L165.484 106.693L153.588 91.2098L142.851 96.3804C129.958 108.043 118.742 119.299 112.058 138.962C104.8 160.324 103.487 190.013 107.924 232.379L121.176 229.549C121.176 229.549 121.2 229.549 121.209 229.549H121.214Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M76.9016 226.571C76.9351 226.571 76.9686 226.581 76.9926 226.6L81.5633 229.774L84.3708 156.911L70.0455 131.632L53.3103 108.996C48.5336 119.826 45.4769 131.249 44.2216 142.95C42.952 154.814 43.5605 166.711 46.0374 178.302C48.0641 187.801 50.6129 197.261 53.066 206.071L59.0356 227.529L76.8968 226.567C76.8968 226.567 76.9016 226.567 76.9063 226.567L76.9016 226.571Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M55.6771 228.036L44.581 245.076L88.3139 242.725L87.8779 234.595L76.8537 226.902L55.6771 228.041V228.036Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M8.77725 237.482L21.5215 241.317L30.9887 237.43L17.6072 209.101L2.4147 222.028L8.77725 237.487V237.482Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M141.092 248.939L150.861 252.803L163.941 219.754L140.719 221.094L134.404 237.047L141.083 248.944L141.092 248.939Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M100.469 234.303L92.4869 254.402L135.314 245.258L133.508 236.807L128.363 233.767L121.195 229.88L100.474 234.303H100.469Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M81.8939 230.052L88.1462 234.437C88.1893 234.466 88.2133 234.509 88.2133 234.562L88.3091 236.324L99.3861 236.276L100.22 234.107C100.239 234.059 100.282 234.021 100.335 234.007L107.632 232.451C106.199 220.376 105.375 208.225 105.164 196.213C104.661 167.688 107.881 153.583 108.939 148.949C110.516 142.045 112.36 136.511 114.885 130.99C117.961 124.264 119.834 121.535 123.6 116.235L84.7062 156.949L81.8891 230.052H81.8939Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M49.2906 36.8028L53.5115 44.0992C55.2746 42.4378 57.1911 40.9202 59.2081 39.5796C61.5557 38.0236 63.9992 36.64 66.6103 35.5723L56.4772 27.2274L49.2954 36.798L49.2906 36.8028Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M34.5964 75.985L37.7968 82.5249L46.1524 77.6607L40.7673 69.6701L34.5964 75.9898V75.985Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M46.1524 77.6607L40.7673 69.6653L34.5964 75.985L37.7968 82.5249L46.1524 77.6607Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M40.9972 69.4307L46.5166 77.6224C46.5405 77.6607 46.5501 77.7038 46.5405 77.7469C46.5309 77.7899 46.5022 77.8282 46.4639 77.8522L37.9405 82.817L41.85 90.8028H52.5389L60.1184 82.2808V49.8539L40.9972 69.4307Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M65.7911 58.3951C64.8664 58.3951 64.1142 59.1468 64.1142 60.0708C64.1142 60.9948 64.8664 61.7465 65.7911 61.7465C66.7157 61.7465 67.4679 60.9948 67.4679 60.0708C67.4679 59.1468 66.7157 58.3951 65.7911 58.3951Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M107.449 36.482L104.455 44.4199C104.426 44.487 104.364 44.5253 104.292 44.5205L93.4403 43.5629C93.3876 43.5629 93.3397 43.5294 93.3158 43.4815L88.9415 35.917C88.908 35.8596 88.9128 35.7926 88.9511 35.7399L91.7491 32.0151C83.9396 31.2634 75.996 32.3024 68.7615 35.0313C65.2592 36.1947 57.148 40.1493 51.4657 46.7994C46.1141 53.0617 44.8541 60.8177 44.1737 64.9829C44.121 65.3085 44.0731 65.6101 44.0252 65.8878L60.1759 49.3512C60.2238 49.3033 60.2909 49.289 60.3532 49.3129C60.4155 49.3369 60.4538 49.3991 60.4538 49.4613V82.3478C60.4538 82.3861 60.4394 82.4244 60.4107 82.4531L53.5163 90.2235L75.0091 101.944L109.644 69.3493L107.454 36.482H107.449ZM48.0401 60.2336C47.1921 60.2336 46.5022 59.5442 46.5022 58.6967C46.5022 57.8493 47.1921 57.1599 48.0401 57.1599C48.8881 57.1599 49.5781 57.8493 49.5781 58.6967C49.5781 59.5442 48.8881 60.2336 48.0401 60.2336ZM65.7911 62.0673C64.6891 62.0673 63.7932 61.172 63.7932 60.0708C63.7932 58.9696 64.6891 58.0743 65.7911 58.0743C66.893 58.0743 67.7889 58.9696 67.7889 60.0708C67.7889 61.172 66.893 62.0673 65.7911 62.0673Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M48.0401 57.4807C47.3694 57.4807 46.8232 58.0265 46.8232 58.6967C46.8232 59.367 47.3694 59.9128 48.0401 59.9128C48.7109 59.9128 49.257 59.367 49.257 58.6967C49.257 58.0265 48.7109 57.4807 48.0401 57.4807Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M93.5505 43.247L104.196 44.1853L107.435 35.558L105.916 29.1712L99.755 24.7905L96.5258 26.1742L89.2673 35.8452L93.5458 43.247H93.5505Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+          <path d="M53.4205 108.608L70.3042 131.445L84.5673 156.609L124.745 114.636C124.745 114.636 126.968 111.701 130.212 108.201C134.711 103.351 140.666 97.855 142.688 96.0884C142.697 96.0788 142.712 96.0692 142.726 96.0645L153.425 90.9129L107.655 35.7974L109.965 69.4067C109.965 69.4546 109.95 69.5025 109.912 69.536L75.1337 102.26C75.081 102.308 75.0043 102.317 74.9468 102.284L56.0077 91.9566L53.4205 108.608Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="0.71"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Divider line -->
+    <div class="footer-divider"></div>
+
+    <!-- Bottom section -->
+    <div class="footer-bottom">
+      <div class="footer-bottom-left">
+        <p class="footer-legal-title">{getLocalized('footer_legal_title') || 'Legal Info'}</p>
+        <p class="footer-legal-text">{getLocalized('footer_legal_text') || 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.'}</p>
+      </div>
+      <div class="footer-bottom-right">
+        <p class="footer-legal-title">{getLocalized('footer_terms_title') || 'Terms and Conditions'}</p>
+        <p class="footer-legal-text">{getLocalized('footer_terms_text') || 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.'}</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: rgba(217, 217, 217, 0.72);
+    padding: 40px 80px 60px;
+    position: relative;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+  }
+
+  .footer-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .footer-top {
+    display: grid;
+    grid-template-columns: 140px 1fr auto;
+    gap: 60px;
+    align-items: start;
+    position: relative;
+    min-height: 250px;
+  }
+
+  .footer-logo-section {
+    padding-top: 10px;
+  }
+
+  .footer-oddny-logo {
+    width: 140px;
+    height: auto;
+  }
+
+  .footer-nav-columns {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+  }
+
+  .footer-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .footer-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: #42383e;
+    margin: 0 0 8px 0;
+  }
+
+  .footer-column-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #42383e;
+    margin: 0 0 8px 0;
+  }
+
+  .footer-link {
+    font-size: 16px;
+    font-weight: 500;
+    color: #42383e;
+    text-decoration: none;
+    line-height: 34px;
+    transition: opacity 0.2s;
+  }
+
+  .footer-link:hover {
+    opacity: 0.7;
+  }
+
+  .footer-newsletter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #42383e;
+    text-decoration: none;
+    line-height: 20px;
+    transition: opacity 0.2s;
+  }
+
+  .footer-newsletter-btn:hover {
+    opacity: 0.7;
+  }
+
+  .footer-newsletter-btn svg {
+    transition: transform 0.2s;
+  }
+
+  .footer-newsletter-btn:hover svg {
+    transform: translateX(4px);
+  }
+
+  .footer-social {
+    display: flex;
+    gap: 12px;
+    padding-top: 10px;
+  }
+
+  .footer-social-btn {
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+    background: #FF40B4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+  }
+
+  .footer-social-btn:hover {
+    transform: scale(1.1);
+  }
+
+  .footer-social-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .footer-bear {
+    position: absolute;
+    right: 0;
+    top: -20px;
+    width: 200px;
+    height: 285px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .footer-bear svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .footer-nav-columns {
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-divider {
+    margin: 40px 0 30px;
+    border: none;
+    border-top: 2px dashed #888484;
+    opacity: 0.8;
+  }
+
+  .footer-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .footer-legal-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #888484;
+    margin: 0 0 12px 0;
+  }
+
+  .footer-legal-text {
+    font-size: 12px;
+    font-weight: 300;
+    color: #888484;
+    line-height: 16px;
+    margin: 0;
+  }
+
+  @media (max-width: 1024px) {
+    .footer {
+      padding: 40px;
+    }
+
+    .footer-top {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    .footer-nav-columns {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .footer-bear {
+      display: none;
+    }
+
+    .footer-social {
+      position: static;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .footer {
+      padding: 30px 20px;
+    }
+
+    .footer-nav-columns {
+      grid-template-columns: 1fr;
+      gap: 30px;
+    }
+
+    .footer-bottom {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

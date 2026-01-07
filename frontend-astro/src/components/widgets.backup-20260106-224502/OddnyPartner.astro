@@ -1,0 +1,485 @@
+---
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+// Get localized text values
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading');
+const content = getLocalizedField(block, 'content');
+const buttonText = getLocalizedField(block, 'button_text');
+
+// SVG paths for decorative lines
+const svgPaths = {
+  p13d4a300: "M1217.83 306.912C1244.18 219.797 1220.45 104.01 1057.68 63.3015C944.191 34.9047 828.163 103.934 707.927 147.942C549.504 205.927 434.554 167.158 442.198 58.9938C449.364 -42.5257 632.291 -4.87211 564.221 124.601C525.262 198.701 444.556 280.241 257.761 299.656C150.408 310.807 25.2721 236.554 1 211.93",
+  p2a8b7ec0: "M1277.38 322C1305.02 230.615 1280.13 109.152 1109.39 66.4482C990.351 36.6595 868.644 109.072 742.524 155.238C576.347 216.065 455.772 175.396 463.79 61.9294C471.307 -44.5665 663.186 -5.06718 591.785 130.753C550.92 208.486 466.263 294.022 270.326 314.389C157.72 326.086 26.46 248.193 1 222.362"
+};
+---
+
+<section 
+  class="oddny-partner-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <style>
+    .oddny-partner-section {
+      position: relative;
+      width: 100%;
+      min-height: 1600px;
+      background: white;
+      overflow-x: hidden;
+      overflow-y: visible;
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      padding: 60px 0;
+    }
+    
+    .partner-container {
+      position: relative;
+      max-width: 1440px;
+      margin: 0 auto;
+      height: 1480px;
+      overflow: visible;
+    }
+    
+    /* Main Title */
+    .partner-title {
+      position: absolute;
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      height: 170px;
+      line-height: 85px;
+      left: 740px;
+      color: #42383e;
+      font-size: 80px;
+      top: 134px;
+      width: 615px;
+      margin: 0;
+    }
+    
+    .partner-title p {
+      margin: 0;
+    }
+    
+    /* Intro Text */
+    .partner-intro {
+      position: absolute;
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      height: 181px;
+      line-height: 30px;
+      left: 743px;
+      color: #888484;
+      font-size: 28px;
+      top: 363px;
+      width: 612px;
+    }
+    
+    .partner-intro p {
+      margin: 0 0 4px 0;
+    }
+    
+    /* Benefits List Items */
+    .partner-benefit {
+      position: absolute;
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      font-size: 35px;
+      line-height: 40px;
+      color: #42383e;
+      width: 593px;
+      height: 48px;
+    }
+    
+    .partner-benefit-1 { left: 61px; top: 590px; }
+    .partner-benefit-2 { left: 729px; top: 815px; }
+    .partner-benefit-3 { left: 68px; top: 1038px; }
+    .partner-benefit-4 { left: 730px; top: 1263px; }
+    
+    .partner-benefit ol {
+      margin: 0;
+      padding: 0;
+      list-style: decimal;
+      margin-left: 52.5px;
+    }
+    
+    .partner-benefit li {
+      margin-left: 0;
+    }
+    
+    /* Benefit Descriptions */
+    .partner-description {
+      position: absolute;
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      height: 93px;
+      line-height: 30px;
+      color: #888484;
+      font-size: 28px;
+      width: 616px;
+    }
+    
+    .partner-desc-1 { left: 83px; top: 656px; }
+    .partner-desc-2 { left: 746px; top: 881px; }
+    .partner-desc-3 { left: 83px; top: 1104px; }
+    .partner-desc-4 { left: 746px; top: 1329px; }
+    
+    /* Jumping Bear Images */
+    .partner-bear-1 {
+      position: absolute;
+      left: 488px;
+      top: 221px;
+      width: 230px;
+      height: 221px;
+      transform: rotate(180deg) scaleY(-1);
+    }
+    
+    .partner-bear-2 {
+      position: absolute;
+      left: 778px;
+      top: 1023px;
+      width: 249px;
+      height: 239px;
+    }
+    
+    .partner-bear-1 img,
+    .partner-bear-2 img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+    
+    /* Decorative SVG Lines */
+    .partner-line-1 {
+      position: absolute;
+      left: -632px;
+      top: 203px;
+      width: 1226px;
+      height: 306px;
+      transform: rotate(180deg) scaleY(-1);
+      overflow: visible;
+      pointer-events: none;
+    }
+    
+    .partner-line-2 {
+      position: absolute;
+      left: 543px;
+      top: 426px;
+      width: 1324px;
+      height: 577px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: rotate(168.195deg) scaleY(-1);
+      overflow: visible;
+      pointer-events: none;
+    }
+    
+    /* "Become a Partner" Button */
+    .partner-button {
+      position: absolute;
+      left: 75px;
+      top: 1398px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #FF40B4;
+      text-decoration: none;
+      transition: color 0.3s ease;
+      width: 210px;
+      height: 30px;
+    }
+    
+    .partner-button:hover {
+      color: #e03aa0;
+    }
+    
+    .partner-button span {
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    
+    .partner-button svg {
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+    }
+    
+    .partner-button:hover svg {
+      transform: translateX(4px);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 1440px) {
+      .partner-container {
+        width: 95%;
+        padding: 0 20px;
+        height: auto;
+        min-height: 1400px;
+      }
+      .partner-title {
+        left: 5%;
+        font-size: clamp(50px, 5.5vw, 80px);
+        line-height: clamp(55px, 6vw, 85px);
+        width: 70%;
+      }
+      .partner-intro {
+        left: 5%;
+        width: 70%;
+        font-size: clamp(20px, 2.5vw, 28px);
+        line-height: clamp(24px, 3vw, 30px);
+      }
+      .partner-benefit {
+        font-size: clamp(24px, 3vw, 35px);
+        line-height: clamp(28px, 3.5vw, 40px);
+        width: 80%;
+      }
+      .partner-benefit-1 { left: 5%; }
+      .partner-benefit-2 { left: 5%; }
+      .partner-benefit-3 { left: 5%; }
+      .partner-benefit-4 { left: 5%; }
+      .partner-description {
+        font-size: clamp(16px, 2vw, 28px);
+        line-height: clamp(20px, 2.5vw, 30px);
+        width: 80%;
+      }
+      .partner-desc-1 { left: 5%; }
+      .partner-desc-2 { left: 5%; }
+      .partner-desc-3 { left: 5%; }
+      .partner-desc-4 { left: 5%; }
+      .partner-bear-1,
+      .partner-bear-2 {
+        width: 150px;
+        height: auto;
+        right: 5%;
+        left: auto;
+      }
+      .partner-line-1,
+      .partner-line-2 {
+        display: none;
+      }
+      .partner-button {
+        left: 5%;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .oddny-partner-section {
+        min-height: auto;
+        padding: 40px 0;
+      }
+      .partner-container {
+        height: auto;
+        min-height: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        padding: 20px;
+      }
+      .partner-title {
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 42px;
+        line-height: 46px;
+        height: auto;
+        order: 1;
+      }
+      .partner-intro {
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 20px;
+        line-height: 24px;
+        height: auto;
+        order: 2;
+      }
+      .partner-benefit,
+      .partner-description {
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: auto;
+      }
+      .partner-benefit {
+        font-size: 28px;
+        line-height: 32px;
+        margin-bottom: 10px;
+      }
+      .partner-description {
+        font-size: 18px;
+        line-height: 22px;
+        margin-bottom: 30px;
+      }
+      .partner-bear-1,
+      .partner-bear-2 {
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 120px;
+        height: auto;
+        margin: 0 auto;
+      }
+      .partner-button {
+        position: relative;
+        left: 0;
+        top: 0;
+        width: fit-content;
+        margin: 0 auto;
+        order: 999;
+      }
+    }
+  </style>
+  
+  <div class="partner-container">
+    {/* Main Title */}
+    <div 
+      class="partner-title"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+      set:html={heading || `
+        <p>Benefits of being</p>
+        <p>an Oddny Partner</p>
+      `}
+    >
+    </div>
+    
+    {/* Intro Text */}
+    <div 
+      class="partner-intro"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'popover' })}
+      set:html={content || `
+        <p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+      `}
+    >
+    </div>
+    
+    {/* Bear Images */}
+    <div class="partner-bear-1">
+      <img 
+        src="/images/oddny-jumping-partner.png"
+        alt="Oddny jumping bear"
+        loading="lazy"
+      />
+    </div>
+    
+    <div class="partner-bear-2">
+      <img 
+        src="/images/oddny-jumping-partner.png"
+        alt="Oddny jumping bear"
+        loading="lazy"
+      />
+    </div>
+    
+    {/* Benefits */}
+    <div 
+      class="partner-benefit partner-benefit-1"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`benefit1_${locale}`], mode: 'popover' })}
+    >
+      <ol start="1">
+        <li>{getLocalizedField(block, 'benefit1') || 'Boost your Network'}</li>
+      </ol>
+    </div>
+    
+    <div 
+      class="partner-description partner-desc-1"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`benefit1_desc_${locale}`], mode: 'popover' })}
+    >
+      <p>{getLocalizedField(block, 'benefit1_desc') || 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem'}</p>
+    </div>
+    
+    <div 
+      class="partner-benefit partner-benefit-2"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`benefit2_${locale}`], mode: 'popover' })}
+    >
+      <ol start="2">
+        <li>{getLocalizedField(block, 'benefit2') || 'Build Strong Connections'}</li>
+      </ol>
+    </div>
+    
+    <div 
+      class="partner-description partner-desc-2"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`benefit2_desc_${locale}`], mode: 'popover' })}
+    >
+      <p>{getLocalizedField(block, 'benefit2_desc') || 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem'}</p>
+    </div>
+    
+    <div 
+      class="partner-benefit partner-benefit-3"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`benefit3_${locale}`], mode: 'popover' })}
+    >
+      <ol start="3">
+        <li>{getLocalizedField(block, 'benefit3') || 'Generate New Business'}</li>
+      </ol>
+    </div>
+    
+    <div 
+      class="partner-description partner-desc-3"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`benefit3_desc_${locale}`], mode: 'popover' })}
+    >
+      <p>{getLocalizedField(block, 'benefit3_desc') || 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem'}</p>
+    </div>
+    
+    <div 
+      class="partner-benefit partner-benefit-4"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`benefit4_${locale}`], mode: 'popover' })}
+    >
+      <ol start="4">
+        <li>{getLocalizedField(block, 'benefit4') || 'Empower the Creative Sector'}</li>
+      </ol>
+    </div>
+    
+    <div 
+      class="partner-description partner-desc-4"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`benefit4_desc_${locale}`], mode: 'popover' })}
+    >
+      <p>{getLocalizedField(block, 'benefit4_desc') || 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem'}</p>
+    </div>
+    
+    {/* Decorative Lines */}
+    <div class="partner-line-1">
+      <svg width="1226" height="306" viewBox="0 0 1226 306" fill="none">
+        <path d={svgPaths.p13d4a300} stroke="#FF40B4" stroke-dasharray="7 8" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" />
+      </svg>
+    </div>
+    
+    <div class="partner-line-2">
+      <svg width="1324" height="577" viewBox="0 0 1288 323" fill="none">
+        <path d={svgPaths.p2a8b7ec0} stroke="#FF40B4" stroke-dasharray="7 8" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" />
+      </svg>
+    </div>
+    
+    {/* Become a Partner Button */}
+    <a 
+      href={block.button_link || '#'}
+      class="partner-button"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+    >
+      <span>{buttonText || 'Become a Partner'}</span>
+      <svg 
+        width="50" 
+        height="12" 
+        viewBox="0 0 50 12" 
+        fill="none"
+      >
+        <path d="M0 6H48M48 6L42 1M48 6L42 11" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
+    </a>
+  </div>
+</section>

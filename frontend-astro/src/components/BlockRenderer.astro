@@ -1,0 +1,2094 @@
+---
+import type { Block } from '../lib/directus';
+import { PUBLIC_DIRECTUS_URL } from '../lib/directus';
+import HeroImageOverlay from './widgets/HeroImageOverlay.astro';
+import WunderkamerImageText from './widgets/WunderkamerImageText.astro';
+import WunderkamerText3 from './widgets/WunderkamerText3.astro';
+import DynamicCards from './widgets/DynamicCards.astro';
+import OddnyNewsletterCTA from './widgets/OddnyNewsletterCTA.astro';
+import OddnyPartner from './widgets/OddnyPartner.astro';
+import PricingCards from './widgets/PricingCards.astro';
+import HowToBuy from './widgets/HowToBuy.astro';
+import CharacterCards from './widgets/CharacterCards.astro';
+import FriendsAndFoes from './widgets/FriendsAndFoes.astro';
+import ContactWidget from './widgets/ContactWidget.astro';
+
+interface Props {
+  blocks: Block[];
+  locale?: string;
+}
+
+const { blocks, locale = 'en' } = Astro.props;
+const DIRECTUS_URL = PUBLIC_DIRECTUS_URL;
+
+// Sort blocks by sort field
+const sortedBlocks = [...blocks].sort((a, b) => (a.sort || 0) - (b.sort || 0));
+
+// Helper to get localized field value
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  // First try localized field, then fall back to base field
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+// Helper to create data-directus attribute - now uses localized field names
+const setAttr = (opts: { collection: string; item: string | number; fields?: string | string[]; mode?: string }) => {
+  let attr = `collection:${opts.collection};item:${opts.item}`;
+  if (opts.fields) {
+    // Convert field names to localized versions
+    const localizeField = (f: string) => {
+      const textFields = ['heading', 'subheading', 'content', 'button_text', 'text', 'heading_pink', 'heading_brown'];
+      if (textFields.includes(f)) {
+        return `${f}_${locale}`;
+      }
+      return f;
+    };
+    const fields = Array.isArray(opts.fields)
+      ? opts.fields.map(localizeField).join(',')
+      : localizeField(opts.fields);
+    attr += `;fields:${fields}`;
+  }
+  if (opts.mode) {
+    attr += `;mode:${opts.mode}`;
+  }
+  return attr;
+};
+
+// Helper to get image URL
+const getImageUrl = (imageId: string | null) => {
+  if (!imageId) return null;
+  return `${DIRECTUS_URL}/assets/${imageId}`;
+};
+---
+
+{sortedBlocks.map((block) => {
+  const variant = block.variant || 'default';
+
+  // Get localized text values
+  const heading = getLocalizedField(block, 'heading');
+  const subheading = getLocalizedField(block, 'subheading');
+  const content = getLocalizedField(block, 'content');
+  const buttonText = getLocalizedField(block, 'button_text');
+  const text = getLocalizedField(block, 'text');
+
+  // Oddny hero specific fields
+  const headingPink = getLocalizedField(block, 'heading_pink');
+  const headingBrown = getLocalizedField(block, 'heading_brown');
+
+  // ===== HERO BLOCK =====
+  if (block.block_type === 'hero') {
+    // Hero: Centered (default)
+    if (variant === 'default' || variant === 'centered') {
+      return (
+        <section
+          class="hero hero-centered"
+          style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 6rem 2rem; text-align: center; color: white;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 800px; margin: 0 auto;">
+            <h1
+              style="font-size: 3.5rem; margin-bottom: 1.5rem; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+            >
+              {heading || 'Hero Titel'}
+            </h1>
+            {subheading && (
+              <p
+                style="font-size: 1.5rem; opacity: 0.95; line-height: 1.6; max-width: 600px; margin: 0 auto;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+              >
+                {subheading}
+              </p>
+            )}
+            {buttonText && (
+              <a
+                href={block.button_link || '#'}
+                style="display: inline-block; margin-top: 2rem; padding: 1rem 2.5rem; background: white; color: #667eea; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                {buttonText}
+              </a>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // Hero: Left Aligned
+    if (variant === 'left') {
+      return (
+        <section
+          class="hero hero-left"
+          style="background: #1a1a2e; padding: 6rem 2rem; color: white;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+            <div>
+              <h1
+                style="font-size: 3rem; margin-bottom: 1.5rem; font-weight: 800; line-height: 1.2;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >
+                {heading || 'Hero Titel'}
+              </h1>
+              {subheading && (
+                <p
+                  style="font-size: 1.25rem; opacity: 0.8; line-height: 1.7; margin-bottom: 2rem;"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+                >
+                  {subheading}
+                </p>
+              )}
+              {buttonText && (
+                <a
+                  href={block.button_link || '#'}
+                  style="display: inline-block; padding: 1rem 2rem; background: #e94560; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+                >
+                  {buttonText}
+                </a>
+              )}
+            </div>
+            <div style="background: linear-gradient(135deg, #e94560 0%, #0f3460 100%); border-radius: 20px; height: 400px;"></div>
+          </div>
+        </section>
+      );
+    }
+
+    // Hero: Gradient
+    if (variant === 'gradient') {
+      return (
+        <section
+          class="hero hero-gradient"
+          style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%); padding: 8rem 2rem; text-align: center; color: white; position: relative; overflow: hidden;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 900px; margin: 0 auto; position: relative; z-index: 1;">
+            <h1
+              style="font-size: 4rem; margin-bottom: 1.5rem; font-weight: 900; letter-spacing: -1px;"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+            >
+              {heading || 'Hero Titel'}
+            </h1>
+            {subheading && (
+              <p
+                style="font-size: 1.5rem; opacity: 0.95; line-height: 1.6; max-width: 700px; margin: 0 auto 2rem;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+              >
+                {subheading}
+              </p>
+            )}
+            {buttonText && (
+              <a
+                href={block.button_link || '#'}
+                style="display: inline-block; padding: 1.25rem 3rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 1.1rem; border: 2px solid rgba(255,255,255,0.3);"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                {buttonText}
+              </a>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // ===== ODDNY HERO BLOCK =====
+    if (variant === 'oddny-hero') {
+      return (
+        <section class="oddny-hero" data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}>
+          <style is:inline>
+            .oddny-hero { position: relative; width: 100%; min-height: 700px; background: white; overflow: hidden; font-family: 'Neue Haas Grotesk Display Pro', sans-serif; }
+            .oddny-hero-inner { max-width: 1400px; margin: 0 auto; padding: 80px 40px; position: relative; min-height: 600px; }
+            .oddny-hero-text { position: relative; z-index: 2; max-width: 690px; }
+            .oddny-hero-title { font-size: 80px; font-weight: 500; line-height: 1.06; color: #42383e; margin: 0 0 24px 0; }
+            .oddny-hero-subtitle { font-size: 35px; font-weight: 500; line-height: 1.14; color: #42383e; margin: 0 0 40px 0; max-width: 617px; }
+            .oddny-hero-cta { display: inline-flex; align-items: center; gap: 16px; text-decoration: none; color: #FF40B4; }
+            .oddny-hero-cta span { font-size: 20px; font-weight: 700; }
+            .oddny-hero-cta svg { transition: transform 0.3s ease; }
+            .oddny-hero-cta:hover svg { transform: translateX(8px); }
+            .oddny-hero-image { position: absolute; top: 60px; right: 80px; width: 232px; height: auto; z-index: 3; }
+            .oddny-hero-illustration { position: absolute; right: -50px; top: 50px; width: 680px; height: 760px; z-index: 1; pointer-events: none; overflow: visible; }
+            @media (max-width: 1200px) {
+              .oddny-hero { min-height: 600px; }
+              .oddny-hero-inner { padding: 60px 24px; }
+              .oddny-hero-title { font-size: 60px; }
+              .oddny-hero-subtitle { font-size: 28px; }
+              .oddny-hero-illustration { width: 500px; right: -80px; }
+              .oddny-hero-image { width: 180px; right: 40px; }
+            }
+            @media (max-width: 768px) {
+              .oddny-hero { min-height: auto; }
+              .oddny-hero-inner { padding: 40px 20px 320px; }
+              .oddny-hero-title { font-size: 42px; }
+              .oddny-hero-subtitle { font-size: 22px; }
+              .oddny-hero-illustration { width: 350px; right: -50px; top: auto; bottom: -50px; }
+              .oddny-hero-image { width: 140px; right: 20px; top: 40px; }
+            }
+          </style>
+          <div class="oddny-hero-inner">
+            <div class="oddny-hero-text">
+              <h1 class="oddny-hero-title">
+                <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}>{heading || 'Durf te vliegen'}</span><br/>
+                <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading_brown', mode: 'popover' })}>{headingBrown || 'met Oddny'}</span>
+              </h1>
+              <p class="oddny-hero-subtitle" data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}>
+                {subheading || 'Oddny empowers creative independents to protect their value and creative freedom.'}
+              </p>
+              <a href={block.button_link || '#'} class="oddny-hero-cta" data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}>
+                <span>{buttonText || 'Explore'}</span>
+                <svg width="40" height="16" viewBox="0 0 24 16" fill="none"><path d="M0 8H22M22 8L15 1M22 8L15 15" stroke="#FF40B4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </div>
+            <img src="/images/hero-jumping.png" alt="" class="oddny-hero-image" />
+            <div class="oddny-hero-illustration">
+              <svg width="100%" height="100%" viewBox="0 0 680 760" fill="none" style="overflow:visible">
+                <g id="Bear" transform="translate(0, 132)">
+                  <path d="M73.4 715l28 60 64.8-3.3 19.7-30.7.1-.1 10.9-.6-33.3-122.6L73.4 715z" fill="#00FC26"/>
+                  <path d="M567.7 711.3c.2 0 .4.1.5.3.1.2.2.4.1.6l-39.3 100.6 125.9-61 23-49-26.9-200.3-18.3-120.5-59.6-70.4-130.2 450 18.3 11.6 22-56.6c.1-.2.3-.4.6-.4l82.7-4.8h.2z" fill="#00FC26"/>
+                  <path d="M249.4 21.7l4 29.5c7.9-3 16.1-5.5 24.4-7.2 9.6-2 19.3-3.4 29.1-3.4L285.3 0l-35.9 21.7z" fill="#00FC26"/>
+                  <path d="M149.5 130.9l1.7 25.7 33.4-4.8-6.8-33.3-28.3 12.4z" fill="#00FC26"/>
+                  <path d="M185.5 153l-34.2 4.9 2.1 31.4 34.6 14.3 35.9-17.8 43-106.4-87.8 38.5 7 34.3c0 .2 0 .4-.1.5-.1.2-.3.3-.4.3v0z" fill="#00FC26"/>
+                  <path d="M271.9 114.6c-2.3 0-4.4 1.4-5.4 3.6-1.2 3 .2 6.4 3.2 7.6 1.4.6 3 .6 4.4 0 1.4-.6 2.5-1.7 3.1-3.2 1.2-3-.2-6.4-3.2-7.6-.7-.3-1.5-.4-2.2-.4h.1z" fill="#00FC26"/>
+                  <path d="M216.1 87.8c-1.6 0-3.2 1-3.9 2.6-.9 2.2.2 4.6 2.3 5.5 1 .4 2.2.4 3.2 0 1-.4 1.8-1.3 2.2-2.3.4-1 .4-2.2 0-3.2-.4-1-1.2-1.9-2.3-2.3-.5-.2-1-.3-1.6-.3z" fill="#00FC26"/>
+                  <path d="M277.2 122.7c-.6 1.4-1.7 2.6-3.1 3.2-1.4.6-3 .6-4.4 0-3-1.2-4.4-4.6-3.2-7.6.9-2.3 3.1-3.6 5.4-3.6.7 0 1.5.1 2.2.4 3 1.2 4.4 4.6 3.2 7.6h-.1z" fill="#00FC26"/>
+                  <path d="M418.3 121.1c-.2.2-.5.3-.8.1l-34-17.8c-.2-.1-.3-.3-.3-.5l-4.1-30.8c0-.3.1-.5.3-.7l13.9-8.4c-24.3-12.9-51.4-20.2-78.5-20.9-12.9-.9-43.5.8-70.7 15-25.7 13.4-40.1 37.2-47.8 50-.5.9-1.1 1.7-1.5 2.5l74.1-32.5c.3-.1.5-.1.7.1.2.2.3.5.2.7l-43.7 108.2c-.1.1-.2.3-.3.3l-32.6 16.3 54.1 67.3 155.7-60.6 35.8-108.5-19.3 19.7v-.1zm-197.1-27c-.6 1.4-1.6 2.5-3 3-.7.3-1.4.4-2.1.4s-1.4-.1-2.1-.4c-2.8-1.2-4.2-4.4-3-7.3 1.1-2.8 4.4-4.2 7.2-3 1.4.6 2.4 1.6 3 3 .6 1.4.6 2.9 0 4.3zm57.3 29c-.7 1.8-2.1 3.2-3.8 3.9-.9.4-1.8.6-2.7.6s-1.8-.2-2.7-.5c-3.6-1.5-5.4-5.7-3.9-9.4.7-1.8 2.1-3.2 3.8-3.9 1.7-.7 3.7-.8 5.4 0 3.6 1.5 5.4 5.7 3.9 9.4v-.1z" fill="#00FC26"/>
+                  <path d="M384.4 102.4l33.2 17.4 22.4-22.9 3-24-14.1-22.6-12.2.2-36.4 22 4 30v.1z" fill="#00FC26"/>
+                  <path d="M416.9 747.3c.1 0 .2 0 .3.1l24.6 13.5L572.1 310.3l-41.7-55-37.6 18.4c-45.2 41.5-84.6 81.5-107.1 151.4-25.5 76-30.1 181.5-14.5 332.2l46.4-10h.2v-.1z" fill="#00FC26"/>
+                  <path d="M261.3 736.7c.1 0 .3 0 .4.1l15.9 11.2 9.8-259-50.3-89.9-58.6-80.4c-34.1 78.4-42.9 163.6-25.5 246.4 7.1 33.8 16.1 67.4 24.7 98.8l20.9 76.3 62.6-3.4h.1v-.1z" fill="#00FC26"/>
+                  <path d="M186.9 742.1l-38.8 60.4 153.2-8.3-1.5-28.8-38.6-27.3-74.3 4z" fill="#00FC26"/>
+                  <path d="M22.3 775.5l44.7 13.6 33.1-13.8-46.9-100.6-53.2 45.9 22.3 54.9z" fill="#00FC26"/>
+                  <path d="M486.7 816.3l34.2 13.7 45.8-117.3-81.3 4.8-22.1 56.6 23.4 42.2z" fill="#00FC26"/>
+                  <path d="M344.1 764.4l-27.9 71.3 150-32.5-6.3-29.9-18-10.8-25.1-13.8-72.7 15.7z" fill="#00FC26"/>
+                  <path d="M179.2 317.4l59.1 81 50 89.4 135.1-141.4c24-33.2 54.5-60.8 66-71.2 1.1-1 2.1-1.9 2.8-2.5l.1-.1 37.5-18.3-90.5-153.8-36.3 110.2c-.1.2-.2.3-.4.4L246.2 271.9c-.3.1-.6 0-.8-.2l-15.8-19.7-50.4 65.3v.1z" fill="#00FC26"/>
+                  <path d="M279 749.1l21.9 15.6c.2.1.3.3.3.5l.3 6.2 38.6-.2 3-8.1 26-5.6c-5-42.9-7.9-86-8.6-128.7-1.8-101.5 9.5-151.7 13.3-168.2 5.5-24.6 12-44.3 20.9-63.9 7.9-17.3 14.7-30.1 25.7-45.7L289 489.1l-9.9 260h-.1z" fill="#00FC26"/>
+                </g>
+                <g id="Bird" transform="translate(200, 16)">
+                  <path d="M35.7 15.2c-.3-3.3-.5-6.5-.8-9.7-.3.1-.5.2-.7.3-2.1 1-4.2 2-6.4 3-.9.4-1.8.9-2.6 1.3-.1.1-.2.1-.2.3.1 1.2.1 2.4.2 3.5.2 2.5.5 5 .7 7.5.1.6.1 1.3.1 1.9-.1 1.2-.7 2-1.7 2.5-1 .5-2.1.7-3.2.5-1.1-.2-1.9-.8-2.2-1.9-.5-1.4.2-2.7 1.6-3.3.9-.4 1.9-.3 2.9-.1.6.1 1.2.3 1.8.4 0-.3 0-.7 0-1-.1-1.7-.2-3.3-.4-5-.1-1.3-.2-2.5-.4-3.8-.1-1.1-.3-2.2-.4-3.3-.1-.8-.1-1.6.1-2.4.1-.3.2-.6.3-.8.1-.3.4-.5.7-.7 1.3-.6 2.5-1.2 3.8-1.8 1.7-.8 3.3-1.5 5-2.4.2-.1.5-.2.8-.3.4-.1.7 0 .8.4.1.5.3.9.3 1.4.1 1.5.2 2.9.4 4.4.2 2.2.4 4.5.5 6.7.1.9.2 1.8.3 2.7.1.6 0 1.1-.1 1.7-.2.9-.7 1.6-1.5 2-1.6.8-3.2.8-4.7-.2-.7-.4-1.1-1.1-1-2.1.1-.7.5-1.3 1-1.8.6-.5 1.4-.7 2.2-.8 1.1-.1 2.2.2 3.2.6h.1z" fill="#FF40B4"/>
+                  <path d="M8.1 73.7v-.6c.1-1.8.2-3.5.2-5.3.1-2.6.2-5.2.3-7.7v-1.9c0-.1 0-.2 0-.3.1-.5.4-.8.9-.9.6-.1 1.2 0 1.8.1 1.4.2 2.7.6 3.8 1.5 2.3 1.7 3.2 4 2.8 6.8-.2 1.4-.7 2.7-1.4 3.9v.1c0-.4 0-.8 0-1.1 0-.6 0-1.2 0-1.8 0-1.3-.5-2.4-1.5-3.3-1.1-1.1-2.4-1.7-3.9-1.8-.5 0-1 0-1.5.2-.1 0-.1 0-.1.2.1 1.9 0 3.9-.1 5.8-.1 2.2-.2 4.4-.2 6.7 0 .7-.1 1.4-.2 2.1-.3 1.4-1.2 2.3-2.5 2.7-1.8.5-3.6.2-5.2-.8-.6-.4-1-.8-1.2-1.5-.2-.6-.1-1.2.2-1.8.7-1.5 1.9-2.1 3.5-2.2 1.4 0 2.6.4 3.9 1 .1.1.3.1.4.2h.1z" fill="#FF40B4"/>
+                </g>
+              </svg>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // ===== ODDNY CARDS BLOCK =====
+    if (variant === 'oddny-cards') {
+      // Get card-specific fields
+      const card1Title = block.card1_title_en || block.card1_title || 'Lorem ipsum dolor sit amet';
+      const card1Desc = block.card1_description_en || block.card1_description || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.';
+      const card2Title = block.card2_title_en || block.card2_title || 'Lorem ipsum dolor sit amet';
+      const card2Desc = block.card2_description_en || block.card2_description || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.';
+      const card3Title = block.card3_title_en || block.card3_title || 'Lorem ipsum dolor sit amet';
+      const card3Desc = block.card3_description_en || block.card3_description || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.';
+
+      const card1Image = block.image ? getImageUrl(block.image) : '/images/card-1.png';
+      const card2Image = block.image_2 ? getImageUrl(block.image_2) : '/images/card-2.png';
+      const card3Image = block.image_3 ? getImageUrl(block.image_3) : '/images/card-3.png';
+
+      return (
+        <section
+          class="oddny-cards-section"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <style is:inline>
+            .oddny-cards-section {
+              width: 100%;
+              background-color: white;
+              padding: 40px 5%;
+              box-sizing: border-box;
+              font-family: 'Neue Haas Grotesk Display Pro', -apple-system, 'Inter', Roboto, Helvetica, sans-serif;
+            }
+
+            .oddny-cards-container {
+              max-width: 1440px;
+              margin: 0 auto;
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 40px;
+            }
+
+            .oddny-card {
+              display: flex;
+              flex-direction: column;
+            }
+
+            .oddny-card-image {
+              width: 100%;
+              aspect-ratio: 400 / 350;
+              border-radius: 10px;
+              overflow: hidden;
+              margin-bottom: 24px;
+            }
+
+            .oddny-card-image img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              filter: grayscale(100%);
+            }
+
+            .oddny-card-title {
+              font-size: clamp(20px, 2vw, 28px);
+              font-weight: 500;
+              line-height: 1.14;
+              color: #42383e;
+              margin: 0 0 12px 0;
+            }
+
+            .oddny-card-description {
+              font-size: clamp(14px, 1.1vw, 16px);
+              font-weight: 300;
+              line-height: 1.4;
+              color: #888484;
+              margin: 0;
+            }
+
+            @media (max-width: 1024px) {
+              .oddny-cards-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 30px;
+              }
+            }
+
+            @media (max-width: 640px) {
+              .oddny-cards-section {
+                padding: 30px 5%;
+              }
+
+              .oddny-cards-container {
+                grid-template-columns: 1fr;
+                gap: 40px;
+              }
+            }
+          </style>
+
+          <div class="oddny-cards-container">
+            {/* Card 1 */}
+            <div class="oddny-card">
+              <div
+                class="oddny-card-image"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image', mode: 'popover' })}
+              >
+                <img src={card1Image} alt="" />
+              </div>
+              <h3
+                class="oddny-card-title"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >{heading || card1Title}</h3>
+              <p
+                class="oddny-card-description"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+              >{subheading || card1Desc}</p>
+            </div>
+
+            {/* Card 2 */}
+            <div class="oddny-card">
+              <div
+                class="oddny-card-image"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image_2', mode: 'popover' })}
+              >
+                <img src={card2Image} alt="" />
+              </div>
+              <h3
+                class="oddny-card-title"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'popover' })}
+              >{content || card2Title}</h3>
+              <p
+                class="oddny-card-description"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'text', mode: 'popover' })}
+              >{text || card2Desc}</p>
+            </div>
+
+            {/* Card 3 */}
+            <div class="oddny-card">
+              <div
+                class="oddny-card-image"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image_3', mode: 'popover' })}
+              >
+                <img src={card3Image} alt="" />
+              </div>
+              <h3
+                class="oddny-card-title"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'button_text', mode: 'popover' })}
+              >{buttonText || card3Title}</h3>
+              <p class="oddny-card-description">{card3Desc}</p>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // ===== ODDNY COLOR CARDS =====
+    if (variant === 'oddny-color-cards') {
+      // Card data - 6 cards cycling through 3 types
+      const cardTypes = [
+        { type: 'News', color: '#FF40B4', defaultTitle: 'Oddny empowers creative independents to protect their value' },
+        { type: 'Tools', color: '#7FE8D9', defaultTitle: 'Ten easy ways you can improve your work space' },
+        { type: 'Community', color: '#40FF4F', defaultTitle: 'Connect and collaborate with fellow Oddny members' },
+      ];
+
+      return (
+        <section
+          class="oddny-color-cards-section"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <style>
+            .oddny-color-cards-section {
+              background-color: rgba(217, 217, 217, 0.72);
+              padding: 40px 0 60px 0;
+              width: 100%;
+            }
+            .oddny-color-cards-scroll {
+              display: flex;
+              flex-wrap: nowrap;
+              gap: 20px;
+              justify-content: center;
+              max-width: 1400px;
+              margin: 0 auto;
+              padding: 0 20px;
+            }
+            .oddny-color-card {
+              flex: 1 1 0;
+              min-width: 150px;
+              max-width: 200px;
+              height: 106px;
+              border-radius: 10px;
+              box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.1);
+              display: flex;
+              flex-direction: column;
+              padding: 12px;
+              cursor: pointer;
+              border: none;
+              outline: none;
+              text-align: left;
+              transition: transform 0.2s ease;
+              text-decoration: none;
+            }
+            .oddny-color-card:hover {
+              transform: scale(1.05);
+            }
+            .oddny-color-card-header {
+              display: flex;
+              width: 100%;
+              justify-content: flex-end;
+            }
+            .oddny-color-card-type {
+              font-family: 'Inter', sans-serif;
+              font-size: 10px;
+              font-weight: 500;
+              color: white;
+              opacity: 0.9;
+            }
+            .oddny-color-card-body {
+              margin-top: 4px;
+              display: flex;
+              flex-direction: column;
+              flex: 1;
+              justify-content: space-between;
+            }
+            .oddny-color-card-title {
+              font-family: 'Inter', sans-serif;
+              font-size: 12px;
+              font-weight: 700;
+              line-height: 1.3;
+              color: white;
+              margin: 0;
+            }
+            .oddny-color-card-arrow {
+              align-self: flex-end;
+              width: 12px;
+              height: 12px;
+              color: white;
+              opacity: 0.8;
+            }
+            @media (max-width: 900px) {
+              .oddny-color-cards-scroll {
+                flex-wrap: wrap;
+                gap: 12px;
+              }
+              .oddny-color-card {
+                flex: 0 0 calc(33.333% - 8px);
+                min-width: unset;
+                max-width: unset;
+              }
+            }
+            @media (max-width: 640px) {
+              .oddny-color-card {
+                flex: 0 0 calc(50% - 6px);
+                height: 100px;
+              }
+            }
+          </style>
+
+          <div class="oddny-color-cards-scroll">
+            {/* Card 1 - News */}
+            <a href={block.button_link || '#'} class="oddny-color-card" style={`background-color: ${cardTypes[0].color};`}>
+              <div class="oddny-color-card-header">
+                <span class="oddny-color-card-type">{cardTypes[0].type}</span>
+              </div>
+              <div class="oddny-color-card-body">
+                <p
+                  class="oddny-color-card-title"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+                >"{heading || cardTypes[0].defaultTitle}"</p>
+                <svg class="oddny-color-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </a>
+
+            {/* Card 2 - Tools */}
+            <a href={block.button_link || '#'} class="oddny-color-card" style={`background-color: ${cardTypes[1].color};`}>
+              <div class="oddny-color-card-header">
+                <span class="oddny-color-card-type">{cardTypes[1].type}</span>
+              </div>
+              <div class="oddny-color-card-body">
+                <p
+                  class="oddny-color-card-title"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+                >"{subheading || cardTypes[1].defaultTitle}"</p>
+                <svg class="oddny-color-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </a>
+
+            {/* Card 3 - Community */}
+            <a href={block.button_link || '#'} class="oddny-color-card" style={`background-color: ${cardTypes[2].color};`}>
+              <div class="oddny-color-card-header">
+                <span class="oddny-color-card-type">{cardTypes[2].type}</span>
+              </div>
+              <div class="oddny-color-card-body">
+                <p
+                  class="oddny-color-card-title"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'popover' })}
+                >"{content || cardTypes[2].defaultTitle}"</p>
+                <svg class="oddny-color-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </a>
+
+            {/* Card 4 - News (repeat) */}
+            <a href={block.button_link || '#'} class="oddny-color-card" style={`background-color: ${cardTypes[0].color};`}>
+              <div class="oddny-color-card-header">
+                <span class="oddny-color-card-type">{cardTypes[0].type}</span>
+              </div>
+              <div class="oddny-color-card-body">
+                <p
+                  class="oddny-color-card-title"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'text', mode: 'popover' })}
+                >"{text || cardTypes[0].defaultTitle}"</p>
+                <svg class="oddny-color-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </a>
+
+            {/* Card 5 - Tools (repeat) */}
+            <a href={block.button_link || '#'} class="oddny-color-card" style={`background-color: ${cardTypes[1].color};`}>
+              <div class="oddny-color-card-header">
+                <span class="oddny-color-card-type">{cardTypes[1].type}</span>
+              </div>
+              <div class="oddny-color-card-body">
+                <p
+                  class="oddny-color-card-title"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'button_text', mode: 'popover' })}
+                >"{buttonText || cardTypes[1].defaultTitle}"</p>
+                <svg class="oddny-color-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </a>
+
+            {/* Card 6 - Community (repeat) */}
+            <a href={block.button_link || '#'} class="oddny-color-card" style={`background-color: ${cardTypes[2].color};`}>
+              <div class="oddny-color-card-header">
+                <span class="oddny-color-card-type">{cardTypes[2].type}</span>
+              </div>
+              <div class="oddny-color-card-body">
+                <p class="oddny-color-card-title">"{cardTypes[2].defaultTitle}"</p>
+                <svg class="oddny-color-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </a>
+          </div>
+        </section>
+      );
+    }
+
+    // ===== ODDNY PARTNERS SECTION =====
+    if (variant === 'oddny-partners') {
+      // Individual partner cards - each editable separately
+      const partners = [
+        {
+          name: block[`partner1_name_${locale}`] || 'Merlijin Poolman',
+          role: block[`partner1_role_${locale}`] || 'Music night mayor, EU',
+          nameField: `partner1_name_${locale}`,
+          roleField: `partner1_role_${locale}`
+        },
+        {
+          name: block[`partner2_name_${locale}`] || 'Anthony Michael',
+          role: block[`partner2_role_${locale}`] || 'Designer',
+          nameField: `partner2_name_${locale}`,
+          roleField: `partner2_role_${locale}`
+        },
+        {
+          name: block[`partner3_name_${locale}`] || 'Jos de Krieger',
+          role: block[`partner3_role_${locale}`] || 'Architect',
+          nameField: `partner3_name_${locale}`,
+          roleField: `partner3_role_${locale}`
+        },
+        {
+          name: block[`partner4_name_${locale}`] || 'Ina Sok',
+          role: block[`partner4_role_${locale}`] || 'Artist',
+          nameField: `partner4_name_${locale}`,
+          roleField: `partner4_role_${locale}`
+        },
+        {
+          name: block[`partner5_name_${locale}`] || 'Merlijin Poolman',
+          role: block[`partner5_role_${locale}`] || 'Music night mayor, EU',
+          nameField: `partner5_name_${locale}`,
+          roleField: `partner5_role_${locale}`
+        },
+        {
+          name: block[`partner6_name_${locale}`] || 'Anthony Michael',
+          role: block[`partner6_role_${locale}`] || 'Designer',
+          nameField: `partner6_name_${locale}`,
+          roleField: `partner6_role_${locale}`
+        },
+      ];
+
+      // Default benefits text - can be edited via benefits field
+      const defaultBenefitsText = `Benefits of being an Oddny Partner
+1. Boost your network
+2. Build strong connections
+3. Generate new business
+4. Empower the creative sector`;
+
+      // Parse benefits from locale-specific field or use default
+      const benefits = block[`benefits_${locale}`] || block.benefits || defaultBenefitsText;
+      const benefitsText = benefits;
+      const benefitsLines = benefitsText.split('\n').filter((line: string) => line.trim());
+      const benefitsTitle = benefitsLines[0] || 'Benefits of being an Oddny Partner';
+      const benefitsList = benefitsLines.slice(1).map((line: string) => line.replace(/^\d+\.\s*/, ''));
+
+      return (
+        <section
+          class="oddny-partners-section"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <style>
+            .oddny-partners-section {
+              width: 100%;
+              background-color: rgba(217, 217, 217, 0.72);
+              padding: 45px 85px 60px;
+              box-sizing: border-box;
+              font-family: 'Neue Haas Grotesk Display Pro', -apple-system, sans-serif;
+            }
+            .oddny-partners-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr 1fr;
+              gap: 40px;
+              max-width: 1320px;
+              margin: 0 auto;
+            }
+            .oddny-partners-col {
+              display: flex;
+              flex-direction: column;
+            }
+            .oddny-partners-title {
+              font-size: 28px;
+              font-weight: 500;
+              line-height: 32px;
+              color: #42383e;
+              margin: 0 0 4px 0;
+            }
+            .oddny-partners-subtitle {
+              font-size: 22px;
+              line-height: 32px;
+              color: #42383e;
+              opacity: 0.9;
+              margin: 0 0 24px 0;
+            }
+            .oddny-benefits-card {
+              background: white;
+              border-radius: 10px;
+              padding: 20px;
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+            }
+            .oddny-benefits-title {
+              font-size: 20px;
+              font-weight: 700;
+              line-height: 1.3;
+              color: #42383e;
+              margin: 0;
+            }
+            .oddny-benefits-list {
+              list-style: decimal;
+              list-style-position: inside;
+              margin: 0;
+              padding: 0;
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+            }
+            .oddny-benefits-list li {
+              font-size: 20px;
+              font-weight: 700;
+              line-height: 1.3;
+              color: #42383e;
+            }
+            .oddny-partners-link {
+              display: inline-flex;
+              align-items: center;
+              gap: 12px;
+              color: #ff40b4;
+              text-decoration: none;
+              font-size: 18px;
+              font-weight: 500;
+              margin-top: 18px;
+              background: none;
+              border: none;
+              cursor: pointer;
+              padding: 0;
+            }
+            .oddny-partners-link:hover {
+              opacity: 0.75;
+            }
+            .oddny-partners-link svg {
+              width: 20px;
+              height: 20px;
+            }
+            .oddny-partner-cards {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 12px;
+            }
+            .oddny-partner-card {
+              background: white;
+              border-radius: 8px;
+              padding: 8px 10px;
+              height: 54px;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+            }
+            .oddny-partner-name {
+              font-size: 16px;
+              font-weight: 500;
+              line-height: 1.2;
+              color: #42383e;
+              margin: 0;
+            }
+            .oddny-partner-role {
+              font-size: 14px;
+              font-weight: 500;
+              line-height: 1.2;
+              color: #42383e;
+              opacity: 0.8;
+              margin: 2px 0 0 0;
+            }
+            .oddny-bird-col {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+            }
+            .oddny-speech-bubble {
+              position: relative;
+              background: white;
+              border-radius: 8px;
+              padding: 10px 4px;
+              min-width: 180px;
+              max-width: 280px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+              margin-bottom: 8px;
+            }
+            .oddny-speech-bubble::after {
+              content: '';
+              position: absolute;
+              bottom: -12px;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 0;
+              height: 0;
+              border-left: 10px solid transparent;
+              border-right: 10px solid transparent;
+              border-top: 12px solid white;
+            }
+            .oddny-speech-text {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .oddny-speech-text p {
+              font-size: 16px;
+              font-weight: 500;
+              color: #42383e;
+              margin: 0;
+              text-align: center;
+              line-height: 1.4;
+            }
+            .oddny-bird-img {
+              width: 232px;
+              height: 223px;
+              object-fit: contain;
+            }
+            @media (max-width: 1100px) {
+              .oddny-partners-grid {
+                grid-template-columns: 1fr 1fr;
+              }
+              .oddny-bird-col {
+                display: none;
+              }
+            }
+            @media (max-width: 768px) {
+              .oddny-partners-section {
+                padding: 30px 20px 40px;
+              }
+              .oddny-partners-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+              }
+            }
+          </style>
+
+          <div class="oddny-partners-grid">
+            {/* Left Column - Why partner */}
+            <div class="oddny-partners-col">
+              <h2
+                class="oddny-partners-title"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `heading_${locale}`, mode: 'popover' })}
+              >{heading || 'Why partner with Oddny?'}</h2>
+              <p
+                class="oddny-partners-subtitle"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `subheading_${locale}`, mode: 'popover' })}
+              >{subheading || 'Experience the benefits yourself'}</p>
+              <div
+                class="oddny-benefits-card"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `benefits_${locale}`, mode: 'popover' })}
+              >
+                <p class="oddny-benefits-title">{benefitsTitle}</p>
+                <ol class="oddny-benefits-list">
+                  {benefitsList.map((b: string) => <li>{b}</li>)}
+                </ol>
+              </div>
+              <a
+                href={block.button_link || '/partners'}
+                class="oddny-partners-link"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `button_text_${locale},button_link`, mode: 'popover' })}
+              >
+                <span>{buttonText || 'Become a Partner'}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+            </div>
+
+            {/* Middle Column - Our Partners */}
+            <div class="oddny-partners-col">
+              <h2
+                class="oddny-partners-title"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `content_${locale}`, mode: 'popover' })}
+              >{content || 'Our Partners'}</h2>
+              <p
+                class="oddny-partners-subtitle"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `partners_subtitle_${locale}`, mode: 'popover' })}
+              >{block[`partners_subtitle_${locale}`] || block.partners_subtitle || 'Experience the benefits yourself'}</p>
+              <div class="oddny-partner-cards">
+                {partners.map((p) => (
+                  <div
+                    class="oddny-partner-card"
+                    data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `${p.nameField},${p.roleField}`, mode: 'popover' })}
+                  >
+                    <p class="oddny-partner-name">{p.name}</p>
+                    <p class="oddny-partner-role">{p.role}</p>
+                  </div>
+                ))}
+              </div>
+              <a
+                href={block.button_link_2 || '/partners'}
+                class="oddny-partners-link"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `text_${locale},button_link_2`, mode: 'popover' })}
+              >
+                <span>{text || 'More Partners'}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+            </div>
+
+            {/* Right Column - Bird */}
+            <div class="oddny-bird-col">
+              <div
+                class="oddny-speech-bubble"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `speech_text_${locale}`, mode: 'popover' })}
+              >
+                <div class="oddny-speech-text">
+                  <p>{block[`speech_text_${locale}`] || block.speech_text || '"Join our community today"'}</p>
+                </div>
+              </div>
+              <img src="/images/oddny-bird-pink.png" alt="Oddny Bird" class="oddny-bird-img" />
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // ===== ODDNY HUB SECTION =====
+    if (variant === 'oddny-hub') {
+      const defaultIntro = "Welcome to my hub, where I have gathered knowledge, ideas, and products to improve your creative world.";
+      const defaultStep1Title = "Step One: Idea generation and research";
+      const defaultStep2Title = "Step Two: Production";
+      const defaultStep3Title = "Step Three: Presentation";
+      const defaultStepDesc = "nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.";
+
+      return (
+        <section
+          class="oddny-hub-section"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <style>
+            .oddny-hub-section {
+              position: relative;
+              padding: 60px 80px 80px;
+              background: white;
+              overflow: hidden;
+              max-width: 1400px;
+              margin: 0 auto;
+            }
+            .oddny-hub-top {
+              position: relative;
+              min-height: 500px;
+            }
+            .oddny-hub-content {
+              max-width: 620px;
+              margin-left: 150px;
+            }
+            .oddny-hub-intro {
+              font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+              font-size: 28px;
+              font-weight: 500;
+              line-height: 1.4;
+              color: #42383e;
+              margin-bottom: 40px;
+            }
+            .oddny-hub-steps-content {
+              font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+            }
+            .oddny-hub-steps-content h3 {
+              font-size: 28px;
+              font-weight: 500;
+              line-height: 1.4;
+              color: #42383e;
+              margin: 0 0 8px 0;
+            }
+            .oddny-hub-steps-content p {
+              font-size: 16px;
+              line-height: 1.4;
+              color: #acaaaa;
+              margin: 0 0 32px 0;
+              max-width: 557px;
+            }
+            .oddny-hub-steps-content p:last-child {
+              margin-bottom: 0;
+            }
+            .oddny-hub-bear {
+              position: absolute;
+              right: 0;
+              top: 0;
+              width: 413px;
+              height: 491px;
+            }
+            .oddny-hub-bird {
+              position: absolute;
+              left: 0;
+              top: 420px;
+              width: 168px;
+              height: 161px;
+              transform: scaleX(-1);
+            }
+            .oddny-hub-bird img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+            .oddny-hub-speech1 {
+              position: absolute;
+              right: 420px;
+              top: 100px;
+              background: #d9d9d9;
+              border-radius: 4px;
+              padding: 8px 12px;
+              font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+              font-size: 16px;
+              color: #42383e;
+            }
+            .oddny-hub-speech1::after {
+              content: '';
+              position: absolute;
+              right: -10px;
+              top: 50%;
+              transform: translateY(-50%);
+              border-width: 8px;
+              border-style: solid;
+              border-color: transparent transparent transparent #d9d9d9;
+            }
+            .oddny-hub-speech2 {
+              position: absolute;
+              left: 44px;
+              top: 380px;
+              background: #d9d9d9;
+              border-radius: 4px;
+              padding: 8px 12px;
+              font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+              font-size: 16px;
+              color: #42383e;
+              max-width: 126px;
+            }
+            .oddny-hub-speech2::after {
+              content: '';
+              position: absolute;
+              bottom: -10px;
+              left: 50%;
+              transform: translateX(-50%);
+              border-width: 8px;
+              border-style: solid;
+              border-color: #d9d9d9 transparent transparent transparent;
+            }
+            .oddny-hub-more-link {
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              color: #ff40b4;
+              text-decoration: none;
+              font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+              font-size: 20px;
+              font-weight: 500;
+              margin-top: 16px;
+              margin-left: 150px;
+            }
+            .oddny-hub-more-link:hover {
+              opacity: 0.75;
+            }
+            .oddny-hub-more-link svg {
+              width: 24px;
+              height: 16px;
+            }
+            .oddny-hub-cards {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 40px;
+              margin-top: 60px;
+            }
+            .oddny-hub-card {
+              position: relative;
+              border-radius: 10px;
+              overflow: hidden;
+              box-shadow: 1px 1px 4px 1px rgba(0,0,0,0.1);
+              padding: 30px;
+              min-height: 349px;
+              display: flex;
+              flex-direction: column;
+              font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+              color: white;
+            }
+            .oddny-hub-card.tools {
+              background: #00FC26;
+            }
+            .oddny-hub-card.guides {
+              background: #ff40b4;
+            }
+            .oddny-hub-card.products {
+              background: #90E0D9;
+            }
+            .oddny-hub-card-label {
+              text-align: right;
+              font-size: 16px;
+              margin-bottom: 24px;
+            }
+            .oddny-hub-card-text {
+              font-size: 28px;
+              line-height: 1.4;
+              margin: 0;
+              flex: 1;
+            }
+            .oddny-hub-card-link {
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              color: #ff40b4;
+              text-decoration: none;
+              font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+              font-size: 16px;
+              font-weight: 500;
+              margin-top: 12px;
+              justify-content: flex-end;
+            }
+            .oddny-hub-card-link:hover {
+              opacity: 0.75;
+            }
+            .oddny-hub-card-link svg {
+              width: 20px;
+              height: 14px;
+            }
+            .oddny-hub-card-link-inner {
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              color: white;
+              text-decoration: none;
+              font-size: 16px;
+              margin-top: auto;
+            }
+            .oddny-hub-card-link-inner:hover {
+              opacity: 0.75;
+            }
+            .oddny-hub-card-link-inner svg {
+              width: 20px;
+              height: 14px;
+            }
+            @media (max-width: 1200px) {
+              .oddny-hub-bear {
+                width: 300px;
+                height: auto;
+              }
+              .oddny-hub-cards {
+                gap: 24px;
+              }
+            }
+            @media (max-width: 900px) {
+              .oddny-hub-section {
+                padding: 40px 20px;
+              }
+              .oddny-hub-content {
+                margin-left: 0;
+                max-width: 100%;
+              }
+              .oddny-hub-bear {
+                position: relative;
+                right: auto;
+                top: auto;
+                width: 250px;
+                margin: 40px auto 0;
+                display: block;
+              }
+              .oddny-hub-bird,
+              .oddny-hub-speech1,
+              .oddny-hub-speech2 {
+                display: none;
+              }
+              .oddny-hub-more-link {
+                margin-left: 0;
+              }
+              .oddny-hub-intro,
+              .oddny-hub-steps-content h3 {
+                font-size: 22px;
+              }
+              .oddny-hub-cards {
+                grid-template-columns: 1fr;
+                gap: 24px;
+              }
+              .oddny-hub-top {
+                min-height: auto;
+              }
+            }
+          </style>
+
+          <div class="oddny-hub-top">
+            <div class="oddny-hub-content">
+              <p
+                class="oddny-hub-intro"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `heading_${locale}`, mode: 'popover' })}
+              >{heading || defaultIntro}</p>
+
+              <div
+                class="oddny-hub-steps-content"
+                data-richtext
+                data-richtext-collection="blocks"
+                data-richtext-item={block.id}
+                data-richtext-field={`steps_content_${locale}`}
+                set:html={block[`steps_content_${locale}`] || `
+                  <h3>Step One: Idea generation and research</h3>
+                  <p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>
+                  <h3>Step Two: Production</h3>
+                  <p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>
+                  <h3>Step Three: Presentation</h3>
+                  <p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>
+                `}
+              />
+            </div>
+
+            {/* More Tools Link */}
+            <a
+              href={block.button_link || '#'}
+              class="oddny-hub-more-link"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `button_text_${locale},button_link`, mode: 'popover' })}
+            >
+              <span>{buttonText || 'More Tools'}</span>
+              <svg viewBox="0 0 30 20" fill="none"><path d="M0 10H28M28 10L18 2M28 10L18 18" stroke="currentColor" stroke-width="2"/></svg>
+            </a>
+
+            {/* Green Bear SVG */}
+            <div class="oddny-hub-bear">
+            <svg viewBox="0 0 413 491" fill="none" preserveAspectRatio="xMidYMid meet">
+              <g clip-path="url(#hubclip)">
+                <path d="M14.4148 453.964L41.551 462.134L61.7093 453.851L33.2163 393.498L0.867133 421.038L14.4148 453.974V453.964Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M69.391 109.906L76.2057 123.839L93.9972 113.476L82.5306 96.4517L69.391 109.916V109.906Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M100.679 26.4181L109.667 41.963C113.421 38.4236 117.502 35.1902 121.796 32.3342C126.795 29.0192 131.998 26.0713 137.558 23.7967L115.982 6.01803L100.689 26.4079L100.679 26.4181Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M83.0203 95.9315L94.7725 113.384C94.8235 113.465 94.8439 113.557 94.8235 113.649C94.8031 113.741 94.7419 113.822 94.6603 113.873L76.5117 124.451L84.8362 141.465H107.596L123.735 123.308V54.2235L83.0203 95.9315Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M296.151 478.372L316.952 486.604L344.803 416.193L295.356 419.049L281.91 453.035L296.131 478.383L296.151 478.372Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M45.3969 417.682L62.3927 453.678L101.812 451.73L113.788 433.319C113.849 433.227 113.951 433.166 114.053 433.166L120.705 432.809L100.434 359.205L45.3765 417.672L45.3969 417.682Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M114.268 433.839L90.6409 470.141L183.761 465.133L182.832 447.813L159.359 431.421L114.268 433.849V433.839Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M253.825 437.062C253.886 437.062 253.937 437.072 253.988 437.103L268.954 445.222L348.087 175.319L322.757 142.332L299.895 153.348C272.443 178.195 248.561 202.175 234.33 244.067C218.874 289.58 216.079 352.83 225.526 443.09L253.743 437.062C253.743 437.062 253.794 437.062 253.815 437.062H253.825Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M224.506 25.7347L218.13 42.6464C218.069 42.7892 217.936 42.8708 217.783 42.8606L194.676 40.8206C194.564 40.8206 194.462 40.7492 194.411 40.6472L185.097 24.5311C185.026 24.4087 185.036 24.2659 185.118 24.1537L191.075 16.2181C174.447 14.6167 157.532 16.8301 142.128 22.6441C134.671 25.1227 117.4 33.548 105.301 47.7159C93.9054 61.0575 91.2223 77.5816 89.7737 86.4557C89.6615 87.1493 89.5595 87.7919 89.4575 88.3835L123.847 53.1525C123.949 53.0505 124.092 53.0199 124.224 53.0709C124.357 53.1219 124.439 53.2545 124.439 53.3871V123.451C124.439 123.533 124.408 123.614 124.347 123.676L109.667 140.23L155.431 165.2L229.178 95.7581L224.516 25.7347H224.506ZM98.0166 76.3372C96.2109 76.3372 94.7419 74.8684 94.7419 73.063C94.7419 71.2576 96.2109 69.7888 98.0166 69.7888C99.8223 69.7888 101.291 71.2576 101.291 73.063C101.291 74.8684 99.8223 76.3372 98.0166 76.3372ZM135.813 80.254C133.467 80.254 131.559 78.3466 131.559 76.0006C131.559 73.6546 133.467 71.7472 135.813 71.7472C138.16 71.7472 140.067 73.6546 140.067 76.0006C140.067 78.3466 138.16 80.254 135.813 80.254Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M135.813 72.4306C133.845 72.4306 132.243 74.032 132.243 76.0006C132.243 77.9692 133.845 79.5706 135.813 79.5706C137.782 79.5706 139.384 77.9692 139.384 76.0006C139.384 74.032 137.782 72.4306 135.813 72.4306Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M109.473 179.399L145.423 228.053L175.793 281.664L261.344 192.24C261.344 192.24 266.077 185.988 272.984 178.532C282.563 168.199 295.243 156.489 299.548 152.725C299.569 152.705 299.599 152.685 299.63 152.674L322.41 141.699L224.955 24.2557L229.872 95.8601C229.872 95.9621 229.841 96.0641 229.76 96.1355L155.706 165.853C155.594 165.955 155.431 165.975 155.309 165.904L114.982 143.902L109.473 179.378V179.399Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M194.911 40.1474L217.579 42.1466L224.475 23.7661L221.241 10.1593L208.122 0.826204L201.246 3.77402L185.791 24.3781L194.901 40.1474H194.911Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M209.652 447.191L192.656 490.011L283.848 470.529L280.002 452.525L269.046 446.048L253.784 437.766L209.662 447.191H209.652Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M159.461 430.728C159.532 430.728 159.603 430.748 159.654 430.789L169.387 437.552L175.365 282.317L144.862 228.461L109.228 180.235C99.0572 203.307 92.5486 227.645 89.8758 252.574C87.1723 277.849 88.4679 303.197 93.7421 327.891C98.0574 348.128 103.485 368.283 108.708 387.051L121.419 432.768L159.45 430.718C159.45 430.718 159.461 430.718 159.471 430.718L159.461 430.728Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M345.323 415.479C345.435 415.479 345.537 415.53 345.598 415.622C345.67 415.713 345.68 415.836 345.639 415.948L321.747 476.343L398.289 439.724L412.245 410.358L395.943 290.365L384.854 218.179L348.618 175.941L269.576 445.559L281.369 452.546L294.805 418.58C294.856 418.457 294.968 418.365 295.101 418.365L345.302 415.469C345.302 415.469 345.313 415.469 345.323 415.469V415.479Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M98.0166 70.4722C96.5884 70.4722 95.4254 71.635 95.4254 73.063C95.4254 74.491 96.5884 75.6538 98.0166 75.6538C99.4448 75.6538 100.608 74.491 100.608 73.063C100.608 71.635 99.4448 70.4722 98.0166 70.4722Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+                <path d="M170.101 438.143L183.414 447.487C183.506 447.548 183.557 447.64 183.557 447.752L183.761 451.505L207.347 451.403L209.122 446.783C209.163 446.681 209.254 446.599 209.367 446.569L224.904 443.254C221.853 417.529 220.099 391.641 219.65 366.049C218.579 305.277 225.434 275.228 227.689 265.354C231.045 250.646 234.973 238.855 240.349 227.094C246.898 212.763 250.887 206.949 258.905 195.657L176.089 282.399L170.091 438.143H170.101Z" fill="#00FC26" stroke="white" stroke-miterlimit="10" stroke-width="1.42"/>
+              </g>
+              <defs>
+                <clipPath id="hubclip">
+                  <rect fill="white" height="491" width="413"/>
+                </clipPath>
+              </defs>
+            </svg>
+            </div>
+
+            {/* Pink Bird with Stick */}
+            <div class="oddny-hub-bird">
+              <img src="/images/oddny-bird-stick.png" alt="Oddny bird" />
+            </div>
+
+            {/* Speech Bubbles */}
+            <div
+              class="oddny-hub-speech1"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `hub_speech1_${locale}`, mode: 'popover' })}
+            >{block[`hub_speech1_${locale}`] || '"That\'s a nice stick Harrison"'}</div>
+            <div
+              class="oddny-hub-speech2"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `hub_speech2_${locale}`, mode: 'popover' })}
+            >{block[`hub_speech2_${locale}`] || '"Oddny, I\'ve found a stick!"'}</div>
+          </div>
+
+          {/* Cards Section */}
+          <div class="oddny-hub-cards">
+            {/* Tools Card - Green */}
+            <div>
+              <div class="oddny-hub-card tools">
+                <div
+                  class="oddny-hub-card-label"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'card1_label', mode: 'popover' })}
+                >{block.card1_label || 'Tools'}</div>
+                <p
+                  class="oddny-hub-card-text"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `card1_text_${locale}`, mode: 'popover' })}
+                >{block[`card1_text_${locale}`] || 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim'}</p>
+              </div>
+              <a
+                href={block.tools_link || '#'}
+                class="oddny-hub-card-link"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `tools_link_text_${locale},tools_link`, mode: 'popover' })}
+              >
+                <span>{block[`tools_link_text_${locale}`] || 'More Tools'}</span>
+                <svg viewBox="0 0 30 20" fill="none"><path d="M0 10H28M28 10L18 2M28 10L18 18" stroke="currentColor" stroke-width="2"/></svg>
+              </a>
+            </div>
+
+            {/* Guides Card - Pink */}
+            <div>
+              <div class="oddny-hub-card guides">
+                <div
+                  class="oddny-hub-card-label"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'card2_label', mode: 'popover' })}
+                >{block.card2_label || 'Guide'}</div>
+                <p
+                  class="oddny-hub-card-text"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `card2_text_${locale}`, mode: 'popover' })}
+                >{block[`card2_text_${locale}`] || 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim'}</p>
+              </div>
+              <a
+                href={block.guides_link || '#'}
+                class="oddny-hub-card-link"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `guides_link_text_${locale},guides_link`, mode: 'popover' })}
+              >
+                <span>{block[`guides_link_text_${locale}`] || 'More Guides'}</span>
+                <svg viewBox="0 0 30 20" fill="none"><path d="M0 10H28M28 10L18 2M28 10L18 18" stroke="currentColor" stroke-width="2"/></svg>
+              </a>
+            </div>
+
+            {/* Products Card - Turquoise */}
+            <div>
+              <div class="oddny-hub-card products">
+                <div
+                  class="oddny-hub-card-label"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'card3_label', mode: 'popover' })}
+                >{block.card3_label || 'Product'}</div>
+                <p
+                  class="oddny-hub-card-text"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `card3_text_${locale}`, mode: 'popover' })}
+                >{block[`card3_text_${locale}`] || 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim'}</p>
+              </div>
+              <a
+                href={block.products_link || '#'}
+                class="oddny-hub-card-link"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: `products_link_text_${locale},products_link`, mode: 'popover' })}
+              >
+                <span>{block[`products_link_text_${locale}`] || 'More Products'}</span>
+                <svg viewBox="0 0 30 20" fill="none"><path d="M0 10H28M28 10L18 2M28 10L18 18" stroke="currentColor" stroke-width="2"/></svg>
+              </a>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // ===== APPFRONT HERO BLOCK =====
+    if (variant === 'appfront-hero') {
+      return (
+        <section
+          class="appfront-hero"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100;200;300;400;500;600;700;800;900&display=swap');
+            
+            .appfront-hero {
+              font-family: 'Geist', sans-serif;
+            }
+            .appfront-hero .frame-431 {
+              grid-column-gap: 40px;
+              background-color: #fff;
+              background-image: url('/images/appfront-hero-bg.svg');
+              background-position: 50%;
+              background-repeat: no-repeat;
+              background-size: cover;
+              justify-content: center;
+              align-items: flex-start;
+              width: 100%;
+              max-width: 1512px;
+              height: 601px;
+              margin-left: auto;
+              margin-right: auto;
+              padding: 120px;
+              text-decoration: none;
+              display: flex;
+            }
+            .appfront-hero .frame-432 {
+              grid-row-gap: 32px;
+              flex-direction: column;
+              justify-content: flex-start;
+              align-items: flex-start;
+              width: 100%;
+              max-width: 835px;
+              text-decoration: none;
+              display: flex;
+            }
+            .appfront-hero .frame-433 {
+              grid-row-gap: 16px;
+              flex-direction: column;
+              justify-content: flex-start;
+              align-items: flex-start;
+              width: 100%;
+              text-decoration: none;
+              display: flex;
+              position: relative;
+            }
+            .appfront-hero .text-159 {
+              color: #06232a;
+              width: 100%;
+              margin-top: 0;
+              margin-bottom: 0;
+              font-family: 'Geist', sans-serif;
+              font-size: 64px;
+              font-weight: 600;
+              line-height: 150%;
+              text-decoration: none;
+            }
+            .appfront-hero .text-160 {
+              color: #06232a;
+              width: 100%;
+              margin-top: 0;
+              margin-bottom: 0;
+              font-family: 'Geist', sans-serif;
+              font-size: 18px;
+              font-weight: 400;
+              line-height: 164%;
+              text-decoration: none;
+            }
+            .appfront-hero .frame-434 {
+              grid-column-gap: 16px;
+              flex: 0 auto;
+              justify-content: flex-start;
+              align-items: center;
+              text-decoration: none;
+              display: flex;
+            }
+            .appfront-hero .tag-23 {
+              grid-column-gap: 8px;
+              background-color: #edeeee;
+              border-radius: 92px;
+              flex: 0 auto;
+              justify-content: center;
+              align-items: center;
+              min-width: 150px;
+              padding: 2px 16px;
+              text-decoration: none;
+              display: flex;
+            }
+            .appfront-hero .tag-23.nomin {
+              min-width: auto;
+            }
+            .appfront-hero .ux-design-2 {
+              box-sizing: border-box;
+              color: #06232a;
+              object-fit: fill;
+              width: auto;
+              min-width: 0;
+              margin-top: 0;
+              margin-bottom: 0;
+              font-family: 'Geist', sans-serif;
+              font-size: 18px;
+              font-weight: 500;
+              line-height: 164%;
+              text-decoration: none;
+            }
+            .appfront-hero .frame-435 {
+              grid-row-gap: 8px;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              width: 100%;
+              max-width: 397px;
+              height: 360px;
+              text-decoration: none;
+              display: flex;
+            }
+            .appfront-hero .group-46 {
+              width: 354px;
+              height: 325px;
+            }
+            @media screen and (max-width: 991px) {
+              .appfront-hero .text-159 {
+                font-size: 50px;
+              }
+              .appfront-hero .text-160 {
+                font-size: 14px;
+              }
+              .appfront-hero .frame-434 {
+                grid-row-gap: 20px;
+                flex-flow: wrap;
+                justify-content: flex-start;
+                align-items: center;
+              }
+              .appfront-hero .ux-design-2 {
+                font-size: 14px;
+              }
+            }
+            @media screen and (max-width: 767px) {
+              .appfront-hero .frame-431 {
+                flex-flow: column-reverse;
+                justify-content: center;
+                align-items: center;
+                height: auto;
+                padding: 6.19384vw;
+              }
+              .appfront-hero .frame-435 {
+                max-width: none;
+                height: 100%;
+              }
+            }
+            @media screen and (max-width: 479px) {
+              .appfront-hero .text-159 {
+                font-size: 40px;
+              }
+              .appfront-hero .frame-434 {
+                grid-column-gap: 16px;
+                grid-row-gap: 16px;
+                grid-template-rows: auto auto;
+              }
+            }
+          `}</style>
+          <div class="frame-431">
+            <div class="frame-432">
+              <div class="frame-433">
+                <h1 
+                  class="text-159"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+                >
+                  {heading || 'Wij bouwen jouw digitale voorsprong'}
+                </h1>
+                <div 
+                  class="text-160"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+                >
+                  {subheading || 'Jouw partner bij het ontwikkelen van slimme digitale oplossingen'}
+                </div>
+              </div>
+              <div class="frame-434">
+                <div class="tag-23"><h5 class="ux-design-2">Digital Design</h5></div>
+                <div class="tag-23"><h5 class="ux-design-2">Development</h5></div>
+                <div class="tag-23"><h5 class="ux-design-2">AI-integratie</h5></div>
+                <div class="tag-23 nomin"><h5 class="ux-design-2">Beheer</h5></div>
+              </div>
+            </div>
+            <div class="frame-435">
+              <img src="/images/appfront-hero-illustration.svg" loading="lazy" width="354" height="325" alt="" class="group-46" />
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // Safe Widget System - Import from separate files
+    if (variant === 'image-overlay') {
+      return (
+        <HeroImageOverlay 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'wunderkamer-image-text') {
+      return (
+        <WunderkamerImageText 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'wunderkamer-text-3') {
+      return (
+        <WunderkamerText3 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'dynamic-cards') {
+      return (
+        <DynamicCards 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'newsletter-cta') {
+      return (
+        <OddnyNewsletterCTA 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'oddny-partner') {
+      return (
+        <OddnyPartner 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'pricing-cards') {
+      return (
+        <PricingCards 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'how-to-buy') {
+      return (
+        <HowToBuy 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'character-cards') {
+      return (
+        <CharacterCards 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'friends-and-foes') {
+      return (
+        <FriendsAndFoes 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+    if (variant === 'contact-widget') {
+      return (
+        <ContactWidget 
+          block={block} 
+          locale={locale} 
+          getImageUrl={getImageUrl} 
+          setAttr={setAttr} 
+        />
+      );
+    }
+
+
+
+  }
+
+
+  // ===== THREE COLUMN IMAGE TEXT BLOCK =====
+  if (block.block_type === 'three_column') {
+    if (variant === 'default' || variant === 'image-text') {
+      const image1Url = block.image ? getImageUrl(block.image) : '/images/a68bee1ed41d916baeacb8282ff859fc0a335b75.png';
+      const image2Url = block.image_2 ? getImageUrl(block.image_2) : '/images/0c59031718f023dc2a1306f1c3f4a839a4d90a93.png';
+      const image3Url = block.image_3 ? getImageUrl(block.image_3) : '/images/7e155a058b2f08a228fca03af573b81922e39990.png';
+      return (
+        <section
+          class="three-column-image-text"
+          style="padding: 40px 80px; overflow: hidden;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="display: flex; gap: 40px; max-width: 1280px; margin: 0 auto;">
+            {/* Column 1 */}
+            <div style="flex: 1; min-width: 0;">
+              <div style="border-radius: 10px; overflow: hidden; margin-bottom: 24px; aspect-ratio: 400/350;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image', mode: 'popover' })}
+              >
+                <img alt="" style="width: 100%; height: 100%; object-fit: cover;" src={image1Url} />
+              </div>
+              <p class="font-['Neue_Haas_Grotesk_Display_Pro',sans-serif]" style="font-size: 28px; line-height: 32px; color: #42383e; font-weight: 500; margin-bottom: 24px;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >{heading || 'Lorem ipsum dolor sit amet'}</p>
+              <p class="font-['Neue_Haas_Grotesk_Display_Pro',sans-serif]" style="font-size: 16px; line-height: 22px; color: #888484; font-weight: 300;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'popover' })}
+              >{content || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.'}</p>
+            </div>
+            {/* Column 2 */}
+            <div style="flex: 1; min-width: 0;">
+              <div style="border-radius: 10px; overflow: hidden; margin-bottom: 24px; aspect-ratio: 400/350;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image_2', mode: 'popover' })}
+              >
+                <img alt="" style="width: 100%; height: 100%; object-fit: cover;" src={image2Url} />
+              </div>
+              <p class="font-['Neue_Haas_Grotesk_Display_Pro',sans-serif]" style="font-size: 28px; line-height: 32px; color: #42383e; font-weight: 500; margin-bottom: 24px;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+              >{subheading || 'Lorem ipsum dolor sit amet'}</p>
+              <p class="font-['Neue_Haas_Grotesk_Display_Pro',sans-serif]" style="font-size: 16px; line-height: 22px; color: #888484; font-weight: 300;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'text', mode: 'popover' })}
+              >{text || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.'}</p>
+            </div>
+            {/* Column 3 */}
+            <div style="flex: 1; min-width: 0;">
+              <div style="border-radius: 10px; overflow: hidden; margin-bottom: 24px; aspect-ratio: 400/350;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image_3', mode: 'popover' })}
+              >
+                <img alt="" style="width: 100%; height: 100%; object-fit: cover;" src={image3Url} />
+              </div>
+              <p class="font-['Neue_Haas_Grotesk_Display_Pro',sans-serif]" style="font-size: 28px; line-height: 32px; color: #42383e; font-weight: 500; margin-bottom: 24px;">Lorem ipsum dolor sit amet</p>
+              <p class="font-['Neue_Haas_Grotesk_Display_Pro',sans-serif]" style="font-size: 16px; line-height: 22px; color: #888484; font-weight: 300;">nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.</p>
+            </div>
+          </div>
+        </section>
+      );
+    }
+  }
+  // ===== CTA BLOCK =====
+  if (block.block_type === 'cta') {
+    // CTA: Simple (default)
+    if (variant === 'default' || variant === 'simple') {
+      return (
+        <section
+          class="cta cta-simple"
+          style="background-color: #10b981; padding: 4rem 2rem; text-align: center; color: white;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 600px; margin: 0 auto;">
+            <h2
+              style="font-size: 2rem; margin-bottom: 1.5rem; font-weight: 600;"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+            >
+              {heading || 'Call to Action'}
+            </h2>
+            {buttonText && (
+              <a
+                href={block.button_link || '#'}
+                style="display: inline-block; padding: 1rem 2rem; background: white; color: #10b981; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1.1rem;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                {buttonText}
+              </a>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // CTA: Highlight
+    if (variant === 'highlight') {
+      return (
+        <section
+          class="cta cta-highlight"
+          style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); padding: 5rem 2rem; text-align: center;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 700px; margin: 0 auto; background: white; padding: 3rem; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.1);">
+            <h2
+              style="font-size: 2.5rem; margin-bottom: 1rem; font-weight: 700; color: #1a1a2e;"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+            >
+              {heading || 'Call to Action'}
+            </h2>
+            {subheading && (
+              <p
+                style="font-size: 1.1rem; color: #666; margin-bottom: 2rem; line-height: 1.6;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+              >
+                {subheading}
+              </p>
+            )}
+            {buttonText && (
+              <a
+                href={block.button_link || '#'}
+                style="display: inline-block; padding: 1rem 2.5rem; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(245,87,108,0.4);"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                {buttonText}
+              </a>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // CTA: Banner
+    if (variant === 'banner') {
+      return (
+        <section
+          class="cta cta-banner"
+          style="background: #1a1a2e; padding: 3rem 2rem; color: white;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;">
+            <div>
+              <h2
+                style="font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >
+                {heading || 'Call to Action'}
+              </h2>
+              {subheading && (
+                <p
+                  style="opacity: 0.8; font-size: 1rem;"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+                >
+                  {subheading}
+                </p>
+              )}
+            </div>
+            {buttonText && (
+              <a
+                href={block.button_link || '#'}
+                style="display: inline-block; padding: 1rem 2rem; background: #e94560; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; white-space: nowrap;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                {buttonText}
+              </a>
+            )}
+          </div>
+        </section>
+      );
+    }
+  }
+
+  // ===== RICHTEXT BLOCK =====
+  if (block.block_type === 'richtext') {
+    // Rich Text: Simple (default)
+    if (variant === 'default' || variant === 'simple') {
+      return (
+        <section
+          class="richtext richtext-simple"
+          style="background-color: #ffffff; padding: 4rem 2rem; color: #1f2937;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 800px; margin: 0 auto;">
+            {heading && (
+              <h2
+                style="font-size: 2.5rem; margin-bottom: 1.5rem; font-weight: 700;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >
+                {heading}
+              </h2>
+            )}
+            {content && (
+              <div
+                class="prose"
+                style="font-size: 1.125rem; line-height: 1.8; color: #4b5563;"
+                set:html={content}
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'modal' })}
+              />
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // Rich Text: Card
+    if (variant === 'card') {
+      return (
+        <section
+          class="richtext richtext-card"
+          style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 5rem 2rem;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 800px; margin: 0 auto; background: white; padding: 3rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
+            {heading && (
+              <h2
+                style="font-size: 2rem; margin-bottom: 1.5rem; font-weight: 700; color: #1a1a2e; border-bottom: 3px solid #667eea; padding-bottom: 1rem; display: inline-block;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >
+                {heading}
+              </h2>
+            )}
+            {content && (
+              <div
+                class="prose"
+                style="font-size: 1.1rem; line-height: 1.9; color: #4b5563;"
+                set:html={content}
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'modal' })}
+              />
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // Rich Text: Columns
+    if (variant === 'columns') {
+      return (
+        <section
+          class="richtext richtext-columns"
+          style="background: #fafafa; padding: 5rem 2rem;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 1200px; margin: 0 auto;">
+            {heading && (
+              <h2
+                style="font-size: 2.5rem; margin-bottom: 3rem; font-weight: 700; color: #1a1a2e; text-align: center;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >
+                {heading}
+              </h2>
+            )}
+            {content && (
+              <div
+                class="prose columns-content"
+                style="font-size: 1.1rem; line-height: 1.8; color: #4b5563; column-count: 2; column-gap: 3rem;"
+                set:html={content}
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'modal' })}
+              />
+            )}
+          </div>
+        </section>
+      );
+    }
+  }
+
+  // ===== IMAGE WITH TEXT BLOCK =====
+  if (block.block_type === 'image_with_text') {
+    const imageUrl = getImageUrl(block.image);
+    const isImageLeft = block.image_position !== 'right';
+
+    return (
+      <section
+        class="image-with-text"
+        style="padding: 5rem 2rem; background: white;"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+      >
+        <div style={`max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;`}>
+          {isImageLeft && (
+            <div
+              style="border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.15);"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image', mode: 'popover' })}
+            >
+              {imageUrl ? (
+                <img src={imageUrl} alt={heading || ''} style="width: 100%; height: auto; display: block;" />
+              ) : (
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 350px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem;">
+                  + Afbeelding
+                </div>
+              )}
+            </div>
+          )}
+          <div style={isImageLeft ? '' : 'order: -1;'}>
+            {heading && (
+              <h2
+                style="font-size: 2.5rem; margin-bottom: 1.5rem; color: #1a1a2e; font-weight: 700; line-height: 1.2;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >
+                {heading}
+              </h2>
+            )}
+            {text && (
+              <div
+                style="font-size: 1.125rem; line-height: 1.9; color: #4b5563;"
+                set:html={text}
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'text', mode: 'modal' })}
+              />
+            )}
+            {buttonText && (
+              <a
+                href={block.button_link || '#'}
+                style="display: inline-block; margin-top: 2rem; padding: 1rem 2rem; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                {buttonText}
+              </a>
+            )}
+          </div>
+          {!isImageLeft && (
+            <div
+              style="border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.15);"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image', mode: 'popover' })}
+            >
+              {imageUrl ? (
+                <img src={imageUrl} alt={heading || ''} style="width: 100%; height: auto; display: block;" />
+              ) : (
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 350px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem;">
+                  + Afbeelding
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Fallback for any unhandled variants
+  if (block.block_type === 'hero') {
+    return (
+      <section
+        class="hero hero-centered"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 6rem 2rem; text-align: center; color: white;"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+      >
+        <div style="max-width: 800px; margin: 0 auto;">
+          <h1
+            style="font-size: 3.5rem; margin-bottom: 1.5rem; font-weight: 800;"
+            data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+          >
+            {heading || 'Hero Titel'}
+          </h1>
+          {subheading && (
+            <p
+              style="font-size: 1.5rem; opacity: 0.95; line-height: 1.6;"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+            >
+              {subheading}
+            </p>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  if (block.block_type === 'cta') {
+    return (
+      <section
+        class="cta cta-simple"
+        style="background-color: #10b981; padding: 4rem 2rem; text-align: center; color: white;"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+      >
+        <div style="max-width: 600px; margin: 0 auto;">
+          <h2
+            style="font-size: 2rem; margin-bottom: 1.5rem; font-weight: 600;"
+            data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+          >
+            {heading || 'Call to Action'}
+          </h2>
+          {buttonText && (
+            <a
+              href={block.button_link || '#'}
+              style="display: inline-block; padding: 1rem 2rem; background: white; color: #10b981; text-decoration: none; border-radius: 8px; font-weight: 600;"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+            >
+              {buttonText}
+            </a>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  if (block.block_type === 'richtext') {
+    return (
+      <section
+        class="richtext richtext-simple"
+        style="background-color: #ffffff; padding: 4rem 2rem; color: #1f2937;"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+      >
+        <div style="max-width: 800px; margin: 0 auto;">
+          {heading && (
+            <h2
+              style="font-size: 2.5rem; margin-bottom: 1.5rem; font-weight: 700;"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+            >
+              {heading}
+            </h2>
+          )}
+          {content && (
+            <div
+              class="prose"
+              style="font-size: 1.125rem; line-height: 1.8; color: #4b5563;"
+              set:html={content}
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'modal' })}
+            />
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Final fallback
+  return (
+    <section style="padding: 2rem; background: #fee; text-align: center;">
+      <p>Unknown block type: {block.block_type}</p>
+    </section>
+  );
+})}

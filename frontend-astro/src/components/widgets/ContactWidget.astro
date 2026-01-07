@@ -1,0 +1,903 @@
+---
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const email = block.contact_email || 'contact@oddny.nl';
+const phone = block.contact_phone || '0900 333 355 553';
+const emailText = getLocalizedField(block, 'email_text') || '...you can fling us an email...';
+const phoneText = getLocalizedField(block, 'phone_text') || '...dig out our phone number and give us a call...';
+const postcardText = getLocalizedField(block, 'postcard_text') || '...or even send us a postcard if you like...';
+
+const svgPaths = {
+  p10b83000: "M27.8411 42.0685L36.6454 39.2874L35.6567 30.0489L32.5126 0.7848C32.3871 0.916478 32.2668 1.05869 32.1674 1.2167L0.313879 50.1956C0.177865 50.4063 0.0732385 50.6275 0 50.854L27.8411 42.0685Z",
+  p111be3f0: "M119.986 115.787V132.383V138.178V154.774H124.471V138.178H209.787V154.774H214.272V138.178V132.383V115.787H119.986Z",
+  p138ef400: "M330.129 641.443H4.12917V684.5H330.129V641.443Z",
+  p14497500: "M275.69 12.0052H58.5852V26.056H275.69V12.0052Z",
+  p15bc9480: "M75.0456 60.3114L77.2134 80.4907L57.9791 86.5651L63.8383 141.152C64.094 140.884 64.3394 140.596 64.5439 140.277L126.807 44.5386C126.951 44.3224 127.063 44.0959 127.176 43.8694L75.0558 60.3217L75.0456 60.3114Z",
+  p183b1980: "M54.4206 82.2306L71.6302 76.7946L69.6976 58.7362L63.552 1.53404C63.3066 1.79143 63.0714 2.06941 62.8771 2.37827L0.613535 98.1167C0.34767 98.5285 0.143158 98.9609 0 99.4036L54.4206 82.2306Z",
+  p18708f00: "M32.7264 36.6984L40.0021 46.6618L44.33 42.2528L32.7264 36.6984Z",
+  p190d3700: "M1.25626 145.991C1.75591 146.623 2.35549 147.198 3.06928 147.658L79.5157 198.051C80.3294 198.583 81.2145 198.942 82.1139 199.129L73.9481 123.036L1.25626 145.991Z",
+  p1b2aeaf2: "M52.6008 42.2733L54.1202 56.4173L40.6386 60.675L44.7454 98.936C44.9246 98.7484 45.0966 98.5463 45.24 98.3226L88.8816 31.2179C88.982 31.0663 89.0608 30.9076 89.1396 30.7488L52.6079 42.2805L52.6008 42.2733Z",
+  p1b67b580: "M38.1443 57.6369L50.2069 53.8267L48.8523 41.1692L44.5447 1.07523C44.3727 1.25564 44.2079 1.45048 44.0717 1.66697L0.430038 68.7717C0.243688 69.0604 0.100342 69.3635 0 69.6738L38.1443 57.6369Z",
+  p1de78272: "M294.366 26.0393H39.8754V42.5016H294.366V26.0393Z",
+  p2145ff00: "M0.88 101.57C1.23 102.01 1.65 102.41 2.15 102.73L55.7 137.79C56.27 138.16 56.89 138.41 57.52 138.54L51.8 85.6L0.88 101.57Z",
+  p21f3200: "M140.746 92.1379L142.196 93.3999L162.96 54.3021L146.332 48.0885L140.746 92.1379Z",
+  p22a6dd00: "M268.276 566.182H65.9822V572.596H268.276V566.182Z",
+  p265a2c00: "M75.9753 114.8L100.001 107.211L97.3032 82.0002L88.7235 2.14164C88.3809 2.50097 88.0525 2.88905 87.7813 3.32025L0.856542 136.978C0.485374 137.553 0.19986 138.157 0 138.775L75.9753 114.8Z",
+  p26624800: "M0.630722 73.2964C0.881577 73.6139 1.1826 73.9025 1.54097 74.1335L39.9218 99.4339C40.3304 99.701 40.7747 99.8814 41.2263 99.9752L37.1266 61.7719L0.630722 73.2964Z",
+  p2a647b00: "M177.062 53.7709C176.491 52.8797 175.748 52.0892 174.82 51.4855L98.3739 1.09238C97.5459 0.546189 96.6465 0.186854 95.7329 0L103.984 76.8402L177.062 53.7709Z",
+  p2b0b4980: "M126.828 38.5157C126.419 37.8774 125.887 37.3111 125.223 36.8787L70.4645 0.782462C69.8714 0.391231 69.2272 0.133842 68.5728 0L74.4832 55.0401L126.828 38.5157Z",
+  p2bb16a40: "M41.9727 60.2825C48.5196 63.9519 70.8149 76.4513 81.4577 82.3273L100.439 68.6543L119.184 76.379L129.244 64.3137L59.7446 60.9577L62.1834 63.0356L41.9727 60.2825Z",
+  p2bc11000: "M64.884 19.7043C64.6748 19.3777 64.4028 19.088 64.0627 18.8668L36.049 0.400301C35.7456 0.20015 35.416 0.0684725 35.0812 0L38.1049 28.158L64.884 19.7043Z",
+  p2c522f1: "M124.03 37.41C123.63 36.79 123.11 36.24 122.46 35.82L68.91 0.76C68.33 0.38 67.7 0.13 67.06 0L72.84 53.46L124.03 37.41Z",
+  p2deb2f00: "M73.39 58.58L75.51 78.18L56.7 84.08L62.43 137.1C62.68 136.84 62.92 136.56 63.12 136.25L124.01 43.26C124.15 43.05 124.26 42.83 124.37 42.61L73.4 58.59L73.39 58.58Z",
+  p2e572c0: "M263.691 163.516H70.5843V566.182H263.691V163.516Z",
+  p2ea92680: "M245.433 181.887H88.8256V309.031H245.433V181.887Z",
+  p2fbea200: "M299.852 240.967C302.203 239.03 304.443 237.159 306.684 235.332C321.687 223.051 329.639 206.983 331.923 187.923C332.055 186.844 331.923 185.48 331.352 184.599C326.256 176.258 321.335 167.784 315.822 159.728C301.917 139.457 287.222 119.802 269.714 102.392C255.744 88.5041 241.268 75.1662 225.54 63.3248C207.659 49.8548 188.461 38.3876 168.493 28.2631C132.359 9.92882 93.9395 0.816716 53.4993 0.00235024C51.5663 -0.0416696 50.1385 0.530588 48.8644 1.8952C44.0098 7.06753 39.0674 12.1298 34.3007 17.3902C22.8562 29.9578 13.4985 43.8901 7.43581 59.8913C7.12828 60.7056 6.90862 61.564 6.57912 62.5545C39.1772 70.0599 71.4459 77.4772 103.89 84.9385C105.582 75.8485 107.229 67.0225 108.877 58.2185C117.158 59.187 123.682 63.3248 129.964 67.7488C156.06 86.1271 182.222 104.439 208.077 123.192C220.949 132.524 233.206 142.715 245.727 152.575C246.364 153.081 247.067 154.006 247.045 154.71C246.869 159.024 245.508 162.766 241.224 164.746C236.655 166.837 232.987 170.051 229.604 173.704C228.286 175.113 228.462 175.795 229.824 177.05C247.902 193.491 265.914 209.999 283.949 226.484C289.177 231.26 294.405 236.036 299.874 241.011L299.852 240.967Z",
+  p3059800: "M0.460356 53.4981C0.643452 53.7299 0.863168 53.9405 1.12473 54.1091L29.1384 72.5756C29.4366 72.7705 29.761 72.9021 30.0905 72.9706L27.0982 45.0865L0.460356 53.4981Z",
+  p31380f00: "M272.795 589.193H61.4469V605.789H272.795V589.193Z",
+  p31af2100: "M38.3926 30.8548L39.5017 41.1783L29.6616 44.2859L32.6591 72.2122C32.7899 72.0752 32.9155 71.9277 33.0201 71.7645L64.8736 22.7855C64.9468 22.6749 65.0044 22.5591 65.0619 22.4432L38.3979 30.86L38.3926 30.8548Z",
+  p32f39280: "M53.22 79.87L70.05 74.59L68.16 57.05L62.15 1.49C61.91 1.74 61.68 2.01 61.49 2.31L0.6 95.3C0.34 95.7 0.14 96.12 0 96.55L53.22 79.87Z",
+  p333c6f0: "M167.129 420.081C181.39 420.081 192.951 408.511 192.951 394.24C192.951 379.969 181.39 368.399 167.129 368.399C152.868 368.399 141.307 379.969 141.307 394.24C141.307 408.511 152.868 420.081 167.129 420.081Z",
+  p33c14e00: "M40.3604 47.4455L41.4067 46.3804L59.5695 61.87L40.3359 59.2496L40.3604 47.4455Z",
+  p34037580: "M121.811 337.97V345.071V355.437V362.521H127.3V355.437H206.975V362.521H212.448V355.437V345.071V337.97H121.811Z",
+  p3531f280: "M59.5329 48.6351C59.4799 48.6351 59.4229 48.6351 59.3659 48.6432C58.9629 48.6874 58.6005 48.8803 58.3481 49.1938C58.0956 49.5033 57.9776 49.8971 58.0224 50.291C58.0671 50.6849 58.2626 51.0466 58.5801 51.2958C58.8937 51.545 59.2927 51.6615 59.6917 51.6173C60.0947 51.5731 60.4571 51.3802 60.7095 51.0667C60.9619 50.7572 61.08 50.3674 61.0352 49.9695C60.9905 49.5716 60.795 49.2139 60.4774 48.9647C60.2047 48.7477 59.8749 48.6351 59.5288 48.6351H59.5329Z",
+  p35d17180: "M88.896 26.9963C88.6093 26.5489 88.2366 26.152 87.7707 25.8489L49.3898 0.548442C48.9741 0.274221 48.5226 0.0938124 48.0639 0L52.2066 38.5786L88.896 26.9963Z",
+  p36834000: "M853.573 216.983C872.037 155.49 855.408 73.7585 741.363 45.023C661.849 24.9783 580.554 73.7046 496.31 104.769C385.31 145.7 304.771 118.334 310.126 41.9823C315.147 -29.6785 443.316 -3.09951 395.622 88.2934C368.326 140.6 311.778 198.157 180.9 211.861C105.683 219.733 18.0063 167.319 1 149.937",
+  p36a9ee40: "M245.433 455.534H88.8256V551.244H245.433V455.534Z",
+  p379705f1: "M0.899852 104.572C1.25775 105.025 1.68722 105.437 2.1985 105.766L56.9565 141.862C57.5394 142.243 58.1733 142.501 58.8176 142.635L52.9685 88.13L0.899852 104.572Z",
+  p38883300: "M90.2765 153.932L89.2097 152.714L97.5603 145.616L103.391 120.083L104.978 120.436L99.0301 146.488L90.2765 153.932Z",
+  p3a45a080: "M272.811 589.193H61.4637C61.4637 589.193 65.9822 585.458 68.4924 580.886C71.0027 576.314 70.5843 572.579 70.5843 572.579H263.691C263.691 572.579 263.373 575.895 266.117 580.886C268.862 585.877 272.811 589.193 272.811 589.193Z",
+  p3ab1200: "M114.265 104.979C118.337 111.856 114.901 118.182 112.128 120.903C111.322 121.694 110.389 122.43 109.343 123.109C112.523 121.899 115.809 120.444 118.007 119.211C123.577 116.092 128.911 111.916 133.112 107.398L114.27 104.979H114.265Z",
+  p3abd78f0: "M40.3563 60.3026C40.5436 65.7083 41.4922 78.1193 46.0319 90.9081C51.8907 107.419 61.5157 118.704 74.638 124.455C82.4348 127.872 94.1484 128.145 103.13 125.127C106.701 123.925 109.534 122.313 111.554 120.332C114.229 117.707 117.559 111.51 113.227 104.846L77.1704 100.216L71.9101 89.208L80.733 82.8498C69.1334 76.4433 44.6028 62.6859 40.3604 60.3026H40.3563Z",
+  p3ad96d80: "M263.239 0.5H71.0194V12.0052H263.239V0.5Z",
+  p3c39c780: "M330.129 641.443H4.12917L48.8956 630.44H285.363L330.129 641.443Z",
+  p3cafc080: "M77.716 99.4728L160.114 110.055L125.275 79.7591L100.549 69.5706L72.932 89.4652L77.716 99.4768V99.4728Z",
+  p3e3a5b70: "M285.363 605.806H48.8956V630.441H285.363V605.806Z",
+  p3f55cb00: "M167.129 529.238C181.39 529.238 192.951 517.669 192.951 503.397C192.951 489.126 181.39 477.557 167.129 477.557C152.868 477.557 141.307 489.126 141.307 503.397C141.307 517.669 152.868 529.238 167.129 529.238Z",
+  p5099a40: "M74.5688 48.7919C63.2094 38.3261 51.3533 40.3236 45.238 42.4779L41.9727 45.8017L58.743 60.1057L83.811 61.3154C80.7655 55.8173 77.7404 51.7138 74.5688 48.7919ZM61.3447 51.5691C60.9538 52.0474 60.4001 52.3488 59.7812 52.4131C59.6957 52.4211 59.6102 52.4252 59.5288 52.4252C58.9995 52.4252 58.4906 52.2483 58.0712 51.9147C57.5867 51.5289 57.2813 50.9823 57.2162 50.3714C57.1511 49.7605 57.3261 49.1616 57.717 48.6834C58.1079 48.2051 58.6616 47.9037 59.2804 47.8394C59.8993 47.775 60.5059 47.9479 60.9904 48.3337C61.475 48.7195 61.7803 49.2661 61.8455 49.877C61.9106 50.4879 61.7355 51.0868 61.3447 51.5651V51.5691Z",
+  p8a1f580: "M260.946 115.787H67.8398L30.236 86.8646H304.039L260.946 115.787Z",
+  p9998100: "M263.691 115.787H70.5843V154.774H263.691V115.787Z",
+  p9e6db00: "M119.97 76.7005L125.714 79.0678L140.009 91.4948L145.656 46.9753L155.656 50.713L154.597 35.1832L119.974 76.7005H119.97Z",
+  pc1eca00: "M104.769 84.1993L107.796 112.371L80.9432 120.852L89.1232 197.059C89.4801 196.686 89.8227 196.283 90.1082 195.837L177.033 62.1793C177.233 61.8775 177.39 61.5613 177.547 61.245L104.784 84.2137L104.769 84.1993Z",
+  pcb940f0: "M271.205 154.774H63.0702V163.516H271.205V154.774Z",
+  pd33f180: "M245.433 330.702H88.8256V433.545H245.433V330.702Z",
+  pecccd00: "M305.545 50.9254H28.6963V77.0675H305.545V50.9254Z",
+  pf0bc400: "M87.5812 127.972L83.5056 139.242L75.7536 144.049L76.6208 145.411L84.8533 140.307L89.2993 128.008C88.7252 128.008 88.1552 127.992 87.5852 127.968L87.5812 127.972Z",
+  pf4e0300: "M314.08 42.5016H20.1781V86.8478H314.08V42.5016Z",
+};
+---
+
+<section 
+  class="contact-widget-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <style>
+    .contact-widget-section {
+      width: 100vw;
+      margin-left: calc(-50vw + 50%);
+      background: white;
+      font-family: 'Neue Haas Grotesk Display Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      overflow: visible;
+      position: relative;
+    }
+    
+    .contact-desktop {
+      display: none;
+    }
+    
+    .contact-mobile {
+      display: flex;
+      flex-direction: column;
+      padding: 40px 24px;
+      gap: 48px;
+      min-height: 100vh;
+    }
+    
+    .contact-mobile-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    
+    .contact-mobile-header h1 {
+      color: #FF40B4;
+      font-size: 48px;
+      font-weight: 700;
+      z-index: 10;
+      margin-top: 40px;
+    }
+    
+    .contact-mobile-decor {
+      position: absolute;
+      top: -40px;
+      left: -40px;
+      opacity: 0.5;
+      transform: rotate(12deg);
+      width: 160px;
+      height: 160px;
+    }
+    
+    .contact-section-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      text-align: center;
+      max-width: 400px;
+      margin: 0 auto;
+      width: 100%;
+      position: relative;
+    }
+    
+    .contact-text {
+      color: #888484;
+      font-size: 20px;
+      line-height: 28px;
+      font-weight: 300;
+      max-width: 300px;
+    }
+    
+    .contact-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #FF40B4;
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 14px 32px;
+      border-radius: 50px;
+      text-decoration: none;
+      transition: background 0.2s ease;
+      box-shadow: 0 4px 15px rgba(255, 64, 180, 0.3);
+    }
+    
+    .contact-button:hover {
+      background: #d63396;
+    }
+    
+    .contact-button svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .contact-image {
+      width: 192px;
+      height: auto;
+      object-fit: contain;
+    }
+    
+    .contact-handset-mobile {
+      width: 192px;
+      height: 192px;
+      position: relative;
+      margin: 0 auto;
+    }
+    
+    .contact-bird-mobile {
+      width: 224px;
+      height: auto;
+    }
+    
+    .contact-footer-decor {
+      margin-top: 48px;
+      opacity: 0.5;
+      position: relative;
+      width: 100%;
+      height: 160px;
+      overflow: hidden;
+    }
+    
+    .contact-footer-decor img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.3;
+      transform: rotate(180deg);
+    }
+    
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .contact-mobile {
+        padding: 60px 48px;
+        gap: 64px;
+      }
+      
+      .contact-mobile-header h1 {
+        font-size: 64px;
+      }
+      
+      .contact-section-item {
+        max-width: 500px;
+        gap: 32px;
+      }
+      
+      .contact-text {
+        font-size: 24px;
+        line-height: 32px;
+        max-width: 400px;
+      }
+      
+      .contact-button {
+        font-size: 20px;
+        padding: 16px 40px;
+      }
+      
+      .contact-image {
+        width: 256px;
+      }
+      
+      .contact-handset-mobile {
+        width: 256px;
+        height: 256px;
+      }
+      
+      .contact-bird-mobile {
+        width: 300px;
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .contact-mobile {
+        display: none;
+      }
+      
+      .contact-desktop {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        position: relative;
+      }
+      
+      .contact-desktop-inner {
+        position: relative;
+        width: 100%;
+        max-width: 1440px;
+        aspect-ratio: 1440 / 1900;
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .contact-bg-top {
+        position: absolute;
+        background: rgba(217, 217, 217, 0.72);
+        height: 36.95%;
+        left: 50%;
+        transform: translateX(-50%);
+        top: -4.2%;
+        width: 100vw;
+      }
+      
+      .contact-bg-bottom {
+        position: absolute;
+        background: rgba(217, 217, 217, 0.72);
+        height: 45.21%;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 54.79%;
+        width: 100vw;
+      }
+      
+      .contact-layer-1 {
+        position: absolute;
+        height: 7.29%;
+        left: 8.33%;
+        top: 76.68%;
+        width: 8.64%;
+      }
+      
+      .contact-layer-4-wrap {
+        position: absolute;
+        display: flex;
+        height: 12.55%;
+        align-items: center;
+        justify-content: center;
+        left: 9.17%;
+        top: 7.58%;
+        width: 15.49%;
+      }
+      
+      .contact-layer-4 {
+        transform: rotate(15.032deg);
+        width: 100%;
+        height: 100%;
+      }
+      
+      .contact-layer-5 {
+        position: absolute;
+        height: 13.58%;
+        left: 50.56%;
+        overflow: hidden;
+        top: 30.74%;
+        width: 23.06%;
+      }
+      
+      .contact-phone-number {
+        position: absolute;
+        left: 43.75%;
+        top: 28.42%;
+        width: 13.89%;
+        height: 10.53%;
+        pointer-events: none;
+      }
+      
+      .contact-phone-link {
+        position: absolute;
+        inset: 0;
+        pointer-events: auto;
+        cursor: pointer;
+      }
+      
+      .contact-phone-edit {
+        position: absolute;
+        left: 50.69%;
+        top: 25.26%;
+        color: #2e2e2e;
+        font-size: 1.4vw;
+        font-weight: bold;
+        z-index: 100;
+        cursor: pointer;
+        background: transparent;
+        padding: 0.5% 1%;
+      }
+      
+      .contact-email-edit {
+        display: none;
+      }
+      
+      .contact-dashed-line {
+        position: absolute;
+        height: 15.79%;
+        left: 19.44%;
+        top: 6.32%;
+        width: 62.5%;
+        overflow: visible;
+        z-index: 50;
+      }
+      
+      .contact-dashed-line-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      
+      .contact-dashed-line svg {
+        overflow: visible;
+      }
+      
+      .contact-email-link {
+        position: absolute;
+        right: 3.47%;
+        top: 10%;
+        width: 27.78%;
+        height: 20%;
+        cursor: pointer;
+        z-index: 100;
+        display: block;
+      }
+      
+      .contact-jumping-bear {
+        position: absolute;
+        height: 13.68%;
+        left: 71.81%;
+        top: 20.21%;
+        width: 18.75%;
+      }
+      
+      .contact-jumping-bear img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+      }
+      
+      .contact-tail-wrap {
+        position: absolute;
+        display: flex;
+        height: 43.22%;
+        align-items: center;
+        justify-content: center;
+        left: -5.63%;
+        top: 17.11%;
+        width: 58.75%;
+      }
+      
+      .contact-tail-inner {
+        transform: rotate(188.015deg) scaleY(-1);
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+      
+      .contact-tail-inner img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+      }
+      
+      .contact-group {
+        position: absolute;
+        height: 36%;
+        left: 61.11%;
+        top: 60.47%;
+        width: 22.64%;
+      }
+      
+      .contact-group-inner {
+        position: absolute;
+        inset: -0.07% -1.27%;
+      }
+      
+      .contact-text-email {
+        position: absolute;
+        height: 1.89%;
+        line-height: 1.5;
+        left: 63.61%;
+        color: #888484;
+        font-size: 1.5vw;
+        top: 19.26%;
+        width: 26.74%;
+        font-weight: 300;
+        z-index: 100;
+        cursor: pointer;
+      }
+      
+      .contact-text-postcard {
+        position: absolute;
+        height: 1.89%;
+        line-height: 1.5;
+        left: 17.99%;
+        color: #888484;
+        font-size: 1.5vw;
+        top: 64.32%;
+        width: 26.74%;
+        font-weight: 300;
+        z-index: 100;
+        cursor: pointer;
+      }
+      
+      .contact-text-phone {
+        position: absolute;
+        height: 4.21%;
+        line-height: 1.5;
+        left: 77.71%;
+        color: #888484;
+        font-size: 1.5vw;
+        top: 37.74%;
+        width: 18.4%;
+        font-weight: 300;
+        z-index: 100;
+        cursor: pointer;
+      }
+      
+      .contact-pink-bird {
+        position: absolute;
+        height: 45.84%;
+        left: 62.22%;
+        pointer-events: none;
+        top: 52.79%;
+        width: 13.61%;
+      }
+      
+      .contact-frame-helper-1 {
+        position: absolute;
+        display: flex;
+        height: 6.17%;
+        align-items: center;
+        justify-content: center;
+        width: 8.6%;
+        left: 84.72%;
+        top: 70.53%;
+      }
+      
+      .contact-frame-helper-2 {
+        position: absolute;
+        display: flex;
+        height: 6.17%;
+        align-items: center;
+        justify-content: center;
+        width: 8.6%;
+        left: 83.54%;
+        top: 4.74%;
+      }
+      
+      .contact-layer-2-wrap {
+        position: absolute;
+        display: flex;
+        height: 4.5%;
+        align-items: center;
+        justify-content: center;
+        left: 51.6%;
+        top: 69.05%;
+        width: 6.28%;
+      }
+      
+      .contact-layer-3-wrap {
+        position: absolute;
+        display: flex;
+        height: 9.61%;
+        align-items: center;
+        justify-content: center;
+        left: 46.81%;
+        top: 83.26%;
+        width: 12.14%;
+      }
+      
+      .contact-layer-6-wrap-1 {
+        position: absolute;
+        display: flex;
+        height: 10.49%;
+        align-items: center;
+        justify-content: center;
+        left: 73.26%;
+        top: 44.79%;
+        width: 19.01%;
+      }
+      
+      .contact-layer-6-wrap-2 {
+        position: absolute;
+        display: flex;
+        height: 15.15%;
+        align-items: center;
+        justify-content: center;
+        left: 24.17%;
+        top: 71.32%;
+        width: 17.48%;
+      }
+      
+      .contact-dnf-wrap {
+        position: absolute;
+        display: flex;
+        inset: 50.53% 56.63% 41.87% 36.29%;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+    
+  </style>
+  
+  <!-- MOBILE VERSION -->
+  <div class="contact-mobile">
+    <div class="contact-mobile-header">
+      <div class="contact-mobile-decor">
+        <svg viewBox="0 0 177.533 199.129" fill="none" style="width: 100%; height: 100%;">
+          <path d={svgPaths.p2a647b00} fill="#91DBD4"/>
+          <path d={svgPaths.pc1eca00} fill="#91DBD4"/>
+          <path d={svgPaths.p265a2c00} fill="#91DBD4"/>
+          <path d={svgPaths.p190d3700} fill="#91DBD4"/>
+        </svg>
+      </div>
+      <h1>Oddny</h1>
+    </div>
+    
+    <div class="contact-section-item">
+      <img 
+        src="/images/oddny-jumping-contact.png" 
+        alt="Oddny jumping" 
+        class="contact-image"
+      />
+      <p 
+        class="contact-text"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`email_text_${locale}`], mode: 'popover' })}
+      >
+        {emailText}
+      </p>
+      <a 
+        href={`mailto:${email}`} 
+        class="contact-button"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['contact_email'], mode: 'popover' })}
+      >
+        {email}
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+        </svg>
+      </a>
+    </div>
+    
+    <div class="contact-section-item">
+      <p 
+        class="contact-text"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`phone_text_${locale}`], mode: 'popover' })}
+      >
+        {phoneText}
+      </p>
+      <div class="contact-handset-mobile">
+        <svg viewBox="0 0 332 258" fill="none" style="width: 100%; height: 100%;">
+          <path d={svgPaths.p2fbea200} fill="#91DBD4"/>
+        </svg>
+      </div>
+      <a 
+        href={`tel:${phone.replace(/\s/g, '')}`} 
+        class="contact-button"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['contact_phone'], mode: 'popover' })}
+      >
+        {phone}
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+        </svg>
+      </a>
+    </div>
+    
+    <div class="contact-section-item">
+      <p 
+        class="contact-text"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`postcard_text_${locale}`], mode: 'popover' })}
+      >
+        {postcardText}
+      </p>
+      <div class="contact-bird-mobile">
+        <svg viewBox="0 0 196 186" fill="none" style="width: 100%; height: auto;">
+          <path d={svgPaths.p33c14e00} fill="#FF40B4"/>
+          <path d={svgPaths.p3531f280} fill="#FF40B4"/>
+          <path d={svgPaths.p5099a40} fill="#FF40B4"/>
+          <path d={svgPaths.p18708f00} fill="#FF40B4"/>
+          <path d={svgPaths.p3abd78f0} fill="#FF40B4"/>
+          <path d={svgPaths.p2bb16a40} fill="#FF40B4"/>
+          <path d={svgPaths.p3ab1200} fill="#FF40B4"/>
+          <path d={svgPaths.p9e6db00} fill="#FF40B4"/>
+          <path d={svgPaths.p21f3200} fill="#FF40B4"/>
+          <path d={svgPaths.p3cafc080} fill="#FF40B4"/>
+          <path d={svgPaths.p38883300} fill="#FF40B4"/>
+          <path d={svgPaths.pf0bc400} fill="#FF40B4"/>
+        </svg>
+      </div>
+    </div>
+    
+    <div class="contact-footer-decor">
+      <img src="/images/oddny-tail.png" alt="" />
+    </div>
+  </div>
+  
+  <!-- DESKTOP VERSION -->
+  <div class="contact-desktop">
+    <div class="contact-desktop-inner">
+      <div class="contact-bg-top"></div>
+      <div class="contact-bg-bottom"></div>
+      
+      <!-- Layer 1 - Bottom left turquoise shape -->
+      <div class="contact-layer-1">
+        <svg viewBox="0 0 124.36 138.54" fill="none" style="width: 100%; height: 100%;">
+          <path d={svgPaths.p2c522f1} fill="#91DBD4"/>
+          <path d={svgPaths.p2deb2f00} fill="#91DBD4"/>
+          <path d={svgPaths.p32f39280} fill="#91DBD4"/>
+          <path d={svgPaths.p2145ff00} fill="#91DBD4"/>
+        </svg>
+      </div>
+      
+      <!-- Frame Helper 1 -->
+      <div class="contact-frame-helper-1">
+        <div style="transform: rotate(70.686deg);">
+          <svg viewBox="0 0 89.1325 99.9752" fill="none" style="width: 89.132px; height: 99.975px;">
+            <path d={svgPaths.p35d17180} fill="#91DBD4"/>
+            <path d={svgPaths.p1b2aeaf2} fill="#91DBD4"/>
+            <path d={svgPaths.p1b67b580} fill="#91DBD4"/>
+            <path d={svgPaths.p26624800} fill="#91DBD4"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- Frame Helper 2 -->
+      <div class="contact-frame-helper-2">
+        <div style="transform: rotate(70.686deg);">
+          <svg viewBox="0 0 89.1325 99.9752" fill="none" style="width: 89.132px; height: 99.975px;">
+            <path d={svgPaths.p35d17180} fill="#91DBD4"/>
+            <path d={svgPaths.p1b2aeaf2} fill="#91DBD4"/>
+            <path d={svgPaths.p1b67b580} fill="#91DBD4"/>
+            <path d={svgPaths.p26624800} fill="#91DBD4"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- Layer 2 wrap -->
+      <div class="contact-layer-2-wrap">
+        <div style="transform: rotate(70.686deg);">
+          <svg viewBox="0 0 65.0567 72.9706" fill="none" style="width: 65.057px; height: 72.971px;">
+            <path d={svgPaths.p2bc11000} fill="#91DBD4"/>
+            <path d={svgPaths.p31af2100} fill="#91DBD4"/>
+            <path d={svgPaths.p10b83000} fill="#91DBD4"/>
+            <path d={svgPaths.p3059800} fill="#91DBD4"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- Layer 3 wrap -->
+      <div class="contact-layer-3-wrap">
+        <div style="transform: rotate(24.477deg);">
+          <svg viewBox="0 0 127.165 142.635" fill="none" style="width: 127.165px; height: 142.635px;">
+            <path d={svgPaths.p2b0b4980} fill="#91DBD4"/>
+            <path d={svgPaths.p15bc9480} fill="#91DBD4"/>
+            <path d={svgPaths.p183b1980} fill="#91DBD4"/>
+            <path d={svgPaths.p379705f1} fill="#91DBD4"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- Layer 4 - Top left turquoise shape -->
+      <div class="contact-layer-4-wrap">
+        <div class="contact-layer-4">
+          <svg viewBox="0 0 177.533 199.129" fill="none" style="width: 100%; height: 100%;">
+            <path d={svgPaths.p2a647b00} fill="#91DBD4"/>
+            <path d={svgPaths.pc1eca00} fill="#91DBD4"/>
+            <path d={svgPaths.p265a2c00} fill="#91DBD4"/>
+            <path d={svgPaths.p190d3700} fill="#91DBD4"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- Layer 5 - Phone Handset -->
+      <div class="contact-layer-5">
+        <svg viewBox="0 0 331.97 257.996" fill="none" style="width: 100%; height: 100%;">
+          <path d={svgPaths.p2fbea200} fill="#91DBD4"/>
+        </svg>
+      </div>
+      
+      <!-- Phone Number -->
+      <div class="contact-phone-number">
+        <svg viewBox="0 0 200 200" style="width: 100%; height: 100%; overflow: visible;">
+          <path id="phoneCurve" d="M 60 160 Q 80 80 140 40" fill="none" stroke="none"/>
+          <text fill="#2e2e2e" font-size="20" font-weight="bold" style="letter-spacing: 2px; font-family: 'Neue Haas Grotesk Display Pro', sans-serif;">
+            <textPath href="#phoneCurve" text-anchor="middle" startOffset="50%">
+              {phone}
+            </textPath>
+          </text>
+        </svg>
+        <a href={`tel:${phone.replace(/\s/g, '')}`} class="contact-phone-link" aria-label="Call us"></a>
+      </div>
+      
+      <!-- Layer 6 wrap 1 -->
+      <div class="contact-layer-6-wrap-1">
+        <div style="transform: rotate(12.901deg); width: 247px; height: 148px; overflow: hidden; position: relative;">
+          <svg viewBox="0 0 60.4464 116.19" fill="none" style="position: absolute; top: 17.71%; left: 0; width: 24.47%; height: 78.5%;">
+            <path d="M25.5233 0.681594C24.5128 0.587581 23.5492 0.493569 22.5857 0.399556C16.158 -0.246784 10.4942 1.65698 5.46486 5.60553C5.18285 5.82881 4.90083 6.18136 4.81857 6.52215C4.05478 9.68334 3.22048 12.8445 2.62119 16.041C1.12885 24.0908 -0.0344717 32.1877 0.000780409 40.4138C0.0242818 46.983 0.294548 53.5404 1.22285 60.0391C2.26867 67.4308 4.10178 74.6581 6.42842 81.7561C10.6352 94.6006 17.5563 105.812 26.9099 115.542C27.3564 116.012 27.8265 116.212 28.4493 116.188C30.8111 116.118 33.173 116.094 35.5349 115.977C41.1988 115.718 46.6746 114.649 51.8802 112.31C52.1504 112.193 52.3972 112.04 52.7027 111.887C46.7804 102.427 40.9168 93.0729 35.0179 83.6598C32.4798 85.3991 30.0121 87.0913 27.5562 88.7718C25.8288 86.586 25.2648 84.0829 24.83 81.5563C22.9969 71.0738 21.1403 60.5914 19.46 50.0737C18.6257 44.8325 18.1321 39.5442 17.4976 34.2677C17.4623 33.9975 17.5211 33.6097 17.6974 33.4569C18.7549 32.4815 19.9535 31.9174 21.4341 32.4697C23.0087 33.0456 24.6185 33.1631 26.2754 33.1043C26.9217 33.0808 27.0392 32.8811 27.0157 32.2582C26.6161 24.1261 26.2636 15.9822 25.8876 7.85009C25.7818 5.49976 25.6643 3.13769 25.5586 0.669845L25.5233 0.681594Z" fill="#91DBD4"/>
+          </svg>
+          <svg viewBox="0 0 101.264 148.003" fill="none" style="position: absolute; top: 0; left: 59%; width: 40.99%; height: 100%;">
+            <path d="M93.0995 11.4578C92.1594 10.5295 91.2546 9.64809 90.3616 8.76671C84.3922 2.84389 77.1185 0.129268 68.8108 0C68.3407 0 67.7649 0.117516 67.4007 0.387804C64.04 2.96141 60.6088 5.46451 57.3891 8.21439C49.2811 15.1243 41.4786 22.3516 34.7807 30.6953C29.4224 37.3584 24.3343 44.1979 19.9395 51.5309C14.9455 59.8628 10.8798 68.653 7.4133 77.7253C1.15017 94.154 -1.03547 111.135 0.445117 128.633C0.515621 129.468 0.821143 130.055 1.46743 130.549C3.91158 132.406 6.32047 134.321 8.79988 136.143C14.734 140.514 21.1499 143.934 28.3178 145.826C28.6821 145.92 29.0581 145.979 29.5046 146.073C31.2672 131.665 33.0063 117.411 34.7455 103.062C30.7502 102.744 26.8725 102.427 23.0182 102.11C23.0535 98.4904 24.5458 95.4937 26.1674 92.5793C32.9006 80.4869 39.6103 68.371 46.5197 56.3726C49.9626 50.391 53.7934 44.6444 57.4713 38.8039C57.6593 38.5101 58.0236 38.1575 58.3291 38.1458C60.1975 38.0165 61.8661 38.4513 62.9119 40.2023C64.0165 42.0708 65.5676 43.5163 67.2949 44.809C67.9647 45.3143 68.2467 45.2085 68.7285 44.5622C74.9916 36.0187 81.29 27.4988 87.5767 18.9789C89.398 16.511 91.2194 14.0432 93.123 11.4578H93.0995Z" fill="#91DBD4"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- Layer 6 wrap 2 -->
+      <div class="contact-layer-6-wrap-2">
+        <div style="transform: rotate(300deg); width: 247px; height: 148px; overflow: hidden; position: relative;">
+          <svg viewBox="0 0 60.4464 116.19" fill="none" style="position: absolute; top: 17.71%; left: 0; width: 24.47%; height: 78.5%;">
+            <path d="M25.5233 0.681594C24.5128 0.587581 23.5492 0.493569 22.5857 0.399556C16.158 -0.246784 10.4942 1.65698 5.46486 5.60553C5.18285 5.82881 4.90083 6.18136 4.81857 6.52215C4.05478 9.68334 3.22048 12.8445 2.62119 16.041C1.12885 24.0908 -0.0344717 32.1877 0.000780409 40.4138C0.0242818 46.983 0.294548 53.5404 1.22285 60.0391C2.26867 67.4308 4.10178 74.6581 6.42842 81.7561C10.6352 94.6006 17.5563 105.812 26.9099 115.542C27.3564 116.012 27.8265 116.212 28.4493 116.188C30.8111 116.118 33.173 116.094 35.5349 115.977C41.1988 115.718 46.6746 114.649 51.8802 112.31C52.1504 112.193 52.3972 112.04 52.7027 111.887C46.7804 102.427 40.9168 93.0729 35.0179 83.6598C32.4798 85.3991 30.0121 87.0913 27.5562 88.7718C25.8288 86.586 25.2648 84.0829 24.83 81.5563C22.9969 71.0738 21.1403 60.5914 19.46 50.0737C18.6257 44.8325 18.1321 39.5442 17.4976 34.2677C17.4623 33.9975 17.5211 33.6097 17.6974 33.4569C18.7549 32.4815 19.9535 31.9174 21.4341 32.4697C23.0087 33.0456 24.6185 33.1631 26.2754 33.1043C26.9217 33.0808 27.0392 32.8811 27.0157 32.2582C26.6161 24.1261 26.2636 15.9822 25.8876 7.85009C25.7818 5.49976 25.6643 3.13769 25.5586 0.669845L25.5233 0.681594Z" fill="#91DBD4"/>
+          </svg>
+          <svg viewBox="0 0 101.264 148.003" fill="none" style="position: absolute; top: 0; left: 59%; width: 40.99%; height: 100%;">
+            <path d="M93.0995 11.4578C92.1594 10.5295 91.2546 9.64809 90.3616 8.76671C84.3922 2.84389 77.1185 0.129268 68.8108 0C68.3407 0 67.7649 0.117516 67.4007 0.387804C64.04 2.96141 60.6088 5.46451 57.3891 8.21439C49.2811 15.1243 41.4786 22.3516 34.7807 30.6953C29.4224 37.3584 24.3343 44.1979 19.9395 51.5309C14.9455 59.8628 10.8798 68.653 7.4133 77.7253C1.15017 94.154 -1.03547 111.135 0.445117 128.633C0.515621 129.468 0.821143 130.055 1.46743 130.549C3.91158 132.406 6.32047 134.321 8.79988 136.143C14.734 140.514 21.1499 143.934 28.3178 145.826C28.6821 145.92 29.0581 145.979 29.5046 146.073C31.2672 131.665 33.0063 117.411 34.7455 103.062C30.7502 102.744 26.8725 102.427 23.0182 102.11C23.0535 98.4904 24.5458 95.4937 26.1674 92.5793C32.9006 80.4869 39.6103 68.371 46.5197 56.3726C49.9626 50.391 53.7934 44.6444 57.4713 38.8039C57.6593 38.5101 58.0236 38.1575 58.3291 38.1458C60.1975 38.0165 61.8661 38.4513 62.9119 40.2023C64.0165 42.0708 65.5676 43.5163 67.2949 44.809C67.9647 45.3143 68.2467 45.2085 68.7285 44.5622C74.9916 36.0187 81.29 27.4988 87.5767 18.9789C89.398 16.511 91.2194 14.0432 93.123 11.4578H93.0995Z" fill="#91DBD4"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- Dashed Line with Email -->
+      <div class="contact-dashed-line">
+        <div class="contact-dashed-line-inner">
+          <svg viewBox="-50 -50 950 320" fill="none" style="width: 100%; height: 100%; overflow: visible;">
+            <defs>
+              <path d={svgPaths.p36834000} id="textPathCurve"/>
+            </defs>
+            <path d={svgPaths.p36834000} stroke="#FF40B4" stroke-dasharray="7 8" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2"/>
+            <text fill="#2e2e2e" font-size="24" font-weight="bold" style="letter-spacing: 1px; font-family: 'Neue Haas Grotesk Display Pro', sans-serif;">
+              <textPath href="#textPathCurve" startOffset="15%" text-anchor="middle" side="left">
+                {email}
+              </textPath>
+            </text>
+          </svg>
+          <a 
+            href={`mailto:${email}`} 
+            class="contact-email-link" 
+            aria-label={`Send email to ${email}`}
+            data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['contact_email'], mode: 'popover' })}
+          ></a>
+        </div>
+      </div>
+      
+      <!-- Jumping Bear -->
+      <div class="contact-jumping-bear">
+        <img src="/images/oddny-jumping-contact.png" alt="Oddny jumping"/>
+      </div>
+      
+      <!-- Tail Bear -->
+      <div class="contact-tail-wrap">
+        <div class="contact-tail-inner">
+          <img src="/images/oddny-tail.png" alt=""/>
+        </div>
+      </div>
+      
+      <!-- Pink Bird Group (Postcard) -->
+      <div class="contact-group">
+        <div class="contact-group-inner">
+          <svg viewBox="0 0 334.258 685" fill="none" style="width: 100%; height: 100%;">
+            <path d={svgPaths.p2e572c0} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p31380f00} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p3a45a080} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p22a6dd00} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p3e3a5b70} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p138ef400} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p3c39c780} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.pcb940f0} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p2ea92680} fill="#FF40B4" stroke="white" stroke-miterlimit="10" stroke-width="3"/>
+            <path d={svgPaths.pd33f180} fill="#FF40B4" stroke="white" stroke-miterlimit="10" stroke-width="3"/>
+            <path d={svgPaths.p36a9ee40} fill="#FF40B4" stroke="white" stroke-miterlimit="10" stroke-width="3"/>
+            <path d={svgPaths.p9998100} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.pf4e0300} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p8a1f580} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.pecccd00} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p1de78272} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p14497500} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p3ad96d80} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p34037580} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p111be3f0} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p333c6f0} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+            <path d={svgPaths.p3f55cb00} fill="#FF40B4" stroke="white" stroke-miterlimit="10"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- Editable Phone Number -->
+      <span 
+        class="contact-phone-edit"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['contact_phone'], mode: 'popover' })}
+      >
+        {phone}
+      </span>
+      
+      <!-- Text Labels -->
+      <p 
+        class="contact-text-email"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`email_text_${locale}`], mode: 'popover' })}
+      >
+        {emailText}
+      </p>
+      <p 
+        class="contact-text-postcard"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`postcard_text_${locale}`], mode: 'popover' })}
+      >
+        {postcardText}
+      </p>
+      <p 
+        class="contact-text-phone"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`phone_text_${locale}`], mode: 'popover' })}
+      >
+        {phoneText}
+      </p>
+      
+      <!-- Pink Bird -->
+      <div class="contact-pink-bird">
+        <svg viewBox="0 0 196 186" fill="none" style="width: 100%; height: 186px;">
+          <path d={svgPaths.p33c14e00} fill="#FF40B4"/>
+          <path d={svgPaths.p3531f280} fill="#FF40B4"/>
+          <path d={svgPaths.p5099a40} fill="#FF40B4"/>
+          <path d={svgPaths.p18708f00} fill="#FF40B4"/>
+          <path d={svgPaths.p3abd78f0} fill="#FF40B4"/>
+          <path d={svgPaths.p2bb16a40} fill="#FF40B4"/>
+          <path d={svgPaths.p3ab1200} fill="#FF40B4"/>
+          <path d={svgPaths.p9e6db00} fill="#FF40B4"/>
+          <path d={svgPaths.p21f3200} fill="#FF40B4"/>
+          <path d={svgPaths.p3cafc080} fill="#FF40B4"/>
+          <path d={svgPaths.p38883300} fill="#FF40B4"/>
+          <path d={svgPaths.pf0bc400} fill="#FF40B4"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  directus:
+    build: ./backend-directus
+    ports:
+      - '8055:8055'
+    environment:
+      DB_CLIENT: sqlite3
+      DB_FILENAME: /directus/database/database.sqlite
+      PUBLIC_URL: 'http://localhost:8055'
+      CORS_ENABLED: 'true'
+      CORS_ORIGIN: 'http://localhost,http://localhost:4321,true'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:8055/server/info || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  astro:
+    build: ./frontend-astro
+    ports:
+      - '4321:4321'
+    depends_on:
+      directus:
+        condition: service_healthy
+    environment:
+      DIRECTUS_URL: 'http://directus:8055'
+      PUBLIC_DIRECTUS_URL: 'http://localhost:8055'
+      HOST: '0.0.0.0'
+      PORT: '4321'
+    restart: unless-stopped

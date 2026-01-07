@@ -1,0 +1,388 @@
+---
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import { type Locale, defaultLocale } from '../lib/directus';
+import '../styles/tailwind.css';
+import '../styles/fonts.css';
+
+interface Props {
+  title: string;
+  preview?: boolean;
+  hideNavbar?: boolean;
+  hideFooter?: boolean;
+  currentLocale?: Locale;
+  currentSlug?: string;
+}
+
+const {
+  title,
+  preview = false,
+  hideNavbar = false,
+  hideFooter = false,
+  currentLocale = defaultLocale,
+  currentSlug = ''
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang={currentLocale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    {!hideNavbar && <Navbar currentLocale={currentLocale} currentSlug={currentSlug} />}
+    <main>
+      <slot />
+    </main>
+    {!hideFooter && <Footer locale={currentLocale} />}
+
+    <!-- Rich Text Editor Modal (hidden by default, shown only in iframe/preview) -->
+    <div id="richtext-modal" class="richtext-modal">
+      <div class="richtext-modal-content">
+        <div class="richtext-modal-header">
+          <h3>Edit Content</h3>
+          <button id="richtext-close" class="richtext-close">&times;</button>
+        </div>
+        <div class="richtext-modal-body">
+          <textarea id="richtext-editor"></textarea>
+        </div>
+        <div class="richtext-modal-footer">
+          <button id="richtext-cancel" class="richtext-btn richtext-btn-cancel">Cancel</button>
+          <button id="richtext-save" class="richtext-btn richtext-btn-save">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rich Text Editor Script (only activates in iframe) -->
+    <script is:inline>
+      (function() {
+        // Only activate if we're in an iframe (Directus visual editor)
+        var isInIframe = window !== window.parent;
+        if (!isInIframe) return;
+
+        // Load Quill CSS
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.quilljs.com/1.3.7/quill.snow.css';
+        document.head.appendChild(link);
+
+        // Load Quill JS
+        var script = document.createElement('script');
+        script.src = 'https://cdn.quilljs.com/1.3.7/quill.min.js';
+        script.onload = initRichTextEditor;
+        document.head.appendChild(script);
+
+        // Add hover styles for richtext elements
+        var style = document.createElement('style');
+        style.textContent = `
+          [data-richtext] {
+            cursor: pointer;
+            position: relative;
+          }
+          [data-richtext]:hover::after {
+            content: '✎ Edit Rich Text';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #8b5cf6;
+            color: white;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: sans-serif;
+            z-index: 1000;
+            white-space: nowrap;
+          }
+          #richtext-editor-container {
+            height: 350px;
+            background: white;
+          }
+          #richtext-editor-container .ql-editor {
+            font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+          }
+          #richtext-editor-container .ql-editor h3 {
+            font-size: 28px;
+            font-weight: 500;
+            color: #42383e;
+            margin-bottom: 8px;
+          }
+          #richtext-editor-container .ql-editor p {
+            color: #666;
+            margin-bottom: 24px;
+          }
+        `;
+        document.head.appendChild(style);
+
+        function initRichTextEditor() {
+          var directusUrl = 'http://85.215.222.143:8055';
+          var currentElement = null;
+          var currentCollection = null;
+          var currentItem = null;
+          var currentField = null;
+          var quillInstance = null;
+
+          var modal = document.getElementById('richtext-modal');
+          var closeBtn = document.getElementById('richtext-close');
+          var cancelBtn = document.getElementById('richtext-cancel');
+          var saveBtn = document.getElementById('richtext-save');
+          var editorContainer = document.getElementById('richtext-editor');
+
+          // Replace textarea with div for Quill (only once)
+          if (!document.getElementById('richtext-editor-container')) {
+            var quillContainer = document.createElement('div');
+            quillContainer.id = 'richtext-editor-container';
+            editorContainer.parentNode.replaceChild(quillContainer, editorContainer);
+          }
+
+          function openEditor(element) {
+            currentElement = element;
+            currentCollection = element.dataset.richtextCollection;
+            currentItem = element.dataset.richtextItem;
+            currentField = element.dataset.richtextField;
+
+            // Clean the HTML content - remove extra whitespace between tags
+            var content = element.innerHTML
+              .replace(/>\s+</g, '><')
+              .replace(/^\s+|\s+$/g, '')
+              .trim();
+
+            modal.classList.add('active');
+
+            // Get the container
+            var container = document.getElementById('richtext-editor-container');
+
+            // Completely reset the container
+            container.innerHTML = '';
+
+            // Remove any existing toolbar
+            var existingToolbars = modal.querySelectorAll('.ql-toolbar');
+            existingToolbars.forEach(function(tb) { tb.remove(); });
+
+            // Create new Quill instance
+            quillInstance = new Quill(container, {
+              theme: 'snow',
+              modules: {
+                toolbar: [
+                  [{ 'header': [1, 2, 3, false] }],
+                  ['bold', 'italic', 'underline'],
+                  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                  ['link'],
+                  ['clean']
+                ]
+              }
+            });
+
+            // Set content using clipboard to properly parse HTML
+            quillInstance.clipboard.dangerouslyPasteHTML(content);
+            quillInstance.focus();
+          }
+
+          function closeEditor() {
+            modal.classList.remove('active');
+            currentElement = null;
+          }
+
+          async function saveContent() {
+            if (!quillInstance || !currentElement) return;
+
+            var newContent = quillInstance.root.innerHTML;
+
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
+
+            try {
+              var response = await fetch(directusUrl + '/items/' + currentCollection + '/' + currentItem, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                  [currentField]: newContent
+                })
+              });
+
+              if (response.ok) {
+                currentElement.innerHTML = newContent;
+                closeEditor();
+              } else {
+                alert('Error saving content. Please try again.');
+              }
+            } catch (error) {
+              console.error('Save error:', error);
+              alert('Error saving content. Please try again.');
+            } finally {
+              saveBtn.textContent = 'Save';
+              saveBtn.disabled = false;
+            }
+          }
+
+          // Event listeners
+          document.addEventListener('click', function(e) {
+            var richtextEl = e.target.closest('[data-richtext]');
+            if (richtextEl) {
+              e.preventDefault();
+              e.stopPropagation();
+              openEditor(richtextEl);
+            }
+          });
+
+          closeBtn.addEventListener('click', closeEditor);
+          cancelBtn.addEventListener('click', closeEditor);
+          saveBtn.addEventListener('click', saveContent);
+
+          modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+              closeEditor();
+            }
+          });
+
+          document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+              closeEditor();
+            }
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.5;
+    color: #1f2937;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .preview-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #f59e0b;
+    color: white;
+    text-align: center;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    z-index: 9999;
+  }
+
+  main {
+    flex: 1;
+  }
+
+  body:has(.preview-banner) main {
+    padding-top: 2rem;
+  }
+
+  /* Rich Text Modal Styles */
+  .richtext-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 100000;
+    justify-content: center;
+    align-items: center;
+  }
+  .richtext-modal.active {
+    display: flex;
+  }
+  .richtext-modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .richtext-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .richtext-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+  .richtext-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #6b7280;
+    line-height: 1;
+  }
+  .richtext-close:hover {
+    color: #1f2937;
+  }
+  .richtext-modal-body {
+    padding: 24px;
+    flex: 1;
+    overflow: auto;
+    min-height: 300px;
+  }
+  .richtext-modal-body .tox-tinymce {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+  }
+  .richtext-modal-body iframe {
+    pointer-events: auto !important;
+  }
+  .richtext-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+  }
+  .richtext-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+  }
+  .richtext-btn-cancel {
+    background: #f3f4f6;
+    color: #374151;
+  }
+  .richtext-btn-cancel:hover {
+    background: #e5e7eb;
+  }
+  .richtext-btn-save {
+    background: #8b5cf6;
+    color: white;
+  }
+  .richtext-btn-save:hover {
+    background: #7c3aed;
+  }
+</style>

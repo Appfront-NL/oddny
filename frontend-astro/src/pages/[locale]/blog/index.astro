@@ -1,0 +1,99 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getArticles, locales, type Locale, defaultLocale, PUBLIC_DIRECTUS_URL } from '../../../lib/directus';
+
+export async function getStaticPaths() {
+  return [];
+}
+
+const { locale } = Astro.params;
+const currentLocale = (locales.includes(locale as Locale) ? locale : defaultLocale) as Locale;
+const articles = await getArticles('published');
+const directusUrl = PUBLIC_DIRECTUS_URL;
+
+function getImageUrl(image: any) {
+  if (!image) return '/images/placeholder.jpg';
+  if (typeof image === 'string') return `${directusUrl}/assets/${image}`;
+  return `${directusUrl}/assets/${image.id}`;
+}
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString(currentLocale === 'nl' ? 'nl-NL' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+---
+
+<Layout title="Blog" currentLocale={currentLocale} currentSlug="blog">
+  <div style="max-width: 1200px; margin: 0 auto; padding: 40px 20px;">
+    <header style="margin-bottom: 48px;">
+      <h1 style="font-family: 'Neue Haas Grotesk Display Pro', sans-serif; font-size: 48px; font-weight: 500; color: #42383e; margin-bottom: 16px;">
+        {currentLocale === 'nl' ? 'Artikelen' : 'Articles'}
+      </h1>
+      <p style="font-size: 18px; color: #888484;">
+        {currentLocale === 'nl' ? 'Ontdek onze laatste verhalen en inzichten' : 'Discover our latest stories and insights'}
+      </p>
+    </header>
+
+    {articles.length === 0 ? (
+      <div style="text-align: center; padding: 80px 20px; background: #f9f9f9; border-radius: 12px;">
+        <p style="font-size: 18px; color: #888484;">
+          {currentLocale === 'nl' ? 'Nog geen artikelen gepubliceerd.' : 'No articles published yet.'}
+        </p>
+      </div>
+    ) : (
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 32px;">
+        {articles.map((article: any) => (
+          <article style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.2s;">
+            <a href={`/${currentLocale}/blog/${article.slug}`} style="text-decoration: none; color: inherit;">
+              <div style="aspect-ratio: 16/10; overflow: hidden;">
+                <img 
+                  src={getImageUrl(article.featured_image)} 
+                  alt={article.title}
+                  style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;"
+                />
+              </div>
+              <div style="padding: 24px;">
+                {article.category && (
+                  <span style={`display: inline-block; padding: 4px 12px; background: ${article.category.color || '#ff40b4'}; color: white; font-size: 12px; font-weight: 500; border-radius: 4px; margin-bottom: 12px; text-transform: uppercase;`}>
+                    {article.category.name}
+                  </span>
+                )}
+                <h2 style="font-family: 'Neue Haas Grotesk Display Pro', sans-serif; font-size: 24px; font-weight: 500; color: #42383e; margin-bottom: 12px; line-height: 1.3;">
+                  {article.title}
+                </h2>
+                {article.excerpt && (
+                  <p style="font-size: 15px; color: #888484; line-height: 1.6; margin-bottom: 16px;">
+                    {article.excerpt.substring(0, 120)}{article.excerpt.length > 120 ? '...' : ''}
+                  </p>
+                )}
+                <div style="display: flex; align-items: center; gap: 16px; font-size: 14px; color: #888484;">
+                  {article.published_date && (
+                    <span>{formatDate(article.published_date)}</span>
+                  )}
+                  {article.reading_time && (
+                    <span>{article.reading_time} min {currentLocale === 'nl' ? 'leestijd' : 'read'}</span>
+                  )}
+                </div>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+    )}
+  </div>
+</Layout>
+
+<style>
+  article:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
+  article:hover img {
+    transform: scale(1.05);
+  }
+</style>

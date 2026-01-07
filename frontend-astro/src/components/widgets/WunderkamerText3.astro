@@ -1,0 +1,212 @@
+---
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+// Get localized text values
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading');
+const content = getLocalizedField(block, 'content');
+---
+
+<section 
+  class="wunderkamer-text-3-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <style>
+    .wunderkamer-text-3-section {
+      position: relative;
+      width: 100%;
+      min-height: 500px;
+      height: auto;
+      background: white;
+      overflow: hidden;
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      padding: 50px 0;
+    }
+    
+    .wunderkamer-3-container {
+      position: relative;
+      max-width: 1440px;
+      height: auto;
+      min-height: 500px;
+      background: white;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+    
+    /* Text Content - exact positioning from reference */
+    .wunderkamer-3-content {
+      position: absolute;
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      height: auto;
+      line-height: 30px;
+      left: 80px;
+      color: #888484;
+      font-size: 28px;
+      top: 156px;
+      width: 616px;
+    }
+    
+    .wunderkamer-3-content p {
+      margin-bottom: 0;
+    }
+    
+    /* Title - exact positioning from reference */
+    .wunderkamer-3-title {
+      position: absolute;
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      font-weight: 500;
+      height: 72px;
+      line-height: 85px;
+      left: 80px;
+      color: #42383e;
+      font-size: 80px;
+      top: 50px;
+      width: 840px;
+      margin: 0;
+    }
+    
+    /* Composition Image - positioned right */
+    .wunderkamer-3-composition {
+      position: absolute;
+      right: 70px;
+      top: 123px;
+      width: 616px;
+      height: auto;
+      pointer-events: none;
+    }
+    
+    .wunderkamer-3-composition img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 1440px) {
+      .wunderkamer-3-container {
+        width: 95%;
+        max-width: 1440px;
+        height: auto;
+        min-height: 450px;
+        margin: 0 auto;
+      }
+      .wunderkamer-3-title {
+        left: 5%;
+        font-size: clamp(40px, 5.5vw, 80px);
+        line-height: clamp(45px, 6vw, 85px);
+        width: 70%;
+      }
+      .wunderkamer-3-content {
+        left: 5%;
+        top: clamp(120px, 15vw, 156px);
+        font-size: clamp(18px, 2vw, 28px);
+        line-height: clamp(22px, 2.2vw, 30px);
+        width: 50%;
+        height: auto;
+      }
+      .wunderkamer-3-composition {
+        right: 2%;
+        width: clamp(300px, 40vw, 616px);
+        height: auto;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .wunderkamer-text-3-section {
+        min-height: auto;
+        padding: 30px 0;
+      }
+      .wunderkamer-3-container {
+        height: auto;
+        min-height: 350px;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+      }
+      .wunderkamer-3-title {
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 100%;
+        font-size: 42px;
+        line-height: 46px;
+        margin-bottom: 20px;
+      }
+      .wunderkamer-3-content {
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 100%;
+        font-size: 20px;
+        line-height: 24px;
+        height: auto;
+        margin-bottom: 30px;
+      }
+      .wunderkamer-3-composition {
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 250px;
+        margin: 0 auto;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .wunderkamer-3-title {
+        font-size: 32px;
+        line-height: 36px;
+      }
+      .wunderkamer-3-content {
+        font-size: 18px;
+        line-height: 22px;
+      }
+      .wunderkamer-3-composition {
+        width: 200px;
+      }
+    }
+  </style>
+  
+  <div class="wunderkamer-3-container">
+    {/* Title - exact from reference */}
+    <h1 
+      class="wunderkamer-3-title"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+    >
+      {heading || 'Wunderkammer'}
+    </h1>
+
+    {/* Text Content - exact from reference */}
+    <div 
+      class="wunderkamer-3-content"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'popover' })}
+      set:html={content || `
+        <p>Once, a Wunderkammer gathered the wonders of art, nature and invention in one place.<br aria-hidden="true" /><br aria-hidden="true" /></p>
+        <p>At Oddny, we carry that spirit forward — exploring, connecting and sharing insights from the creative and financial worlds to protect, inspire and expand what creativity can achieve.</p>
+        <p>&nbsp;</p>
+        <p>A space to discover, to be inspired, and to spark new possibilities.</p>
+      `}
+    >
+    </div>
+
+    {/* Composition Image - exact positioning from reference */}
+    <div class="wunderkamer-3-composition">
+      <img 
+        src="/images/wunderkamer-composition.png"
+        alt="Composition with Bear, Bird and Rock"
+        loading="lazy"
+      />
+    </div>
+  </div>
+</section>

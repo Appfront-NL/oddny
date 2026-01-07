@@ -1,0 +1,272 @@
+---
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+// Get localized text values
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading');
+const buttonText = getLocalizedField(block, 'button_text');
+---
+
+<section 
+  class="hero hero-image-overlay"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <style>
+    .hero-image-overlay {
+      position: relative;
+      width: 100vw;
+      height: 711px;
+      background: white;
+      overflow: hidden;
+      font-family: 'Neue Haas Grotesk Display Pro', 'Inter', sans-serif;
+      padding: 0;
+      margin: 0;
+      margin-left: calc(-50vw + 50%);
+      max-width: 1440px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    /* Background Image Container - exact Figma positioning */
+    .hero-image-overlay .bg-image {
+      position: absolute;
+      left: 80px;
+      top: 35px;
+      width: 1280px;
+      height: 636px;
+      border-radius: 10px;
+      overflow: hidden;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+    
+    .hero-image-overlay .bg-image:hover {
+      opacity: 0.95;
+    }
+    
+    .hero-image-overlay .bg-image::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 64, 180, 0.1);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    
+    .hero-image-overlay .bg-image:hover::after {
+      opacity: 1;
+    }
+    
+    .hero-image-overlay .bg-image img {
+      position: absolute;
+      height: 141.39%;
+      left: -2.67%;
+      max-width: none;
+      top: -24.06%;
+      width: 105.42%;
+      object-fit: cover;
+    }
+    
+    /* Text Overlay - positioned to match original design */
+    .hero-image-overlay .text-overlay {
+      position: absolute;
+      left: 790px;
+      bottom: 60px;
+      width: 517px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .hero-image-overlay h1 {
+      font-family: 'Neue Haas Grotesk Display Pro', 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 35px;
+      line-height: 40px;
+      color: #ff40b4;
+      margin: 0;
+      margin-bottom: 40px;
+    }
+    
+    /* Explore Button - positioned relative to text */
+    .hero-image-overlay .explore-btn {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      text-decoration: none;
+      z-index: 20;
+      transition: transform 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      width: fit-content;
+    }
+    
+    .hero-image-overlay .explore-btn:hover {
+      transform: translateX(4px);
+    }
+    
+    .hero-image-overlay .explore-btn span {
+      font-family: 'Neue Haas Grotesk Display Pro', 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 20px;
+      color: #ff40b4;
+    }
+    
+    .hero-image-overlay .explore-btn svg {
+      color: #ff40b4;
+      transition: transform 0.3s ease;
+    }
+    
+    .hero-image-overlay .explore-btn:hover svg {
+      transform: translateX(4px);
+    }
+    
+    /* Responsive scaling - maintain proportions */
+    @media (max-width: 1440px) and (min-width: 769px) {
+      .hero-image-overlay {
+        height: calc(711px * 100vw / 1440px);
+        min-height: 400px;
+      }
+      .hero-image-overlay .bg-image {
+        left: calc(80px * 100vw / 1440px);
+        top: calc(35px * 100vw / 1440px);
+        width: calc(1280px * 100vw / 1440px);
+        height: calc(636px * 100vw / 1440px);
+      }
+      .hero-image-overlay .text-overlay {
+        left: calc(790px * 100vw / 1440px);
+        bottom: calc(60px * 100vw / 1440px);
+        width: calc(517px * 100vw / 1440px);
+      }
+      .hero-image-overlay h1 {
+        font-size: clamp(20px, calc(35px * 100vw / 1440px), 35px);
+        line-height: clamp(24px, calc(40px * 100vw / 1440px), 40px);
+        margin-bottom: calc(40px * 100vw / 1440px);
+      }
+      .hero-image-overlay .explore-btn {
+        gap: calc(16px * 100vw / 1440px);
+      }
+      .hero-image-overlay .explore-btn span {
+        font-size: clamp(16px, calc(20px * 100vw / 1440px), 20px);
+      }
+    }
+    
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+      .hero-image-overlay {
+        height: 500px;
+      }
+      .hero-image-overlay .bg-image {
+        left: 20px;
+        top: 20px;
+        width: calc(100vw - 40px);
+        height: 300px;
+      }
+      .hero-image-overlay .text-overlay {
+        left: 40px;
+        bottom: 20px;
+        width: calc(100vw - 80px);
+      }
+      .hero-image-overlay h1 {
+        font-size: 28px;
+        line-height: 32px;
+        margin-bottom: 16px;
+      }
+      .hero-image-overlay .explore-btn {
+        gap: 12px;
+      }
+      .hero-image-overlay .explore-btn span {
+        font-size: 18px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .hero-image-overlay {
+        height: 450px;
+      }
+      .hero-image-overlay .bg-image {
+        left: 15px;
+        top: 15px;
+        width: calc(100vw - 30px);
+        height: 270px;
+      }
+      .hero-image-overlay .text-overlay {
+        left: 30px;
+        bottom: 15px;
+        width: calc(100vw - 60px);
+      }
+      .hero-image-overlay h1 {
+        font-size: 24px;
+        line-height: 28px;
+        margin-bottom: 12px;
+      }
+      .hero-image-overlay .explore-btn {
+        gap: 10px;
+      }
+      .hero-image-overlay .explore-btn span {
+        font-size: 16px;
+      }
+    }
+  </style>
+  
+  {/* Background Image */}
+  <div 
+    class="bg-image"
+    data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'background_image', mode: 'popover' })}
+  >
+    <img 
+      src={block.background_image ? getImageUrl(block.background_image) : '/images/peter-bellerby-globes.png'}
+      alt="Hero background image"
+      loading="lazy"
+      key={block.background_image || 'default'}
+    />
+  </div>
+
+  {/* Text Overlay */}
+  <div class="text-overlay">
+    <h1 
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+      set:html={heading || 'Step inside the world<br/>of Peter Bellerby\'s hand<br/>built globes'}
+    >
+    </h1>
+    
+    {/* Explore Button */}
+    <a 
+      href={block.button_link || '#'}
+      class="explore-btn"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+    >
+      <span>{buttonText || 'Explore'}</span>
+      <svg 
+        width="35" 
+        height="14" 
+        viewBox="0 0 35 14" 
+        fill="none"
+      >
+        <path 
+          d="M1 7H34M34 7L28 1M34 7L28 13" 
+          stroke="currentColor" 
+          strokeWidth="1.5" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        />
+      </svg>
+    </a>
+  </div>
+</section>

@@ -1,0 +1,214 @@
+---
+/**
+ * Visual Editor Test Page v6
+ * Uses correct block IDs for each field type
+ */
+import { client, readItems, PUBLIC_DIRECTUS_URL } from '../lib/directus';
+
+const DIRECTUS_URL = PUBLIC_DIRECTUS_URL;
+
+// Fetch all blocks to use the right ones
+let heroBlock = { id: 1, heading: 'Hero Heading', subheading: 'Hero Subheading' };
+let richtextBlock = { id: 2, heading: 'Content Heading', content: 'Content text' };
+let ctaBlock = { id: 5, heading: 'CTA Heading', button_text: 'Click Me', button_link: '#' };
+
+try {
+  const blocks = await client.request(
+    readItems('blocks', {
+      fields: ['id', 'block_type', 'heading', 'subheading', 'content', 'button_text', 'button_link'],
+    })
+  ) as any[];
+
+  // Find first hero block
+  const hero = blocks.find(b => b.block_type === 'hero');
+  if (hero) {
+    heroBlock = {
+      id: hero.id,
+      heading: hero.heading || heroBlock.heading,
+      subheading: hero.subheading || heroBlock.subheading
+    };
+  }
+
+  // Find first richtext block
+  const richtext = blocks.find(b => b.block_type === 'richtext');
+  if (richtext) {
+    richtextBlock = {
+      id: richtext.id,
+      heading: richtext.heading || richtextBlock.heading,
+      content: richtext.content || richtextBlock.content
+    };
+  }
+
+  // Find first cta block
+  const cta = blocks.find(b => b.block_type === 'cta');
+  if (cta) {
+    ctaBlock = {
+      id: cta.id,
+      heading: cta.heading || ctaBlock.heading,
+      button_text: cta.button_text || ctaBlock.button_text,
+      button_link: cta.button_link || ctaBlock.button_link
+    };
+  }
+} catch (e) {
+  console.error('Error fetching blocks:', e);
+}
+---
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Editor Test v6</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Polyfill for crypto.randomUUID -->
+  <script is:inline>
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID !== 'function') {
+      crypto.randomUUID = function() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random() * 16 | 0;
+          return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+      };
+    }
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+
+    .hero {
+      background: linear-gradient(135deg, #6644ff, #4422cc);
+      color: white;
+      padding: 5rem 2rem;
+      text-align: center;
+    }
+    .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+    .hero p { font-size: 1.2rem; opacity: 0.9; }
+
+    .content {
+      padding: 4rem 2rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .content h2 { font-size: 1.8rem; margin-bottom: 1rem; color: #333; }
+    .content .text { font-size: 1.1rem; line-height: 1.8; color: #555; }
+
+    .cta {
+      background: #10b981;
+      padding: 4rem 2rem;
+      text-align: center;
+      color: white;
+    }
+    .cta h2 { font-size: 2rem; margin-bottom: 1.5rem; }
+    .btn {
+      display: inline-block;
+      padding: 1rem 2rem;
+      background: white;
+      color: #10b981;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    .debug {
+      padding: 2rem;
+      background: #f5f5f5;
+      max-width: 700px;
+      margin: 2rem auto;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .debug h3 { margin-bottom: 1rem; }
+    .debug p { margin: 0.25rem 0; }
+    .debug .ok { color: green; font-weight: bold; }
+    .debug .err { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <!-- HERO SECTION - uses hero block -->
+  <header class="hero">
+    <h1 data-directus={`collection:blocks;item:${heroBlock.id};fields:heading;mode:popover`}>
+      {heroBlock.heading}
+    </h1>
+    <p data-directus={`collection:blocks;item:${heroBlock.id};fields:subheading;mode:popover`}>
+      {heroBlock.subheading}
+    </p>
+  </header>
+
+  <!-- CONTENT SECTION - uses richtext block -->
+  <section class="content">
+    <h2 data-directus={`collection:blocks;item:${richtextBlock.id};fields:heading;mode:popover`}>
+      {richtextBlock.heading}
+    </h2>
+    <div class="text" data-directus={`collection:blocks;item:${richtextBlock.id};fields:content;mode:modal`}>
+      <Fragment set:html={richtextBlock.content} />
+    </div>
+  </section>
+
+  <!-- CTA SECTION - uses cta block -->
+  <section class="cta">
+    <h2 data-directus={`collection:blocks;item:${ctaBlock.id};fields:heading;mode:popover`}>
+      {ctaBlock.heading}
+    </h2>
+    <a
+      href={ctaBlock.button_link || '#'}
+      class="btn"
+      data-directus={`collection:blocks;item:${ctaBlock.id};fields:button_text,button_link;mode:popover`}
+    >
+      {ctaBlock.button_text}
+    </a>
+  </section>
+
+  <!-- Debug Info -->
+  <div class="debug" id="debug">
+    <h3>Block IDs Used</h3>
+    <p>Hero Block: <strong>{heroBlock.id}</strong> (heading, subheading)</p>
+    <p>Richtext Block: <strong>{richtextBlock.id}</strong> (heading, content)</p>
+    <p>CTA Block: <strong>{ctaBlock.id}</strong> (heading, button_text, button_link)</p>
+    <hr style="margin: 1rem 0;">
+    <p>Polyfill: <span id="s-poly">...</span></p>
+    <p>Library: <span id="s-lib">...</span></p>
+    <p>Apply: <span id="s-apply">...</span></p>
+  </div>
+
+  <script is:inline define:vars={{ directusUrl: DIRECTUS_URL }}>
+    var $ = function(id) { return document.getElementById(id); };
+
+    // Check polyfill
+    $('s-poly').textContent = typeof crypto.randomUUID === 'function' ? 'OK' : 'MISSING';
+    $('s-poly').className = typeof crypto.randomUUID === 'function' ? 'ok' : 'err';
+
+    // Hide debug in iframe
+    if (window.self !== window.top) {
+      $('debug').style.display = 'none';
+    }
+
+    // Load visual editing library
+    var script = document.createElement('script');
+    script.src = 'https://unpkg.com/@directus/visual-editing@1.1.0';
+    script.onload = function() {
+      $('s-lib').textContent = 'Loaded';
+      $('s-lib').className = 'ok';
+
+      if (window.DirectusVisualEditing) {
+        window.DirectusVisualEditing.apply({
+          directusUrl: directusUrl
+        }).then(function(result) {
+          $('s-apply').textContent = 'Success';
+          $('s-apply').className = 'ok';
+        }).catch(function(e) {
+          $('s-apply').textContent = 'Error: ' + e.message;
+          $('s-apply').className = 'err';
+        });
+      }
+    };
+    script.onerror = function() {
+      $('s-lib').textContent = 'Failed';
+      $('s-lib').className = 'err';
+    };
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>

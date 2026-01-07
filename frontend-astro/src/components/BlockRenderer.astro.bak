@@ -1,0 +1,941 @@
+---
+import type { Block } from '../lib/directus';
+
+interface Props {
+  blocks: Block[];
+  locale?: string;
+}
+
+const { blocks, locale = 'en' } = Astro.props;
+const DIRECTUS_URL = 'http://85.215.222.143:8055';
+
+// Sort blocks by sort field
+const sortedBlocks = [...blocks].sort((a, b) => (a.sort || 0) - (b.sort || 0));
+
+// Helper to get localized field value
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  // First try localized field, then fall back to base field
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+// Helper to create data-directus attribute - now uses localized field names
+const setAttr = (opts: { collection: string; item: string | number; fields?: string | string[]; mode?: string }) => {
+  let attr = `collection:${opts.collection};item:${opts.item}`;
+  if (opts.fields) {
+    // Convert field names to localized versions
+    const localizeField = (f: string) => {
+      const textFields = ['heading', 'subheading', 'content', 'button_text', 'text'];
+      if (textFields.includes(f)) {
+        return `${f}_${locale}`;
+      }
+      return f;
+    };
+    const fields = Array.isArray(opts.fields)
+      ? opts.fields.map(localizeField).join(',')
+      : localizeField(opts.fields);
+    attr += `;fields:${fields}`;
+  }
+  if (opts.mode) {
+    attr += `;mode:${opts.mode}`;
+  }
+  return attr;
+};
+
+// Helper to get image URL
+const getImageUrl = (imageId: string | null) => {
+  if (!imageId) return null;
+  return `${DIRECTUS_URL}/assets/${imageId}`;
+};
+---
+
+{sortedBlocks.map((block) => {
+  const variant = block.variant || 'default';
+
+  // Get localized text values
+  const heading = getLocalizedField(block, 'heading');
+  const subheading = getLocalizedField(block, 'subheading');
+  const content = getLocalizedField(block, 'content');
+  const buttonText = getLocalizedField(block, 'button_text');
+  const text = getLocalizedField(block, 'text');
+
+  // ===== HERO BLOCK =====
+  if (block.block_type === 'hero') {
+    // Hero: Centered (default)
+    if (variant === 'default' || variant === 'centered') {
+      return (
+        <section
+          class="hero hero-centered"
+          style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 6rem 2rem; text-align: center; color: white;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 800px; margin: 0 auto;">
+            <h1
+              style="font-size: 3.5rem; margin-bottom: 1.5rem; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+            >
+              {heading || 'Hero Titel'}
+            </h1>
+            {subheading && (
+              <p
+                style="font-size: 1.5rem; opacity: 0.95; line-height: 1.6; max-width: 600px; margin: 0 auto;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+              >
+                {subheading}
+              </p>
+            )}
+            {buttonText && (
+              <a
+                href={block.button_link || '#'}
+                style="display: inline-block; margin-top: 2rem; padding: 1rem 2.5rem; background: white; color: #667eea; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                {buttonText}
+              </a>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // Hero: Left Aligned
+    if (variant === 'left') {
+      return (
+        <section
+          class="hero hero-left"
+          style="background: #1a1a2e; padding: 6rem 2rem; color: white;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+            <div>
+              <h1
+                style="font-size: 3rem; margin-bottom: 1.5rem; font-weight: 800; line-height: 1.2;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >
+                {heading || 'Hero Titel'}
+              </h1>
+              {subheading && (
+                <p
+                  style="font-size: 1.25rem; opacity: 0.8; line-height: 1.7; margin-bottom: 2rem;"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+                >
+                  {subheading}
+                </p>
+              )}
+              {buttonText && (
+                <a
+                  href={block.button_link || '#'}
+                  style="display: inline-block; padding: 1rem 2rem; background: #e94560; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+                >
+                  {buttonText}
+                </a>
+              )}
+            </div>
+            <div style="background: linear-gradient(135deg, #e94560 0%, #0f3460 100%); border-radius: 20px; height: 400px;"></div>
+          </div>
+        </section>
+      );
+    }
+
+    // Hero: Gradient
+    if (variant === 'gradient') {
+      return (
+        <section
+          class="hero hero-gradient"
+          style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%); padding: 8rem 2rem; text-align: center; color: white; position: relative; overflow: hidden;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 900px; margin: 0 auto; position: relative; z-index: 1;">
+            <h1
+              style="font-size: 4rem; margin-bottom: 1.5rem; font-weight: 900; letter-spacing: -1px;"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+            >
+              {heading || 'Hero Titel'}
+            </h1>
+            {subheading && (
+              <p
+                style="font-size: 1.5rem; opacity: 0.95; line-height: 1.6; max-width: 700px; margin: 0 auto 2rem;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+              >
+                {subheading}
+              </p>
+            )}
+            {buttonText && (
+              <a
+                href={block.button_link || '#'}
+                style="display: inline-block; padding: 1.25rem 3rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 1.1rem; border: 2px solid rgba(255,255,255,0.3);"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                {buttonText}
+              </a>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // ===== ODDNY HERO BLOCK =====
+    if (variant === 'oddny-hero') {
+      return (
+        <section
+          style="min-height: 100vh; background-color: #F8F7F6; overflow: hidden; font-family: 'Neue Haas Grotesk Display Pro', -apple-system, 'Inter', Roboto, Helvetica, sans-serif;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 1400px; margin: 0 auto; padding: 32px 80px 48px 80px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; min-height: calc(100vh - 128px);">
+
+              {/* Left Content */}
+              <div style="display: flex; flex-direction: column; justify-content: center; gap: 48px; z-index: 10;">
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                  <h1
+                    style="font-size: clamp(48px, 8vw, 96px); font-weight: 500; line-height: 1.05; color: #42383E; margin: 0;"
+                    data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+                  >
+                    {heading || 'Durf te veligen\nmet Oddny'}
+                  </h1>
+
+                  <p
+                    style="font-size: clamp(24px, 3vw, 35px); font-weight: 500; line-height: 1.14; color: #42383E; margin: 0; max-width: 617px;"
+                    data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+                  >
+                    {subheading || 'Oddny empowers creative independents to protect their value and creative freedom.'}
+                  </p>
+                </div>
+
+                {buttonText && (
+                  <a
+                    href={block.button_link || '#'}
+                    style="display: inline-flex; align-items: center; gap: 12px; color: #FF40B4; font-size: clamp(20px, 2vw, 24px); font-weight: 500; text-decoration: none; width: fit-content; transition: gap 0.3s ease;"
+                    data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+                  >
+                    <span>{buttonText}</span>
+                    <svg style="width: 32px; height: 32px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </a>
+                )}
+              </div>
+
+              {/* Right Content - Illustration */}
+              <div
+                style="position: relative; display: flex; align-items: center; justify-content: flex-end;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image', mode: 'popover' })}
+              >
+                {block.image ? (
+                  <img src={getImageUrl(block.image)} alt={heading || 'Hero image'} style="max-width: 100%; height: auto;" />
+                ) : (
+                  <div style="position: relative; width: 100%; aspect-ratio: 989/607;">
+                    {/* Pink Bird - positioned on top */}
+                    <div style="position: absolute; top: 0; right: 15%; z-index: 20; width: 25%; max-width: 232px;">
+                      <img
+                        src="https://api.builder.io/api/v1/image/assets/TEMP/e91d745a7d04ada4518bf418ee2eef7028563871?width=464"
+                        alt=""
+                        style="width: 100%; height: auto;"
+                      />
+                    </div>
+                    {/* Green Bear SVG */}
+                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;" set:html={`<svg viewBox=\"0 0 989 607\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"width: 100%; height: auto; max-width: 900px;\">
+<g clip-path=\"url(#clip0_4049_2375)\">
+<g style=\"mix-blend-mode: darken;\">
+<mask id=\"mask0_4049_2375\" style=\"mask-type: luminance;\" maskUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"1065\" height=\"607\">
+<path d=\"M1064.06 0H0V606.242H1064.06V0Z\" fill=\"white\"/>
+</mask>
+<g mask=\"url(#mask0_4049_2375)\">
+<path d=\"M832.179 843.375C832.395 843.375 832.588 843.472 832.709 843.655C832.841 843.838 832.877 844.082 832.793 844.289L793.49 944.921L919.417 883.891L942.392 834.91L915.516 634.574L897.237 514.062L837.633 443.689L707.408 893.672L726.686 905.246L748.794 848.631C748.89 848.387 749.119 848.229 749.372 848.204L832.119 843.362C832.119 843.362 832.143 843.362 832.155 843.362L832.179 843.375Z\" fill=\"#00FC26\"/>
+<path d=\"M513.858 153.869L517.831 183.371C525.731 180.298 533.943 177.883 542.227 176.212C551.872 174.261 561.517 172.809 571.367 172.809L549.765 132.123L513.858 153.869Z\" fill=\"#00FC26\"/>
+<path d=\"M414.037 263.026L415.722 288.674L449.113 283.93L442.309 250.598L414.037 263.013V263.026Z\" fill=\"#00FC26\"/>
+<path d=\"M450.004 285.174L415.819 290.028L417.89 321.409L452.496 335.752L488.355 317.946L531.366 211.496L443.549 250.061L450.557 284.357C450.594 284.54 450.557 284.723 450.449 284.881C450.341 285.04 450.184 285.137 450.004 285.162V285.174Z\" fill=\"#00FC26\"/>
+<path d=\"M536.375 246.731C534.099 246.731 531.932 248.11 531.017 250.366C529.812 253.354 531.221 256.781 534.183 258.001C535.616 258.598 537.182 258.586 538.615 257.976C540.035 257.367 541.143 256.244 541.733 254.793C542.937 251.805 541.529 248.378 538.566 247.158C537.856 246.865 537.109 246.719 536.387 246.719L536.375 246.731Z\" fill=\"#00FC26\"/>
+<path d=\"M480.588 219.936C478.939 219.936 477.385 220.924 476.723 222.558C475.856 224.717 476.88 227.181 478.999 228.071C480.034 228.498 481.166 228.498 482.19 228.059C483.213 227.62 484.02 226.803 484.441 225.766C484.863 224.717 484.863 223.571 484.429 222.534C483.996 221.497 483.189 220.68 482.166 220.253C481.648 220.034 481.118 219.936 480.588 219.936Z\" fill=\"#00FC26\"/>
+<path d=\"M541.721 254.805C541.131 256.257 540.036 257.379 538.603 257.989C537.17 258.598 535.604 258.598 534.172 258.013C531.221 256.793 529.801 253.366 531.005 250.378C531.92 248.11 534.087 246.744 536.363 246.744C537.086 246.744 537.832 246.89 538.543 247.183C541.493 248.402 542.913 251.829 541.709 254.817L541.721 254.805Z\" fill=\"#00FC26\"/>
+<path d=\"M682.748 253.183C682.543 253.391 682.23 253.439 681.977 253.305L648.021 235.547C647.828 235.45 647.696 235.255 647.672 235.047L643.53 204.264C643.493 203.995 643.614 203.739 643.843 203.593L657.726 195.19C633.427 182.262 606.322 175.029 579.278 174.261C566.37 173.383 534.81 175.468 507.536 189.689C481.865 203.081 467.463 226.876 459.733 239.657C459.191 240.56 458.673 241.402 458.204 242.17L532.329 209.618C532.582 209.508 532.859 209.569 533.052 209.752C533.244 209.947 533.305 210.228 533.196 210.484L489.475 318.69C489.414 318.836 489.294 318.97 489.15 319.031L456.542 335.277L510.619 402.612L666.287 342.021L702.038 233.474L682.736 253.171L682.748 253.183ZM485.67 226.278C485.116 227.656 484.068 228.73 482.708 229.303C482.021 229.596 481.299 229.742 480.588 229.742C479.878 229.742 479.179 229.608 478.505 229.327C475.7 228.169 474.351 224.912 475.495 222.07C476.639 219.229 479.854 217.863 482.659 219.021C484.02 219.582 485.08 220.656 485.646 222.022C486.211 223.388 486.224 224.9 485.658 226.278H485.67ZM542.95 255.318C542.227 257.098 540.866 258.489 539.12 259.233C538.241 259.611 537.302 259.794 536.375 259.794C535.448 259.794 534.557 259.611 533.678 259.257C530.053 257.757 528.307 253.549 529.789 249.866C530.511 248.085 531.872 246.695 533.618 245.951C535.364 245.207 537.302 245.195 539.06 245.926C542.685 247.427 544.431 251.646 542.95 255.318Z\" fill=\"#00FC26\"/>
+<path d=\"M648.936 234.511L682.146 251.878L704.566 228.937L707.613 204.935L693.488 182.298L681.242 182.505L644.89 204.52L648.924 234.523L648.936 234.511Z\" fill=\"#00FC26\"/>
+<path d=\"M681.351 879.415C681.459 879.415 681.568 879.439 681.664 879.5L706.24 893.002L836.634 442.458L794.96 387.477L757.355 405.844C712.116 447.324 672.766 487.365 649.321 557.286C623.854 633.257 619.242 738.828 634.812 889.477L681.231 879.439C681.231 879.439 681.327 879.427 681.363 879.427L681.351 879.415Z\" fill=\"#00FC26\"/>
+<path d=\"M525.815 868.829C525.947 868.829 526.08 868.865 526.188 868.95L542.095 880.147L551.932 621.121L501.66 531.21L443.02 450.824C408.919 529.247 400.117 614.414 417.565 697.19C424.681 730.974 433.628 764.635 442.225 795.968L463.165 872.231L525.779 868.816C525.779 868.816 525.803 868.816 525.815 868.816V868.829Z\" fill=\"#00FC26\"/>
+<path d=\"M443.706 449.519L502.768 530.491L552.739 619.853L687.817 478.498C711.815 445.251 742.291 417.675 753.767 407.284C754.899 406.259 755.826 405.418 756.524 404.783C756.572 404.735 756.62 404.698 756.681 404.674L794.213 386.355L703.748 232.596L667.455 342.777C667.395 342.972 667.251 343.119 667.07 343.192L510.667 404.064C510.402 404.173 510.101 404.088 509.921 403.856L494.135 384.196L443.718 449.519H443.706Z\" fill=\"#00FC26\"/>
+<path d=\"M543.455 881.257L565.358 896.819C565.527 896.941 565.623 897.124 565.635 897.331L565.96 903.515L604.552 903.344L607.599 895.209L633.572 889.623C628.55 846.704 625.673 803.627 624.938 760.903C623.18 659.406 634.487 609.218 638.195 592.728C643.722 568.153 650.164 548.456 659.063 528.832C666.938 511.489 673.801 498.683 684.795 483.084L553.317 621.268L543.443 881.244L543.455 881.257Z\" fill=\"#00FC26\"/>
+<path d=\"M499.36 30.8566C499.095 27.6002 498.843 24.3804 498.59 21.124C498.337 21.2337 498.096 21.3435 497.867 21.4533C495.748 22.4412 493.629 23.4291 491.509 24.417C490.582 24.8438 489.655 25.2829 488.728 25.7098C488.608 25.7708 488.559 25.8318 488.571 25.9659C488.632 27.149 488.644 28.332 488.74 29.5028C488.957 32.0031 489.234 34.4911 489.474 36.9914C489.535 37.6378 489.571 38.2842 489.535 38.9306C489.474 40.1258 488.872 40.9552 487.801 41.443C486.765 41.9065 485.694 42.1748 484.55 41.9553C483.466 41.7479 482.647 41.1625 482.274 40.077C481.792 38.7111 482.479 37.3329 483.851 36.8206C484.802 36.4669 485.778 36.4791 486.753 36.6743C487.343 36.7962 487.933 36.967 488.535 37.1133C488.535 36.7718 488.535 36.4181 488.511 36.0523C488.391 34.3936 488.258 32.7471 488.126 31.0884C488.018 29.8199 487.897 28.5637 487.765 27.2953C487.644 26.2098 487.488 25.1244 487.379 24.0389C487.295 23.2461 487.295 22.4412 487.476 21.6606C487.548 21.3679 487.656 21.0874 487.789 20.8191C487.933 20.5142 488.186 20.3068 488.499 20.1605C489.763 19.575 491.028 18.9774 492.304 18.4042C493.978 17.648 495.652 16.8553 497.277 16.0015C497.518 15.8674 497.795 15.7698 498.06 15.6966C498.457 15.5747 498.758 15.7088 498.879 16.1113C499.023 16.5748 499.132 17.0504 499.18 17.5261C499.324 18.9896 499.433 20.4532 499.553 21.9167C499.734 24.1609 499.902 26.405 500.095 28.6369C500.167 29.515 500.287 30.3932 500.372 31.2835C500.432 31.8445 500.42 32.4178 500.312 32.9788C500.143 33.9057 499.637 34.6009 498.806 35.0156C497.145 35.8571 495.495 35.8083 493.894 34.8692C493.123 34.418 492.702 33.7228 492.846 32.7836C492.954 32.0641 493.316 31.4664 493.87 31.003C494.508 30.4785 495.266 30.2712 496.073 30.2224C497.169 30.1492 498.216 30.381 499.228 30.7835C499.264 30.7956 499.288 30.8078 499.348 30.8322L499.36 30.8566Z\" fill=\"#FF40B4\"/>
+<path d=\"M471.822 89.3379C471.846 89.155 471.894 88.9599 471.894 88.7647C471.979 86.9963 472.075 85.24 472.135 83.4715C472.231 80.8981 472.304 78.3125 472.388 75.7391C472.412 75.0927 472.388 74.4584 472.4 73.812C472.4 73.7145 472.412 73.6169 472.436 73.5071C472.532 72.9705 472.846 72.6778 473.387 72.5924C474.002 72.507 474.628 72.5924 475.23 72.6656C476.663 72.8729 478.011 73.312 479.191 74.1657C481.491 75.8366 482.382 78.1295 482.045 80.9469C481.876 82.3617 481.335 83.6423 480.6 84.8497C480.6 84.8741 480.576 84.8863 480.516 84.9473C480.504 84.5326 480.48 84.1789 480.48 83.813C480.48 83.2032 480.504 82.5812 480.504 81.9714C480.504 80.6542 479.986 79.5687 479.047 78.6662C477.927 77.6051 476.626 76.9465 475.085 76.8245C474.543 76.7757 474.002 76.8367 473.472 76.9831C473.387 77.0075 473.339 77.0319 473.351 77.1416C473.424 79.0808 473.327 81.0201 473.195 82.9593C473.05 85.179 472.978 87.3865 473.002 89.6063C473.002 90.3137 472.942 91.021 472.773 91.7162C472.436 93.131 471.569 94.0579 470.196 94.436C468.366 94.9361 466.62 94.6677 465.007 93.6432C464.453 93.2895 464.019 92.8017 463.815 92.1431C463.61 91.5089 463.718 90.9113 463.983 90.3258C464.682 88.8135 465.898 88.1793 467.487 88.1671C468.848 88.1671 470.124 88.5574 471.34 89.1306C471.485 89.2038 471.629 89.2648 471.762 89.3379C471.762 89.3379 471.762 89.3379 471.81 89.3379H471.822Z\" fill=\"#FF40B4\"/>
+</g>
+</g>
+</g>
+<defs>
+<clipPath id=\"clip0_4049_2375\">
+<rect width=\"1064.06\" height=\"606.242\" fill=\"white\"/>
+</clipPath>
+</defs>
+</svg>`} />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // ===== APPFRONT HERO BLOCK =====
+    if (variant === 'appfront-hero') {
+      return (
+        <section
+          class="appfront-hero"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100;200;300;400;500;600;700;800;900&display=swap');
+            
+            .appfront-hero {
+              font-family: 'Geist', sans-serif;
+            }
+            .appfront-hero .frame-431 {
+              grid-column-gap: 40px;
+              background-color: #fff;
+              background-image: url('/images/appfront-hero-bg.svg');
+              background-position: 50%;
+              background-repeat: no-repeat;
+              background-size: cover;
+              justify-content: center;
+              align-items: flex-start;
+              width: 100%;
+              max-width: 1512px;
+              height: 601px;
+              margin-left: auto;
+              margin-right: auto;
+              padding: 120px;
+              text-decoration: none;
+              display: flex;
+            }
+            .appfront-hero .frame-432 {
+              grid-row-gap: 32px;
+              flex-direction: column;
+              justify-content: flex-start;
+              align-items: flex-start;
+              width: 100%;
+              max-width: 835px;
+              text-decoration: none;
+              display: flex;
+            }
+            .appfront-hero .frame-433 {
+              grid-row-gap: 16px;
+              flex-direction: column;
+              justify-content: flex-start;
+              align-items: flex-start;
+              width: 100%;
+              text-decoration: none;
+              display: flex;
+              position: relative;
+            }
+            .appfront-hero .text-159 {
+              color: #06232a;
+              width: 100%;
+              margin-top: 0;
+              margin-bottom: 0;
+              font-family: 'Geist', sans-serif;
+              font-size: 64px;
+              font-weight: 600;
+              line-height: 150%;
+              text-decoration: none;
+            }
+            .appfront-hero .text-160 {
+              color: #06232a;
+              width: 100%;
+              margin-top: 0;
+              margin-bottom: 0;
+              font-family: 'Geist', sans-serif;
+              font-size: 18px;
+              font-weight: 400;
+              line-height: 164%;
+              text-decoration: none;
+            }
+            .appfront-hero .frame-434 {
+              grid-column-gap: 16px;
+              flex: 0 auto;
+              justify-content: flex-start;
+              align-items: center;
+              text-decoration: none;
+              display: flex;
+            }
+            .appfront-hero .tag-23 {
+              grid-column-gap: 8px;
+              background-color: #edeeee;
+              border-radius: 92px;
+              flex: 0 auto;
+              justify-content: center;
+              align-items: center;
+              min-width: 150px;
+              padding: 2px 16px;
+              text-decoration: none;
+              display: flex;
+            }
+            .appfront-hero .tag-23.nomin {
+              min-width: auto;
+            }
+            .appfront-hero .ux-design-2 {
+              box-sizing: border-box;
+              color: #06232a;
+              object-fit: fill;
+              width: auto;
+              min-width: 0;
+              margin-top: 0;
+              margin-bottom: 0;
+              font-family: 'Geist', sans-serif;
+              font-size: 18px;
+              font-weight: 500;
+              line-height: 164%;
+              text-decoration: none;
+            }
+            .appfront-hero .frame-435 {
+              grid-row-gap: 8px;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              width: 100%;
+              max-width: 397px;
+              height: 360px;
+              text-decoration: none;
+              display: flex;
+            }
+            .appfront-hero .group-46 {
+              width: 354px;
+              height: 325px;
+            }
+            @media screen and (max-width: 991px) {
+              .appfront-hero .text-159 {
+                font-size: 50px;
+              }
+              .appfront-hero .text-160 {
+                font-size: 14px;
+              }
+              .appfront-hero .frame-434 {
+                grid-row-gap: 20px;
+                flex-flow: wrap;
+                justify-content: flex-start;
+                align-items: center;
+              }
+              .appfront-hero .ux-design-2 {
+                font-size: 14px;
+              }
+            }
+            @media screen and (max-width: 767px) {
+              .appfront-hero .frame-431 {
+                flex-flow: column-reverse;
+                justify-content: center;
+                align-items: center;
+                height: auto;
+                padding: 6.19384vw;
+              }
+              .appfront-hero .frame-435 {
+                max-width: none;
+                height: 100%;
+              }
+            }
+            @media screen and (max-width: 479px) {
+              .appfront-hero .text-159 {
+                font-size: 40px;
+              }
+              .appfront-hero .frame-434 {
+                grid-column-gap: 16px;
+                grid-row-gap: 16px;
+                grid-template-rows: auto auto;
+              }
+            }
+          `}</style>
+          <div class="frame-431">
+            <div class="frame-432">
+              <div class="frame-433">
+                <h1 
+                  class="text-159"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+                >
+                  {heading || 'Wij bouwen jouw digitale voorsprong'}
+                </h1>
+                <div 
+                  class="text-160"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+                >
+                  {subheading || 'Jouw partner bij het ontwikkelen van slimme digitale oplossingen'}
+                </div>
+              </div>
+              <div class="frame-434">
+                <div class="tag-23"><h5 class="ux-design-2">Digital Design</h5></div>
+                <div class="tag-23"><h5 class="ux-design-2">Development</h5></div>
+                <div class="tag-23"><h5 class="ux-design-2">AI-integratie</h5></div>
+                <div class="tag-23 nomin"><h5 class="ux-design-2">Beheer</h5></div>
+              </div>
+            </div>
+            <div class="frame-435">
+              <img src="/images/appfront-hero-illustration.svg" loading="lazy" width="354" height="325" alt="" class="group-46" />
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // ===== ODDNY PARTNERS BLOCK =====
+    if (variant === 'oddny-partners') {
+      return (
+        <section
+          class="oddny-partners"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div class="bg-[rgba(217,217,217,0.72)] w-full max-w-[1487px] mx-auto py-12 px-20 font-['Neue_Haas_Grotesk_Display_Pro',sans-serif] relative">
+            {/* Left Column - Why partner */}
+            <div class="flex flex-col md:flex-row gap-8">
+              {/* Left Section */}
+              <div class="flex-1">
+                <div class="mb-4">
+                  <h2 
+                    class="text-[28px] leading-[32px] text-[#ff40b4] font-medium"
+                    data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+                  >
+                    {heading || 'Why partner with Oddny?'}
+                  </h2>
+                  <p 
+                    class="text-[22px] leading-[32px] text-[#42383e]"
+                    data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+                  >
+                    {subheading || 'Experience the benefits yourself'}
+                  </p>
+                </div>
+                <div class="rounded-[10px] overflow-hidden w-[400px] h-[212px]">
+                  <img 
+                    src="/images/c515751b301c941cd803f1e044c249c2d6ab4a25.png" 
+                    alt="Partner benefits" 
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div class="mt-4">
+                  <img 
+                    src="/images/8c7abaf1ac8b0326e6e96d06c9832b66f7660942.png" 
+                    alt="Logos" 
+                    class="h-[30px] object-contain"
+                  />
+                </div>
+              </div>
+
+              {/* Middle Section - Partners Grid */}
+              <div class="flex-1">
+                <div class="mb-4">
+                  <h2 class="text-[28px] leading-[32px] text-[#42383e] font-medium">Our Partners</h2>
+                  <p class="text-[22px] leading-[32px] text-[#42383e]">Experience the benefits yourself</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  {/* Partner Cards */}
+                  <div class="bg-white rounded-[8px] px-4 py-3">
+                    <p class="text-[16px] leading-[16px] text-[#42383e] font-medium">Merlijin Poolman</p>
+                    <p class="text-[14px] leading-[16px] text-[#42383e]">Music night mayor, EU</p>
+                  </div>
+                  <div class="bg-white rounded-[8px] px-4 py-3">
+                    <p class="text-[16px] leading-[16px] text-[#42383e] font-medium">Anthony Michael</p>
+                    <p class="text-[14px] leading-[16px] text-[#42383e]">Designer</p>
+                  </div>
+                  <div class="bg-white rounded-[8px] px-4 py-3">
+                    <p class="text-[16px] leading-[16px] text-[#42383e] font-medium">Jos de Krieger</p>
+                    <p class="text-[14px] leading-[16px] text-[#42383e]">Architect</p>
+                  </div>
+                  <div class="bg-white rounded-[8px] px-4 py-3">
+                    <p class="text-[16px] leading-[16px] text-[#42383e] font-medium">Ina Sok</p>
+                    <p class="text-[14px] leading-[16px] text-[#42383e]">Artist</p>
+                  </div>
+                  <div class="bg-white rounded-[8px] px-4 py-3">
+                    <p class="text-[16px] leading-[16px] text-[#42383e] font-medium">Merlijin Poolman</p>
+                    <p class="text-[14px] leading-[16px] text-[#42383e]">Music night mayor, EU</p>
+                  </div>
+                  <div class="bg-white rounded-[8px] px-4 py-3">
+                    <p class="text-[16px] leading-[16px] text-[#42383e] font-medium">Anthony Michael</p>
+                    <p class="text-[14px] leading-[16px] text-[#42383e]">Designer</p>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <img 
+                    src="/images/8da8be1605016a4e67c0bafda0a68fe20c976633.png" 
+                    alt="Partner logos" 
+                    class="h-[30px] object-contain"
+                  />
+                </div>
+              </div>
+
+              {/* Right Section - CTA with illustration */}
+              <div class="flex-1 flex flex-col items-center justify-center relative">
+                <div class="bg-white rounded-[4px] px-4 py-2 mb-4 relative">
+                  <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[12px] border-b-white"></div>
+                  <p class="text-[16px] leading-[20px] text-[#42383e] font-medium">"Join our community today"</p>
+                </div>
+                <img 
+                  src="/images/e73d0c3b2f605da59f7abd9e7ae9abd49e535850.png" 
+                  alt="Oddny mascot" 
+                  class="w-[232px] h-[223px] object-contain"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+  }
+
+  // ===== CTA BLOCK =====
+  if (block.block_type === 'cta') {
+    // CTA: Simple (default)
+    if (variant === 'default' || variant === 'simple') {
+      return (
+        <section
+          class="cta cta-simple"
+          style="background-color: #10b981; padding: 4rem 2rem; text-align: center; color: white;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 600px; margin: 0 auto;">
+            <h2
+              style="font-size: 2rem; margin-bottom: 1.5rem; font-weight: 600;"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+            >
+              {heading || 'Call to Action'}
+            </h2>
+            {buttonText && (
+              <a
+                href={block.button_link || '#'}
+                style="display: inline-block; padding: 1rem 2rem; background: white; color: #10b981; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1.1rem;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                {buttonText}
+              </a>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // CTA: Highlight
+    if (variant === 'highlight') {
+      return (
+        <section
+          class="cta cta-highlight"
+          style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); padding: 5rem 2rem; text-align: center;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 700px; margin: 0 auto; background: white; padding: 3rem; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.1);">
+            <h2
+              style="font-size: 2.5rem; margin-bottom: 1rem; font-weight: 700; color: #1a1a2e;"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+            >
+              {heading || 'Call to Action'}
+            </h2>
+            {subheading && (
+              <p
+                style="font-size: 1.1rem; color: #666; margin-bottom: 2rem; line-height: 1.6;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+              >
+                {subheading}
+              </p>
+            )}
+            {buttonText && (
+              <a
+                href={block.button_link || '#'}
+                style="display: inline-block; padding: 1rem 2.5rem; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(245,87,108,0.4);"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                {buttonText}
+              </a>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // CTA: Banner
+    if (variant === 'banner') {
+      return (
+        <section
+          class="cta cta-banner"
+          style="background: #1a1a2e; padding: 3rem 2rem; color: white;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;">
+            <div>
+              <h2
+                style="font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >
+                {heading || 'Call to Action'}
+              </h2>
+              {subheading && (
+                <p
+                  style="opacity: 0.8; font-size: 1rem;"
+                  data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+                >
+                  {subheading}
+                </p>
+              )}
+            </div>
+            {buttonText && (
+              <a
+                href={block.button_link || '#'}
+                style="display: inline-block; padding: 1rem 2rem; background: #e94560; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; white-space: nowrap;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                {buttonText}
+              </a>
+            )}
+          </div>
+        </section>
+      );
+    }
+  }
+
+  // ===== RICHTEXT BLOCK =====
+  if (block.block_type === 'richtext') {
+    // Rich Text: Simple (default)
+    if (variant === 'default' || variant === 'simple') {
+      return (
+        <section
+          class="richtext richtext-simple"
+          style="background-color: #ffffff; padding: 4rem 2rem; color: #1f2937;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 800px; margin: 0 auto;">
+            {heading && (
+              <h2
+                style="font-size: 2.5rem; margin-bottom: 1.5rem; font-weight: 700;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >
+                {heading}
+              </h2>
+            )}
+            {content && (
+              <div
+                class="prose"
+                style="font-size: 1.125rem; line-height: 1.8; color: #4b5563;"
+                set:html={content}
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'modal' })}
+              />
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // Rich Text: Card
+    if (variant === 'card') {
+      return (
+        <section
+          class="richtext richtext-card"
+          style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 5rem 2rem;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 800px; margin: 0 auto; background: white; padding: 3rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
+            {heading && (
+              <h2
+                style="font-size: 2rem; margin-bottom: 1.5rem; font-weight: 700; color: #1a1a2e; border-bottom: 3px solid #667eea; padding-bottom: 1rem; display: inline-block;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >
+                {heading}
+              </h2>
+            )}
+            {content && (
+              <div
+                class="prose"
+                style="font-size: 1.1rem; line-height: 1.9; color: #4b5563;"
+                set:html={content}
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'modal' })}
+              />
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // Rich Text: Columns
+    if (variant === 'columns') {
+      return (
+        <section
+          class="richtext richtext-columns"
+          style="background: #fafafa; padding: 5rem 2rem;"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+        >
+          <div style="max-width: 1200px; margin: 0 auto;">
+            {heading && (
+              <h2
+                style="font-size: 2.5rem; margin-bottom: 3rem; font-weight: 700; color: #1a1a2e; text-align: center;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >
+                {heading}
+              </h2>
+            )}
+            {content && (
+              <div
+                class="prose columns-content"
+                style="font-size: 1.1rem; line-height: 1.8; color: #4b5563; column-count: 2; column-gap: 3rem;"
+                set:html={content}
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'modal' })}
+              />
+            )}
+          </div>
+        </section>
+      );
+    }
+  }
+
+  // ===== IMAGE WITH TEXT BLOCK =====
+  if (block.block_type === 'image_with_text') {
+    const imageUrl = getImageUrl(block.image);
+    const isImageLeft = block.image_position !== 'right';
+
+    return (
+      <section
+        class="image-with-text"
+        style="padding: 5rem 2rem; background: white;"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+      >
+        <div style={`max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;`}>
+          {isImageLeft && (
+            <div
+              style="border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.15);"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image', mode: 'popover' })}
+            >
+              {imageUrl ? (
+                <img src={imageUrl} alt={heading || ''} style="width: 100%; height: auto; display: block;" />
+              ) : (
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 350px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem;">
+                  + Afbeelding
+                </div>
+              )}
+            </div>
+          )}
+          <div style={isImageLeft ? '' : 'order: -1;'}>
+            {heading && (
+              <h2
+                style="font-size: 2.5rem; margin-bottom: 1.5rem; color: #1a1a2e; font-weight: 700; line-height: 1.2;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+              >
+                {heading}
+              </h2>
+            )}
+            {text && (
+              <div
+                style="font-size: 1.125rem; line-height: 1.9; color: #4b5563;"
+                set:html={text}
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'text', mode: 'modal' })}
+              />
+            )}
+            {buttonText && (
+              <a
+                href={block.button_link || '#'}
+                style="display: inline-block; margin-top: 2rem; padding: 1rem 2rem; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;"
+                data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+              >
+                {buttonText}
+              </a>
+            )}
+          </div>
+          {!isImageLeft && (
+            <div
+              style="border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.15);"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image', mode: 'popover' })}
+            >
+              {imageUrl ? (
+                <img src={imageUrl} alt={heading || ''} style="width: 100%; height: auto; display: block;" />
+              ) : (
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 350px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem;">
+                  + Afbeelding
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Fallback for any unhandled variants
+  if (block.block_type === 'hero') {
+    return (
+      <section
+        class="hero hero-centered"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 6rem 2rem; text-align: center; color: white;"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+      >
+        <div style="max-width: 800px; margin: 0 auto;">
+          <h1
+            style="font-size: 3.5rem; margin-bottom: 1.5rem; font-weight: 800;"
+            data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+          >
+            {heading || 'Hero Titel'}
+          </h1>
+          {subheading && (
+            <p
+              style="font-size: 1.5rem; opacity: 0.95; line-height: 1.6;"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'subheading', mode: 'popover' })}
+            >
+              {subheading}
+            </p>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  if (block.block_type === 'cta') {
+    return (
+      <section
+        class="cta cta-simple"
+        style="background-color: #10b981; padding: 4rem 2rem; text-align: center; color: white;"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+      >
+        <div style="max-width: 600px; margin: 0 auto;">
+          <h2
+            style="font-size: 2rem; margin-bottom: 1.5rem; font-weight: 600;"
+            data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+          >
+            {heading || 'Call to Action'}
+          </h2>
+          {buttonText && (
+            <a
+              href={block.button_link || '#'}
+              style="display: inline-block; padding: 1rem 2rem; background: white; color: #10b981; text-decoration: none; border-radius: 8px; font-weight: 600;"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
+            >
+              {buttonText}
+            </a>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  if (block.block_type === 'richtext') {
+    return (
+      <section
+        class="richtext richtext-simple"
+        style="background-color: #ffffff; padding: 4rem 2rem; color: #1f2937;"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+      >
+        <div style="max-width: 800px; margin: 0 auto;">
+          {heading && (
+            <h2
+              style="font-size: 2.5rem; margin-bottom: 1.5rem; font-weight: 700;"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+            >
+              {heading}
+            </h2>
+          )}
+          {content && (
+            <div
+              class="prose"
+              style="font-size: 1.125rem; line-height: 1.8; color: #4b5563;"
+              set:html={content}
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'modal' })}
+            />
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Final fallback
+  return (
+    <section style="padding: 2rem; background: #fee; text-align: center;">
+      <p>Unknown block type: {block.block_type}</p>
+    </section>
+  );
+})}

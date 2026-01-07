@@ -1,0 +1,517 @@
+---
+import { getSiteSettings, getNavigationItems, getAssetUrl, type NavigationItem, type SiteSettings, type Locale, defaultLocale } from '../lib/directus';
+
+interface Props {
+  currentLocale?: Locale;
+  currentSlug?: string;
+}
+
+const { currentLocale = defaultLocale, currentSlug = '' } = Astro.props;
+
+const settings = await getSiteSettings();
+const navItems = await getNavigationItems('header');
+
+function getItemUrl(item: NavigationItem): string {
+  if (item.url) return item.url;
+  if (item.page) return `/${currentLocale}/${item.page.slug}`;
+  return '#';
+}
+
+const otherLocale = currentLocale === 'en' ? 'nl' : 'en';
+---
+
+<header class="navbar">
+  <div class="navbar-container">
+    <!-- Logo -->
+    <a href={`/${currentLocale}/`} class="navbar-logo">
+      <svg class="oddny-logo" viewBox="0 0 141 45.027" fill="none">
+        <path d="M112.579 30.0827C112.579 29.0181 112.579 17.8896 112.579 17.8896L112.556 17.8662C112.272 13.0869 108.675 9.27894 104.264 9.27894C101.947 9.27894 99.8453 10.3358 98.3418 12.03V9.27894H86.5131V35.7169H98.3418V24.332C98.3418 24.332 98.3494 24.3397 98.3571 24.3475L98.5182 28.373C98.5182 28.373 98.5182 28.4197 98.5182 28.443C98.5182 32.6861 101.617 35.6781 105.46 35.7247H114.374C114.374 35.7247 112.571 33.8285 112.571 30.0827H112.579Z" fill="#00FC26"/>
+        <path d="M134.51 9.27894C130.92 9.27894 128.013 13.1879 128.013 17.1357L127.737 22.5057L127.476 17.1357C127.476 13.1879 124.569 9.27894 120.979 9.27894H114.466V22.4979H114.481C114.474 22.7078 114.466 22.9331 114.466 23.174C114.466 28.8005 117.358 33.269 121.6 35.4527V45.0192H133.874V35.4527C138.108 33.269 141.008 28.8082 141.008 23.174C141.008 22.9331 141.008 22.7078 140.992 22.4979H141.008V9.27894H134.51Z" fill="#00FC26"/>
+        <path d="M12.7645 9.34111C5.71487 9.34111 0 14.7966 0 22.5601C0 30.3236 5.71487 35.7791 12.7645 35.7791C19.8141 35.7791 25.529 30.3159 25.529 22.5601C25.529 14.7966 19.8141 9.34111 12.7645 9.34111ZM12.7645 24.2154C11.8516 24.2154 11.1076 23.5082 11.1076 22.4979C11.1076 21.4877 11.8516 20.7805 12.7645 20.7805C13.6773 20.7805 14.4214 21.4877 14.4214 22.4979C14.4214 23.5082 13.6773 24.2154 12.7645 24.2154Z" fill="#00FC26"/>
+        <path d="M43.1262 0V9.96282C41.8681 9.55871 40.5257 9.34111 39.1219 9.34111C32.0723 9.34111 26.3574 14.8043 26.3574 22.5601C26.3574 30.3236 32.0723 35.7791 39.1219 35.7791H54.9471V0H43.1185L43.1262 0ZM37.465 22.4979C37.465 21.4877 38.2091 20.7805 39.1219 20.7805C40.0348 20.7805 40.7788 21.4877 40.7788 22.4979C40.7788 23.5082 40.0348 24.2154 39.1219 24.2154C38.2091 24.2154 37.465 23.5082 37.465 22.4979Z" fill="#00FC26"/>
+        <path d="M72.575 0V9.96282C71.317 9.55871 69.9745 9.34111 68.5708 9.34111C61.5211 9.34111 55.8063 14.8043 55.8063 22.5601C55.8063 30.3236 61.5211 35.7791 68.5708 35.7791H84.3959V0H72.5673L72.575 0ZM68.5708 24.2154C67.6579 24.2154 66.9138 23.5082 66.9138 22.4979C66.9138 21.4877 67.6579 20.7805 68.5708 20.7805C69.4836 20.7805 70.2277 21.4877 70.2277 22.4979C70.2277 23.5082 69.4836 24.2154 68.5708 24.2154Z" fill="#00FC26"/>
+      </svg>
+    </a>
+
+    <!-- Navigation Menu -->
+    <nav class="navbar-nav">
+      <div class="navbar-menu">
+        <!-- Nav Links -->
+        <a href={`/${currentLocale}/creative-flow`} class="navbar-link">Creative Flow</a>
+        <a href={`/${currentLocale}/wunderkammer`} class="navbar-link">Wunderkammer</a>
+        <a href={`/${currentLocale}/hub`} class="navbar-link">Hub</a>
+        <a href={`/${currentLocale}/fans-friends-foes`} class="navbar-link">Soulmates</a>
+
+        <!-- Subscribe Button -->
+        <a href={`/${currentLocale}/newsletter`} class="navbar-subscribe">
+          <span>Subscribe</span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2.5 6H9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 2.5L9.5 6L6 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+
+        <!-- Search Icon -->
+        <button class="navbar-icon-btn" aria-label="Search">
+          <svg width="22" height="26" viewBox="0 0 22.0958 26" fill="none">
+            <circle cx="9.69547" cy="9.69545" r="8.19545" stroke="#42383E" stroke-width="3" />
+            <line stroke="#42383E" stroke-width="3" x1="14.1125" x2="20.9106" y1="16.317" y2="25.0806" />
+          </svg>
+        </button>
+
+        <!-- Hamburger Menu Button -->
+        <button class="navbar-icon-btn navbar-hamburger" aria-label="Open menu" aria-expanded="false">
+          <svg width="30" height="22" viewBox="0 0 30.0001 22" fill="none">
+            <line stroke="#42383E" stroke-linecap="round" stroke-width="3" x1="1.50005" x2="28.5001" y1="20.5" y2="20.5" />
+            <line stroke="#42383E" stroke-linecap="round" stroke-width="3" x1="1.50005" x2="28.5001" y1="11" y2="11" />
+            <line stroke="#42383E" stroke-linecap="round" stroke-width="3" x1="1.5" x2="28.5001" y1="1.5" y2="1.5" />
+          </svg>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Hamburger Menu Drawer -->
+  <div class="menu-overlay" aria-hidden="true"></div>
+  <div class="menu-drawer" aria-hidden="true">
+    <!-- Close Button -->
+    <button class="menu-close" aria-label="Close menu">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <line stroke="#FF40B4" stroke-linecap="round" stroke-width="1.5" x1="2.06066" x2="11.6066" y1="1.70703" y2="11.253" />
+        <line stroke="#FF40B4" stroke-linecap="round" stroke-width="1.5" x1="11.6067" x2="2.06075" y1="2.06066" y2="11.6066" />
+      </svg>
+    </button>
+
+    <!-- Top Labels -->
+    <div class="menu-header">
+      <a href="#" class="menu-account">My Oddny Space</a>
+      <div class="menu-lang-switcher">
+        <a href={`/${currentLocale}/${currentSlug}`} class="menu-lang-option active">{currentLocale.toUpperCase()}</a>
+        <span class="menu-lang-divider">/</span>
+        <a href={`/${otherLocale}/${currentSlug}`} class="menu-lang-option">{otherLocale.toUpperCase()}</a>
+      </div>
+    </div>
+
+    <!-- Menu Items -->
+    <div class="menu-content">
+      <!-- Creative Flow -->
+      <div class="menu-section">
+        <a href={`/${currentLocale}/creative-flow`} class="menu-title">Creative Flow</a>
+        <div class="menu-subitems">
+          <a href={`/${currentLocale}/creative-flow`} class="menu-subitem">The Source</a>
+          <a href={`/${currentLocale}/creative-flow`} class="menu-subitem">The Studio</a>
+          <a href={`/${currentLocale}/creative-flow`} class="menu-subitem">The Marketplace</a>
+        </div>
+      </div>
+
+      <!-- Wunderkammer -->
+      <a href={`/${currentLocale}/wunderkammer`} class="menu-title">Wunderkammer</a>
+
+      <!-- Hub -->
+      <div class="menu-section">
+        <a href={`/${currentLocale}/hub`} class="menu-title">Hub</a>
+        <div class="menu-subitems">
+          <a href={`/${currentLocale}/hub`} class="menu-subitem">Tools</a>
+          <a href={`/${currentLocale}/articles`} class="menu-subitem">Guides</a>
+          <a href={`/${currentLocale}/products`} class="menu-subitem">Financial Products</a>
+          <a href={`/${currentLocale}/products`} class="menu-subitem">Other Products</a>
+        </div>
+      </div>
+
+      <!-- Soulmates -->
+      <div class="menu-section">
+        <a href={`/${currentLocale}/fans-friends-foes`} class="menu-title">Soulmates</a>
+        <div class="menu-subitems">
+          <a href={`/${currentLocale}/fans-friends-foes`} class="menu-subitem-alt">Fans, Friends & Foes</a>
+          <a href={`/${currentLocale}/news`} class="menu-subitem">News</a>
+          <a href={`/${currentLocale}/contact`} class="menu-subitem">Contact</a>
+          <a href={`/${currentLocale}/about-us`} class="menu-subitem">About Us</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Social Icons -->
+    <div class="menu-social">
+      <a href={settings?.linkedin_url || '#'} class="menu-social-btn" aria-label="LinkedIn">
+        <svg viewBox="0 0 9.82355 9.82273" fill="white">
+          <path d="M2.21824 3.22949H0.165558V9.77537H2.21824V3.22949Z"/>
+          <path d="M7.77087 3.08767C7.69519 3.07821 7.61479 3.07348 7.53438 3.06875C6.38507 3.02145 5.73711 3.70253 5.51009 3.99577C5.4486 4.07617 5.42022 4.12347 5.42022 4.12347V3.24848H3.45741V9.79435H5.42022H5.51009C5.51009 9.12747 5.51009 8.46531 5.51009 7.79843C5.51009 7.43897 5.51009 7.07952 5.51009 6.72006C5.51009 6.27547 5.47698 5.8025 5.69927 5.39575C5.88846 5.05521 6.22899 4.88495 6.6121 4.88495C7.74722 4.88495 7.77087 5.91128 7.77087 6.00588C7.77087 6.01061 7.77087 6.01534 7.77087 6.01534V9.82273H9.82355V5.55183C9.82355 4.09036 9.08099 3.22956 7.77087 3.08767Z"/>
+          <path d="M1.19188 2.38376C1.85013 2.38376 2.38376 1.85013 2.38376 1.19188C2.38376 0.533622 1.85013 0 1.19188 0C0.53362 0 0 0.533622 0 1.19188C0 1.85013 0.53362 2.38376 1.19188 2.38376Z"/>
+        </svg>
+      </a>
+      <a href={settings?.instagram_url || '#'} class="menu-social-btn" aria-label="Instagram">
+        <svg viewBox="0 0 12.1234 12.1234" fill="white">
+          <path d="M6.06168 1.09158C7.68128 1.09158 7.87308 1.09868 8.51003 1.12709C9.10199 1.15314 9.42165 1.25259 9.63475 1.33546C9.91652 1.44438 10.1202 1.57698 10.3309 1.78772C10.544 2.00083 10.6742 2.20209 10.7832 2.48387C10.866 2.69697 10.9655 3.019 10.9915 3.60859C11.0199 4.24791 11.027 4.4397 11.027 6.05694C11.027 7.67655 11.0199 7.86834 10.9915 8.50529C10.9655 9.09725 10.866 9.41691 10.7832 9.63002C10.6742 9.91179 10.5416 10.1154 10.3309 10.3262C10.1178 10.5393 9.91652 10.6695 9.63475 10.7784C9.42165 10.8613 9.09962 10.9607 8.51003 10.9868C7.87071 11.0152 7.67891 11.0223 6.06168 11.0223C4.44207 11.0223 4.25028 11.0152 3.61333 10.9868C3.02137 10.9607 2.70171 10.8613 2.4886 10.7784C2.20683 10.6695 2.00319 10.5369 1.79246 10.3262C1.57935 10.1131 1.44912 9.91179 1.3402 9.63002C1.25732 9.41691 1.15788 9.09488 1.13183 8.50529C1.10341 7.86597 1.09631 7.67418 1.09631 6.05694C1.09631 4.43734 1.10341 4.24554 1.13183 3.60859C1.15788 3.01663 1.25732 2.69697 1.3402 2.48387C1.44912 2.20209 1.58172 1.99846 1.79246 1.78772C2.00556 1.57462 2.20683 1.44438 2.4886 1.33546C2.70171 1.25259 3.02374 1.15314 3.61333 1.12709C4.25028 1.09868 4.44207 1.09158 6.06168 1.09158ZM6.06168 0C4.41603 0 4.21002 0.00710353 3.5636 0.0355176C2.91955 0.0639317 2.47676 0.168117 2.09317 0.317291C1.69301 0.473568 1.35441 0.679571 1.01817 1.01817C0.679571 1.35441 0.473568 1.69301 0.317291 2.09081C0.168117 2.47676 0.0639318 2.91718 0.0355176 3.56123C0.00710353 4.21002 0 4.41603 0 6.06168C0 7.70733 0.00710353 7.91333 0.0355176 8.55975C0.0639318 9.2038 0.168117 9.64659 0.317291 10.0302C0.473568 10.4303 0.679571 10.7689 1.01817 11.1052C1.35441 11.4414 1.69301 11.6498 2.09081 11.8037C2.47676 11.9529 2.91718 12.0571 3.56124 12.0855C4.20766 12.1139 4.41366 12.121 6.05931 12.121C7.70496 12.121 7.91096 12.1139 8.55738 12.0855C9.20144 12.0571 9.64422 11.9529 10.0278 11.8037C10.4256 11.6498 10.7642 11.4414 11.1004 11.1052C11.4367 10.7689 11.645 10.4303 11.799 10.0325C11.9481 9.64659 12.0523 9.20617 12.0807 8.56212C12.1091 7.9157 12.1163 7.7097 12.1163 6.06404C12.1163 4.41839 12.1091 4.21239 12.0807 3.56597C12.0523 2.92192 11.9481 2.47913 11.799 2.09554C11.6498 1.69301 11.4438 1.35441 11.1052 1.01817C10.7689 0.681939 10.4303 0.473568 10.0325 0.319659C9.64659 0.170485 9.20617 0.0662996 8.56212 0.0378855C7.91333 0.00710353 7.70733 0 6.06168 0Z"/>
+          <path d="M6.06168 2.94796C4.34262 2.94796 2.94796 4.34262 2.94796 6.06168C2.94796 7.78073 4.34262 9.17539 6.06168 9.17539C7.78073 9.17539 9.17539 7.78073 9.17539 6.06168C9.17539 4.34262 7.78073 2.94796 6.06168 2.94796ZM6.06168 8.08145C4.94642 8.08145 4.04191 7.17693 4.04191 6.06168C4.04191 4.94642 4.94642 4.04191 6.06168 4.04191C7.17693 4.04191 8.08145 4.94642 8.08145 6.06168C8.08145 7.17693 7.17693 8.08145 6.06168 8.08145Z"/>
+          <path d="M10.0254 2.82484C10.0254 3.22738 9.69868 3.55177 9.29852 3.55177C8.89598 3.55177 8.57159 3.22501 8.57159 2.82484C8.57159 2.42231 8.89835 2.09792 9.29852 2.09792C9.69868 2.09792 10.0254 2.42468 10.0254 2.82484Z"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<style>
+  .navbar {
+    background: white;
+    box-shadow: 0px 2px 4px 0px rgba(217, 217, 217, 0.72);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    height: 78px;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+  }
+
+  .navbar-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 54px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+  }
+
+  .navbar-logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    height: 78px;
+    width: 195px;
+  }
+
+  .oddny-logo {
+    width: 141px;
+    height: 45px;
+  }
+
+  .navbar-nav {
+    display: flex;
+    align-items: center;
+  }
+
+  .navbar-menu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .navbar-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    padding: 10px;
+    color: #42383e;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+  }
+
+  .navbar-link:hover {
+    background-color: rgba(66, 56, 62, 0.05);
+  }
+
+  .navbar-subscribe {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 36px;
+    padding: 10px 16px;
+    background: #42383e;
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+  }
+
+  .navbar-subscribe:hover {
+    background: #2e272b;
+  }
+
+  .navbar-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s;
+  }
+
+  .navbar-icon-btn:hover {
+    opacity: 0.7;
+  }
+
+  /* Menu Drawer Styles */
+  .menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    z-index: 1001;
+  }
+
+  .menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .menu-drawer {
+    position: fixed;
+    right: -550px;
+    top: 0;
+    width: 550px;
+    height: 100vh;
+    background: white;
+    box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.25);
+    transition: right 0.3s ease;
+    z-index: 1002;
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  .menu-drawer.active {
+    right: 0;
+  }
+
+  .menu-close {
+    position: absolute;
+    right: 18px;
+    top: 15px;
+    width: 13px;
+    height: 13px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s;
+  }
+
+  .menu-close:hover {
+    opacity: 0.7;
+  }
+
+  .menu-header {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 20px;
+    padding-top: 16px;
+  }
+
+  .menu-account {
+    font-size: 12px;
+    font-weight: 500;
+    color: #42383e;
+    text-decoration: none;
+    padding: 10px;
+  }
+
+  .menu-account:hover {
+    opacity: 0.7;
+  }
+
+  .menu-lang-switcher {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    gap: 2px;
+  }
+
+  .menu-lang-option {
+    font-size: 12px;
+    font-weight: 500;
+    color: #888484;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .menu-lang-option:hover {
+    color: #42383e;
+  }
+
+  .menu-lang-option.active {
+    color: #42383e;
+    font-weight: 700;
+    position: relative;
+  }
+
+  .menu-lang-option.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #FF40B4;
+    border-radius: 1px;
+  }
+
+  .menu-lang-divider {
+    font-size: 12px;
+    color: #888484;
+  }
+
+  .menu-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .menu-section {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .menu-title {
+    font-size: 22px;
+    font-weight: 500;
+    color: #42383e;
+    text-decoration: none;
+    padding: 10px;
+    transition: opacity 0.2s;
+  }
+
+  .menu-title:hover {
+    opacity: 0.7;
+  }
+
+  .menu-subitems {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .menu-subitem {
+    font-size: 16px;
+    font-weight: 500;
+    color: #888484;
+    text-decoration: none;
+    padding: 10px;
+    transition: color 0.2s;
+  }
+
+  .menu-subitem:hover {
+    color: #42383e;
+  }
+
+  .menu-subitem-alt {
+    font-size: 16px;
+    font-weight: 500;
+    color: #888484;
+    text-decoration: none;
+    padding: 10px;
+    transition: color 0.2s;
+  }
+
+  .menu-subitem-alt:hover {
+    color: #42383e;
+  }
+
+  .menu-social {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .menu-social-btn {
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+    background: #FF40B4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+  }
+
+  .menu-social-btn:hover {
+    transform: scale(1.1);
+  }
+
+  .menu-social-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 1024px) {
+    .navbar-container {
+      padding: 0 30px;
+    }
+
+    .navbar-link {
+      display: none;
+    }
+
+    .navbar-subscribe {
+      display: none;
+    }
+
+    .navbar-icon-btn:first-of-type {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .navbar-container {
+      padding: 0 20px;
+    }
+
+    .menu-drawer {
+      width: 100%;
+      right: -100%;
+    }
+  }
+</style>
+
+<script>
+  // Menu drawer toggle
+  const hamburger = document.querySelector('.navbar-hamburger');
+  const menuDrawer = document.querySelector('.menu-drawer');
+  const menuOverlay = document.querySelector('.menu-overlay');
+  const menuClose = document.querySelector('.menu-close');
+
+  function openMenu() {
+    menuDrawer?.classList.add('active');
+    menuOverlay?.classList.add('active');
+    hamburger?.setAttribute('aria-expanded', 'true');
+    menuDrawer?.setAttribute('aria-hidden', 'false');
+    menuOverlay?.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMenu() {
+    menuDrawer?.classList.remove('active');
+    menuOverlay?.classList.remove('active');
+    hamburger?.setAttribute('aria-expanded', 'false');
+    menuDrawer?.setAttribute('aria-hidden', 'true');
+    menuOverlay?.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  hamburger?.addEventListener('click', openMenu);
+  menuClose?.addEventListener('click', closeMenu);
+  menuOverlay?.addEventListener('click', closeMenu);
+
+  // Close on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menuDrawer?.classList.contains('active')) {
+      closeMenu();
+    }
+  });
+</script>

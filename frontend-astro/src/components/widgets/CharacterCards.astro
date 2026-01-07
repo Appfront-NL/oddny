@@ -1,0 +1,462 @@
+---
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+// Get localized text values
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+---
+
+<section 
+  class="character-cards-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <style>
+    .character-cards-section {
+      position: relative;
+      width: 100%;
+      min-height: 1024px;
+      background: white;
+      overflow: hidden;
+      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+      padding: 60px 0;
+    }
+    
+    .character-container {
+      position: relative;
+      max-width: 1440px;
+      height: 1024px;
+      margin: 0 auto;
+      overflow: visible;
+    }
+    
+    /* Character Cards */
+    .character-card {
+      position: absolute;
+      border-radius: 20px;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      color: white;
+    }
+    
+    .character-card-oddny {
+      left: 82px;
+      top: 57px;
+      width: 619px;
+      height: 835px;
+      background: #fa2d9d;
+    }
+    
+    .character-card-harrison {
+      left: 743px;
+      top: 57px;
+      width: 621px;
+      height: 839px;
+      background: #82e0d8;
+      color: #fa2d9d;
+    }
+    
+    /* Character Names */
+    .character-name {
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 25px;
+    }
+    
+    /* Character Images */
+    .character-image {
+      position: relative;
+      width: 100%;
+      height: 400px;
+      background: white;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Fact File Section */
+    .character-fact-file {
+      margin-bottom: 25px;
+    }
+    
+    .character-fact-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    
+    .character-fact-text {
+      font-size: 22px;
+      line-height: 1.3;
+      opacity: 0.9;
+    }
+    
+    /* Stats Section */
+    .character-stats-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+    
+    .character-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 20px;
+      font-size: 20px;
+      font-weight: 500;
+    }
+    
+    .character-stat {
+      display: flex;
+    }
+    
+    .character-stat-label {
+      width: 140px;
+    }
+    
+    .character-stat-label.narrow {
+      width: 120px;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 1440px) {
+      .character-container {
+        width: 95%;
+        height: auto;
+        min-height: 900px;
+        padding: 0 20px;
+      }
+      .character-card-oddny {
+        left: 5%;
+        width: 42%;
+        height: auto;
+        min-height: 700px;
+      }
+      .character-card-harrison {
+        left: 52%;
+        width: 42%;
+        height: auto;
+        min-height: 700px;
+      }
+      .character-name {
+        font-size: clamp(32px, 4vw, 42px);
+      }
+      .character-image {
+        height: 300px;
+      }
+      .character-fact-title,
+      .character-stats-title {
+        font-size: clamp(22px, 3vw, 28px);
+      }
+      .character-fact-text {
+        font-size: clamp(18px, 2.5vw, 22px);
+      }
+      .character-stats-grid {
+        font-size: clamp(16px, 2vw, 20px);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .character-cards-section {
+        min-height: auto;
+        padding: 40px 0;
+      }
+      .character-container {
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        padding: 20px;
+      }
+      .character-card {
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 100%;
+        max-width: 500px;
+        height: auto;
+        min-height: 600px;
+        margin: 0 auto;
+      }
+      .character-image {
+        height: 250px;
+        margin-bottom: 25px;
+      }
+      .character-name {
+        font-size: 36px;
+        margin-bottom: 20px;
+      }
+      .character-fact-file {
+        margin-bottom: 20px;
+      }
+      .character-fact-title,
+      .character-stats-title {
+        font-size: 24px;
+      }
+      .character-fact-text {
+        font-size: 18px;
+      }
+      .character-stats-grid {
+        font-size: 16px;
+        gap: 8px 15px;
+      }
+      .character-stat-label {
+        width: 100px;
+      }
+      .character-stat-label.narrow {
+        width: 90px;
+      }
+    }
+  </style>
+  
+  <div class="character-container">
+    {/* Card 1: Oddny */}
+    <div class="character-card character-card-oddny">
+      {/* Header */}
+      <h1 
+        class="character-name"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`oddny_name_${locale}`], mode: 'popover' })}
+      >
+        {getLocalizedField(block, 'oddny_name') || 'Oddny'}
+      </h1>
+
+      {/* Image Area */}
+      <div 
+        class="character-image"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['oddny_image'], mode: 'popover' })}
+      >
+        <img 
+          src={block.oddny_image ? getImageUrl(block.oddny_image) : '/images/oddny-jumping-partner.png'}
+          alt="Oddny character"
+          loading="lazy"
+          style="width: 100%; height: 100%; object-fit: cover;"
+        />
+      </div>
+
+      {/* Fact File */}
+      <div class="character-fact-file">
+        <h2 
+          class="character-fact-title"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`fact_file_label_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'fact_file_label') || 'Fact File'}
+        </h2>
+        <p 
+          class="character-fact-text"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`oddny_fact_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'oddny_fact') || 'She is solid, reliable and the keeper of all of the important stuff and the harvester of sound knowledge and common sense.'}
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div>
+        <h2 
+          class="character-stats-title"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`stats_label_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'stats_label') || 'Stats'}
+        </h2>
+        <div class="character-stats-grid">
+          <div class="character-stat">
+            <span 
+              class="character-stat-label"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`knowledge_label_${locale}`], mode: 'popover' })}
+            >
+              {getLocalizedField(block, 'knowledge_label') || 'Knowledge:'}
+            </span>
+            <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['oddny_knowledge'], mode: 'popover' })}>
+              {block.oddny_knowledge || '100'}
+            </span>
+          </div>
+          <div class="character-stat">
+            <span 
+              class="character-stat-label narrow"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`strength_label_${locale}`], mode: 'popover' })}
+            >
+              {getLocalizedField(block, 'strength_label') || 'Strength:'}
+            </span>
+            <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['oddny_strength'], mode: 'popover' })}>
+              {block.oddny_strength || '100'}
+            </span>
+          </div>
+          <div class="character-stat">
+            <span 
+              class="character-stat-label"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`protection_label_${locale}`], mode: 'popover' })}
+            >
+              {getLocalizedField(block, 'protection_label') || 'Protection:'}
+            </span>
+            <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['oddny_protection'], mode: 'popover' })}>
+              {block.oddny_protection || '90'}
+            </span>
+          </div>
+          <div class="character-stat">
+            <span 
+              class="character-stat-label narrow"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`energy_label_${locale}`], mode: 'popover' })}
+            >
+              {getLocalizedField(block, 'energy_label') || 'Energy:'}
+            </span>
+            <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['oddny_energy'], mode: 'popover' })}>
+              {block.oddny_energy || '60'}
+            </span>
+          </div>
+          <div class="character-stat">
+            <span 
+              class="character-stat-label"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`cuteness_label_${locale}`], mode: 'popover' })}
+            >
+              {getLocalizedField(block, 'cuteness_label') || 'Cuteness:'}
+            </span>
+            <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['oddny_cuteness'], mode: 'popover' })}>
+              {block.oddny_cuteness || '70'}
+            </span>
+          </div>
+          <div class="character-stat">
+            <span 
+              class="character-stat-label narrow"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`overall_label_${locale}`], mode: 'popover' })}
+            >
+              {getLocalizedField(block, 'overall_label') || 'Overall:'}
+            </span>
+            <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['oddny_overall'], mode: 'popover' })}>
+              {block.oddny_overall || '90'}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Card 2: Harrison */}
+    <div class="character-card character-card-harrison">
+      {/* Header */}
+      <h1 
+        class="character-name"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`harrison_name_${locale}`], mode: 'popover' })}
+      >
+        {getLocalizedField(block, 'harrison_name') || 'Harrison'}
+      </h1>
+
+      {/* Image Area */}
+      <div 
+        class="character-image"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['harrison_image'], mode: 'popover' })}
+      >
+        <img 
+          src={block.harrison_image ? getImageUrl(block.harrison_image) : '/images/oddny-jumping-partner.png'}
+          alt="Harrison character"
+          loading="lazy"
+          style="width: 100%; height: 100%; object-fit: cover;"
+        />
+      </div>
+
+      {/* Fact File */}
+      <div class="character-fact-file">
+        <h2 
+          class="character-fact-title"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`fact_file_label_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'fact_file_label') || 'Fact File'}
+        </h2>
+        <p 
+          class="character-fact-text"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`harrison_fact_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'harrison_fact') || 'the navigator, Energeticly showing, pointing out and guiding to new information.'}
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div>
+        <h2 
+          class="character-stats-title"
+          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`stats_label_${locale}`], mode: 'popover' })}
+        >
+          {getLocalizedField(block, 'stats_label') || 'Stats'}
+        </h2>
+        <div class="character-stats-grid">
+          <div class="character-stat">
+            <span 
+              class="character-stat-label"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`knowledge_label_${locale}`], mode: 'popover' })}
+            >
+              {getLocalizedField(block, 'knowledge_label') || 'Knowledge:'}
+            </span>
+            <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['harrison_knowledge'], mode: 'popover' })}>
+              {block.harrison_knowledge || '100'}
+            </span>
+          </div>
+          <div class="character-stat">
+            <span 
+              class="character-stat-label narrow"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`strength_label_${locale}`], mode: 'popover' })}
+            >
+              {getLocalizedField(block, 'strength_label') || 'Strength:'}
+            </span>
+            <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['harrison_strength'], mode: 'popover' })}>
+              {block.harrison_strength || '20'}
+            </span>
+          </div>
+          <div class="character-stat">
+            <span 
+              class="character-stat-label"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`protection_label_${locale}`], mode: 'popover' })}
+            >
+              {getLocalizedField(block, 'protection_label') || 'Protection:'}
+            </span>
+            <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['harrison_protection'], mode: 'popover' })}>
+              {block.harrison_protection || '80'}
+            </span>
+          </div>
+          <div class="character-stat">
+            <span 
+              class="character-stat-label narrow"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`energy_label_${locale}`], mode: 'popover' })}
+            >
+              {getLocalizedField(block, 'energy_label') || 'Energy:'}
+            </span>
+            <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['harrison_energy'], mode: 'popover' })}>
+              {block.harrison_energy || '100'}
+            </span>
+          </div>
+          <div class="character-stat">
+            <span 
+              class="character-stat-label"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`cuteness_label_${locale}`], mode: 'popover' })}
+            >
+              {getLocalizedField(block, 'cuteness_label') || 'Cuteness:'}
+            </span>
+            <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['harrison_cuteness'], mode: 'popover' })}>
+              {block.harrison_cuteness || '80'}
+            </span>
+          </div>
+          <div class="character-stat">
+            <span 
+              class="character-stat-label narrow"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`overall_label_${locale}`], mode: 'popover' })}
+            >
+              {getLocalizedField(block, 'overall_label') || 'Overall:'}
+            </span>
+            <span data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['harrison_overall'], mode: 'popover' })}>
+              {block.harrison_overall || '70'}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
