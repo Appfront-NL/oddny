@@ -248,6 +248,21 @@ export function getAssetUrl(fileId: string | null): string | null {
   return `${PUBLIC_DIRECTUS_URL}/assets/${fileId}`;
 }
 
+// Helper for Directus visual editor - creates data attribute for inline editing
+export function setAttr(opts: {
+  collection: string;
+  item: string | number;
+  fields?: string | string[];
+  mode?: 'popover' | 'drawer' | 'modal';
+}): string {
+  const { collection, item, fields, mode = 'popover' } = opts;
+  const attr: any = { collection, item, mode };
+  if (fields) {
+    attr.fields = Array.isArray(fields) ? fields : [fields];
+  }
+  return JSON.stringify(attr);
+}
+
 // ===== ARTICLES =====
 export async function getArticles(status: string = 'published') {
   try {
