@@ -1,0 +1,141 @@
+---
+import { PUBLIC_DIRECTUS_URL } from '../../lib/directus';
+
+interface Props {
+  articles: any[];
+  locale: string;
+  limit?: number;
+}
+
+const { articles, locale, limit = 6 } = Astro.props;
+const displayArticles = articles.slice(0, limit);
+const directusUrl = PUBLIC_DIRECTUS_URL;
+
+function getImageUrl(image: any) {
+  if (!image) return null;
+  if (typeof image === 'string') {
+    if (image.startsWith('/')) return image;
+    return `${directusUrl}/assets/${image}`;
+  }
+  if (image.id) return `${directusUrl}/assets/${image.id}`;
+  return null;
+}
+
+function truncateText(text: string, maxLength: number) {
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength).trim() + '...';
+}
+---
+
+<section class="related-articles-section">
+  <div class="related-articles-grid">
+    {displayArticles.map((article: any) => {
+      const title = article[`title_${locale}`] || article.title_nl || article.title_en || 'Lorem ipsum dolor sit';
+      const intro = article[`intro_${locale}`] || article.intro_nl || article.intro_en || '';
+      const slug = article.slug;
+      const collection = article.collection || 'news';
+      const imageUrl = getImageUrl(article.featured_image);
+      
+      return (
+        <a href={`/${locale}/${collection}/${slug}`} class="related-article-item">
+          {imageUrl && (
+            <div class="related-article-image">
+              <img src={imageUrl} alt={title} loading="lazy" />
+            </div>
+          )}
+          <h3 class="related-article-title">{truncateText(title, 40)}</h3>
+          <p class="related-article-intro">{truncateText(intro, 80)}</p>
+        </a>
+      );
+    })}
+  </div>
+</section>
+
+<style>
+  .related-articles-section {
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    background: white;
+    padding: 60px 0 80px;
+  }
+
+  .related-articles-grid {
+    max-width: var(--content-max-width, 1400px);
+    margin: 0 auto;
+    padding: 0 var(--content-padding, 80px);
+    display: grid;
+    grid-template-columns: repeat(6, 180px);
+    gap: 40px;
+    justify-content: start;
+  }
+
+  .related-article-item {
+    text-decoration: none;
+    display: block;
+    width: 180px;
+  }
+
+  .related-article-image {
+    width: 180px;
+    height: 180px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .related-article-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .related-article-item:hover .related-article-image img {
+    transform: scale(1.05);
+  }
+
+  .related-article-title {
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 24px;
+    color: #423e3e;
+    margin: 0 0 8px 0;
+  }
+
+  .related-article-intro {
+    font-size: 12px;
+    font-weight: 300;
+    line-height: 16px;
+    color: #888584;
+    margin: 0;
+  }
+
+  .related-article-item:hover .related-article-title {
+    color: #FF40B4;
+  }
+
+  @media (max-width: 1200px) {
+    .related-articles-grid {
+      grid-template-columns: repeat(3, 180px);
+      gap: 30px;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .related-articles-grid {
+      grid-template-columns: repeat(2, 180px);
+      gap: 30px;
+      padding: 0 var(--content-padding, 20px);
+    }
+  }
+
+  @media (max-width: 500px) {
+    .related-articles-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .related-article-item {
+      width: 100%;
+    }
+  }
+</style>

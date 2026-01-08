@@ -1,0 +1,193 @@
+---
+import { client, readItems, getAssetUrl } from '../../lib/directus';
+
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+const getLocalizedField = (item: any, fieldName: string) => {
+  return item[`${fieldName}_${locale}`] || item[`${fieldName}_en`] || item[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading');
+
+const defaultImages = [
+  '/images/hero-jumping.png',
+  '/images/oddny-bird-pink.png',
+  '/images/oddny-benefits.png',
+  '/images/card-1.png'
+];
+const getRandomImage = (id: number) => defaultImages[id % defaultImages.length];
+
+const getImageSrc = (item: any) => {
+  if (!item.featured_image) return getRandomImage(item.id);
+  if (item.featured_image.startsWith('/')) return item.featured_image;
+  return getAssetUrl(item.featured_image);
+};
+
+const studioItems = await client.request(
+  readItems('studio_items', {
+    filter: { status: { _eq: 'published' } },
+    fields: ['*'],
+    sort: ['sort'],
+    limit: 6
+  })
+) as any[];
+---
+
+<section 
+  class="studio-collection-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <div class="studio-container">
+    <h2 
+      class="studio-title"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`heading_${locale}`], mode: 'popover' })}
+    >
+      {heading || (locale === 'nl' ? 'Studio Tools' : 'Studio Tools')}
+    </h2>
+    
+    <div class="studio-grid">
+      {studioItems.map((item) => (
+        <a href={item.external_url || `/${locale}/studio/${item.slug}`} class="studio-card">
+          <div class="studio-image">
+            <img src={getImageSrc(item)} alt={getLocalizedField(item, 'title')} loading="lazy" />
+          </div>
+          <div class="studio-content">
+            <div class="studio-meta">
+              <span class="studio-category">{item.category}</span>
+              {item.price && <span class="studio-price">{item.price}</span>}
+            </div>
+            <h3 class="studio-item-title">{getLocalizedField(item, 'title')}</h3>
+            <p class="studio-description">{getLocalizedField(item, 'description')}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .studio-collection-section {
+    position: relative;
+    width: 100%;
+    background: rgba(217, 217, 217, 0.3);
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    padding: 60px 0;
+  }
+
+  .studio-container {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 0 var(--content-padding);
+  }
+
+  .studio-title {
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 32px;
+    color: #42383e;
+    margin: 0 0 40px 0;
+  }
+
+  .studio-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+  }
+
+  .studio-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    text-decoration: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .studio-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .studio-image {
+    width: 100%;
+    height: 160px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ff40b4 0%, #ff6b6b 100%);
+  }
+
+  .studio-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .studio-content {
+    padding: 20px;
+  }
+
+  .studio-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .studio-category {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #ff40b4;
+  }
+
+  .studio-price {
+    font-size: 12px;
+    font-weight: 600;
+    color: #00FC26;
+    background: rgba(0, 252, 38, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  .studio-item-title {
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 22px;
+    color: #42383e;
+    margin: 0 0 8px 0;
+  }
+
+  .studio-description {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    color: #888484;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  @media (max-width: 1024px) {
+    .studio-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .studio-collection-section {
+      padding: 40px 0;
+    }
+    .studio-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,483 @@
+---
+interface Props {
+  article: any;
+  locale: string;
+  title: string;
+  intro: string;
+  content: string;
+  getImageUrl: (id: string | null) => string | null;
+  setAttr: (opts: any) => string;
+  similarArticles: any[];
+}
+
+const { article, locale, title, intro, content, getImageUrl, setAttr, similarArticles } = Astro.props;
+
+const galleryImages = [
+  article.gallery_image_1,
+  article.gallery_image_2,
+  article.gallery_image_3,
+  article.gallery_image_4,
+  article.gallery_image_5,
+  article.gallery_image_6
+].filter(Boolean);
+---
+
+<article class="long-article" data-directus={setAttr({ collection: 'articles', item: article.id, mode: 'drawer' })}>
+  <div class="long-article-container">
+    <div class="two-column-layout">
+      <div class="left-column">
+        <div class="category-badge">
+          <span>{article.category || 'Article'}</span>
+        </div>
+        
+        <div class="mascot-section">
+          <img src="/images/oddny-jumping-partner.png" alt="" class="mascot-img" />
+        </div>
+
+        {galleryImages[0] && (
+          <div class="gallery-image img-1">
+            <img 
+              src={getImageUrl(galleryImages[0])} 
+              alt=""
+              data-directus={setAttr({ collection: 'articles', item: article.id, fields: ['gallery_image_1'], mode: 'popover' })}
+            />
+          </div>
+        )}
+
+        {galleryImages[1] && (
+          <div class="gallery-image img-2">
+            <img 
+              src={getImageUrl(galleryImages[1])} 
+              alt=""
+              data-directus={setAttr({ collection: 'articles', item: article.id, fields: ['gallery_image_2'], mode: 'popover' })}
+            />
+          </div>
+        )}
+
+        <div 
+          class="text-block text-left-1"
+          data-directus={setAttr({ collection: 'articles', item: article.id, fields: [`content_${locale}`], mode: 'richtext' })}
+          set:html={content}
+        />
+      </div>
+
+      <div class="right-column">
+        <h1 
+          class="article-title"
+          data-directus={setAttr({ collection: 'articles', item: article.id, fields: [`title_${locale}`], mode: 'popover' })}
+        >
+          {title}
+        </h1>
+
+        <p 
+          class="article-intro"
+          data-directus={setAttr({ collection: 'articles', item: article.id, fields: [`intro_${locale}`], mode: 'popover' })}
+        >
+          {intro}
+        </p>
+
+        <div 
+          class="text-block text-right-1"
+          set:html={content}
+        />
+
+        {galleryImages[2] && (
+          <div class="gallery-image img-3">
+            <img 
+              src={getImageUrl(galleryImages[2])} 
+              alt=""
+              data-directus={setAttr({ collection: 'articles', item: article.id, fields: ['gallery_image_3'], mode: 'popover' })}
+            />
+          </div>
+        )}
+
+        {galleryImages[3] && (
+          <div class="gallery-image img-4">
+            <img 
+              src={getImageUrl(galleryImages[3])} 
+              alt=""
+              data-directus={setAttr({ collection: 'articles', item: article.id, fields: ['gallery_image_4'], mode: 'popover' })}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+
+    {galleryImages[4] && (
+      <div class="full-width-image">
+        <img 
+          src={getImageUrl(galleryImages[4])} 
+          alt=""
+          data-directus={setAttr({ collection: 'articles', item: article.id, fields: ['gallery_image_5'], mode: 'popover' })}
+        />
+      </div>
+    )}
+
+    <div class="bottom-section">
+      <div class="author-row">
+        <div class="author-info">
+          <div class="author-card" data-directus={setAttr({ collection: 'articles', item: article.id, fields: ['author_name', 'author_role'], mode: 'popover' })}>
+            <span class="author-name">{article.author_name || 'Ina Sok'}</span>
+            <span class="author-role">{article.author_role || 'Artist'}</span>
+          </div>
+          <p class="author-bio">
+            Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh
+          </p>
+        </div>
+
+        <div class="cta-section">
+          <div class="cta-bubble">
+            <span>"Join our community today"</span>
+          </div>
+          <img src="/images/oddny-bird-pink.png" alt="" class="cta-mascot" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {similarArticles.length > 0 && (
+    <div class="similar-articles">
+      <h2 class="similar-title">{locale === 'nl' ? 'Vergelijkbare artikelen' : 'Similar Articles'}</h2>
+      <div class="similar-grid">
+        {similarArticles.slice(0, 6).map((similar) => (
+          <a href={`/${locale}/articles/${similar.slug}`} class="similar-card">
+            <div class="similar-image">
+              {getImageUrl(similar.featured_image) ? (
+                <img src={getImageUrl(similar.featured_image)} alt={similar[`title_${locale}`] || similar.title_nl} />
+              ) : (
+                <div class="similar-placeholder"></div>
+              )}
+            </div>
+            <div class="similar-info">
+              <h3 class="similar-card-title">{similar[`title_${locale}`] || similar.title_nl || 'Lorem ipsum dolor sit'}</h3>
+              <p class="similar-card-excerpt">nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+</article>
+
+<style>
+  .long-article {
+    width: 100%;
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    background: white;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+  }
+
+  .long-article-container {
+    padding: 60px var(--content-padding);
+  }
+
+  .two-column-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .category-badge {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .category-badge span {
+    background: #ff40b4;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .mascot-section {
+    width: 220px;
+  }
+
+  .mascot-img {
+    width: 220px;
+    height: 211px;
+    object-fit: contain;
+    transform: scaleY(-1) rotate(180deg);
+  }
+
+  .article-title {
+    font-size: 80px;
+    font-weight: 500;
+    line-height: 1.05;
+    color: #42383e;
+    margin: 0;
+  }
+
+  .article-intro {
+    font-size: 22px;
+    line-height: 30px;
+    color: #888484;
+    margin: 0;
+  }
+
+  .text-block {
+    font-size: 22px;
+    line-height: 30px;
+    color: #888484;
+  }
+
+  .text-block :global(p) {
+    margin-bottom: 20px;
+  }
+
+  .gallery-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+
+  .img-1 img,
+  .img-2 img {
+    height: 538px;
+  }
+
+  .img-3 img,
+  .img-4 img {
+    height: 538px;
+  }
+
+  .full-width-image {
+    margin: 60px 0;
+  }
+
+  .full-width-image img {
+    width: 100%;
+    height: 636px;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  .bottom-section {
+    margin-top: 60px;
+  }
+
+  .author-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 40px;
+  }
+
+  .author-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .author-card {
+    background: #ff40b4;
+    border-radius: 8px;
+    padding: 16px 25px;
+    display: flex;
+    flex-direction: column;
+    color: white;
+    min-width: 160px;
+  }
+
+  .author-name {
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 26px;
+  }
+
+  .author-role {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .author-bio {
+    font-size: 22px;
+    line-height: 30px;
+    color: #888484;
+    max-width: 405px;
+    margin: 0;
+  }
+
+  .cta-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .cta-bubble {
+    background: #d9d9d9;
+    border-radius: 4px;
+    padding: 10px 20px;
+    position: relative;
+  }
+
+  .cta-bubble::after {
+    content: '';
+    position: absolute;
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 8px solid transparent;
+    border-left-color: #d9d9d9;
+  }
+
+  .cta-bubble span {
+    font-size: 16px;
+    font-weight: 500;
+    color: #42383e;
+  }
+
+  .cta-mascot {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+  }
+
+  .similar-articles {
+    padding: 60px var(--content-padding);
+    background: white;
+  }
+
+  .similar-title {
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 24px;
+    color: #42383e;
+    margin: 0 0 40px;
+  }
+
+  .similar-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 40px;
+  }
+
+  .similar-card {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .similar-image {
+    width: 100%;
+    height: 177px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .similar-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .similar-placeholder {
+    width: 100%;
+    height: 100%;
+    background: #f0f0f0;
+  }
+
+  .similar-card-title {
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 24px;
+    color: #42383e;
+    margin: 0 0 8px;
+  }
+
+  .similar-card-excerpt {
+    font-size: 12px;
+    line-height: 16px;
+    color: #888484;
+    margin: 0;
+  }
+
+  .similar-card:hover .similar-card-title {
+    color: #ff40b4;
+  }
+
+  @media (max-width: 1200px) {
+    .article-title {
+      font-size: 48px;
+    }
+    .img-1 img,
+    .img-2 img,
+    .img-3 img,
+    .img-4 img {
+      height: 350px;
+    }
+    .full-width-image img {
+      height: 400px;
+    }
+    .similar-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .long-article-container {
+      padding: 40px 20px;
+    }
+    .two-column-layout {
+      grid-template-columns: 1fr;
+    }
+    .article-title {
+      font-size: 32px;
+    }
+    .mascot-section {
+      display: none;
+    }
+    .text-block {
+      font-size: 18px;
+      line-height: 26px;
+    }
+    .img-1 img,
+    .img-2 img,
+    .img-3 img,
+    .img-4 img {
+      height: 250px;
+    }
+    .full-width-image img {
+      height: 250px;
+    }
+    .author-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .author-info {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .similar-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .similar-articles {
+      padding: 40px 20px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .similar-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

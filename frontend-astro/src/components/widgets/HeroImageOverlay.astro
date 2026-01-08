@@ -1,4 +1,6 @@
 ---
+import { client, readItems, getAssetUrl } from '../../lib/directus';
+
 interface Props {
   block: any;
   locale: string;
@@ -8,241 +10,219 @@ interface Props {
 
 const { block, locale, getImageUrl, setAttr } = Astro.props;
 
-// Get localized text values
-const getLocalizedField = (block: any, fieldName: string) => {
-  const localizedFieldName = `${fieldName}_${locale}`;
-  return block[localizedFieldName] || block[fieldName] || '';
+const getLocalizedField = (item: any, fieldName: string) => {
+  return item[`${fieldName}_${locale}`] || item[`${fieldName}_en`] || item[fieldName] || '';
 };
 
-const heading = getLocalizedField(block, 'heading');
-const buttonText = getLocalizedField(block, 'button_text');
+const defaultImages = [
+  '/images/hero-jumping.png',
+  '/images/oddny-bird-pink.png',
+  '/images/oddny-benefits.png',
+  '/images/card-1.png'
+];
+const getRandomImage = (id: number) => defaultImages[id % defaultImages.length];
+
+const getImageSrc = (item: any) => {
+  if (!item?.featured_image) return getRandomImage(item?.id || 0);
+  if (item.featured_image.startsWith('/')) return item.featured_image;
+  return getAssetUrl(item.featured_image);
+};
+
+const offset = block.news_offset || 0;
+
+const featuredNews = await client.request(
+  readItems('news', {
+    filter: { status: { _eq: 'published' } },
+    fields: ['*'],
+    sort: ['-published_date'],
+    limit: 1,
+    offset: offset
+  })
+) as any[];
+
+const news = featuredNews[0];
+const heading = news ? getLocalizedField(news, 'title') : getLocalizedField(block, 'heading');
+const buttonText = getLocalizedField(block, 'button_text') || (locale === 'nl' ? 'Ontdek' : 'Explore');
+const newsLink = news ? `/${locale}/news/${news.slug}` : (block.button_link || '#');
 ---
 
 <section 
   class="hero hero-image-overlay"
   data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
 >
-  <style>
-    .hero-image-overlay {
-      position: relative;
-      width: 100vw;
-      height: 711px;
-      background: white;
-      overflow: hidden;
-      font-family: 'Neue Haas Grotesk Display Pro', 'Inter', sans-serif;
-      padding: 0;
-      margin: 0;
-      margin-left: calc(-50vw + 50%);
-      max-width: var(--content-max-width);
-      left: 50%;
-      transform: translateX(-50%);
-    }
-    
-    /* Background Image Container - exact Figma positioning */
-    .hero-image-overlay .bg-image {
-      position: absolute;
-      left: 80px;
-      top: 35px;
-      width: 1280px;
-      height: 636px;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    
-    .hero-image-overlay .bg-image img {
-      position: absolute;
-      height: 141.39%;
-      left: -2.67%;
-      max-width: none;
-      top: -24.06%;
-      width: 105.42%;
-      object-fit: cover;
-    }
-    
-    /* Text Overlay - positioned to match original design */
-    .hero-image-overlay .text-overlay {
-      position: absolute;
-      left: 790px;
-      bottom: 60px;
-      width: 517px;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .hero-image-overlay h1 {
-      font-family: 'Neue Haas Grotesk Display Pro', 'Inter', sans-serif;
-      font-weight: 500;
-      font-size: 35px;
-      line-height: 40px;
-      color: #ff40b4;
-      margin: 0;
-      margin-bottom: 40px;
-    }
-    
-    /* Explore Button - positioned relative to text */
-    .hero-image-overlay .explore-btn {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      text-decoration: none;
-      z-index: 20;
-      transition: transform 0.3s ease;
-      cursor: pointer;
-      position: relative;
-      width: fit-content;
-    }
-    
-    .hero-image-overlay .explore-btn:hover {
-      transform: translateX(4px);
-    }
-    
-    .hero-image-overlay .explore-btn span {
-      font-family: 'Neue Haas Grotesk Display Pro', 'Inter', sans-serif;
-      font-weight: 500;
-      font-size: 20px;
-      color: #ff40b4;
-    }
-    
-    .hero-image-overlay .explore-btn svg {
-      color: #ff40b4;
-      transition: transform 0.3s ease;
-    }
-    
-    .hero-image-overlay .explore-btn:hover svg {
-      transform: translateX(4px);
-    }
-    
-    /* Responsive scaling - maintain proportions */
-    @media (max-width: 1440px) and (min-width: 769px) {
-      .hero-image-overlay {
-        height: calc(711px * 100vw / 1440px);
-        min-height: 400px;
-      }
-      .hero-image-overlay .bg-image {
-        left: calc(80px * 100vw / 1440px);
-        top: calc(35px * 100vw / 1440px);
-        width: calc(1280px * 100vw / 1440px);
-        height: calc(636px * 100vw / 1440px);
-      }
-      .hero-image-overlay .text-overlay {
-        left: calc(790px * 100vw / 1440px);
-        bottom: calc(60px * 100vw / 1440px);
-        width: calc(517px * 100vw / 1440px);
-      }
-      .hero-image-overlay h1 {
-        font-size: clamp(20px, calc(35px * 100vw / 1440px), 35px);
-        line-height: clamp(24px, calc(40px * 100vw / 1440px), 40px);
-        margin-bottom: calc(40px * 100vw / 1440px);
-      }
-      .hero-image-overlay .explore-btn {
-        gap: calc(16px * 100vw / 1440px);
-      }
-      .hero-image-overlay .explore-btn span {
-        font-size: clamp(16px, calc(20px * 100vw / 1440px), 20px);
-      }
-    }
-    
-    /* Mobile adjustments */
-    @media (max-width: 768px) {
-      .hero-image-overlay {
-        height: 500px;
-      }
-      .hero-image-overlay .bg-image {
-        left: 20px;
-        top: 20px;
-        width: calc(100vw - 40px);
-        height: 300px;
-      }
-      .hero-image-overlay .text-overlay {
-        left: 40px;
-        bottom: 20px;
-        width: calc(100vw - 80px);
-      }
-      .hero-image-overlay h1 {
-        font-size: 28px;
-        line-height: 32px;
-        margin-bottom: 16px;
-      }
-      .hero-image-overlay .explore-btn {
-        gap: 12px;
-      }
-      .hero-image-overlay .explore-btn span {
-        font-size: 18px;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .hero-image-overlay {
-        height: 450px;
-      }
-      .hero-image-overlay .bg-image {
-        left: 15px;
-        top: 15px;
-        width: calc(100vw - 30px);
-        height: 270px;
-      }
-      .hero-image-overlay .text-overlay {
-        left: 30px;
-        bottom: 15px;
-        width: calc(100vw - 60px);
-      }
-      .hero-image-overlay h1 {
-        font-size: 24px;
-        line-height: 28px;
-        margin-bottom: 12px;
-      }
-      .hero-image-overlay .explore-btn {
-        gap: 10px;
-      }
-      .hero-image-overlay .explore-btn span {
-        font-size: 16px;
-      }
-    }
-  </style>
-  
-  {/* Background Image */}
-  <div 
-    class="bg-image"
-    data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'background_image', mode: 'popover' })}
-  >
-    <img 
-      src={block.background_image ? getImageUrl(block.background_image) : '/images/peter-bellerby-globes.png'}
-      alt="Hero background image"
-      loading="lazy"
-      key={block.background_image || 'default'}
-    />
-  </div>
+  <a href={newsLink} class="bg-image">
+    <img src={getImageSrc(news)} alt={heading} loading="lazy" />
+  </a>
 
-  {/* Text Overlay */}
   <div class="text-overlay">
-    <h1 
-      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
-      set:html={heading || 'Step inside the world<br/>of Peter Bellerby\'s hand<br/>built globes'}
-    >
-    </h1>
+    <h1 set:html={heading || 'Step inside the world of creative insurance'}></h1>
     
-    {/* Explore Button */}
-    <a 
-      href={block.button_link || '#'}
-      class="explore-btn"
-      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
-    >
-      <span>{buttonText || 'Explore'}</span>
-      <svg 
-        width="35" 
-        height="14" 
-        viewBox="0 0 35 14" 
-        fill="none"
-      >
-        <path 
-          d="M1 7H34M34 7L28 1M34 7L28 13" 
-          stroke="currentColor" 
-          strokeWidth="1.5" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        />
+    <a href={newsLink} class="explore-btn">
+      <span>{buttonText}</span>
+      <svg width="35" height="14" viewBox="0 0 35 14" fill="none">
+        <path d="M1 7H34M34 7L28 1M34 7L28 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </a>
   </div>
 </section>
+
+<style>
+  .hero-image-overlay {
+    position: relative;
+    width: 100%;
+    max-width: var(--content-max-width);
+    height: 711px;
+    background: white;
+    overflow: hidden;
+    font-family: 'Neue Haas Grotesk Display Pro', 'Inter', sans-serif;
+    padding: 0 var(--content-padding);
+    margin: 0 auto;
+  }
+
+  .bg-image {
+    position: absolute;
+    left: var(--content-padding);
+    right: var(--content-padding);
+    top: 35px;
+    width: calc(100% - 2 * var(--content-padding));
+    height: 636px;
+    border-radius: 10px;
+    overflow: hidden;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+
+  .bg-image:hover {
+    transform: scale(1.01);
+  }
+
+  .bg-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .bg-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%);
+  }
+
+  .text-overlay {
+    position: absolute;
+    left: 790px;
+    bottom: 60px;
+    width: 517px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-category {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #00FC26;
+    margin-bottom: 12px;
+  }
+
+  .hero-image-overlay h1 {
+    font-weight: 500;
+    font-size: 35px;
+    line-height: 40px;
+    color: #ff40b4;
+    margin: 0 0 40px 0;
+  }
+
+  .explore-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+    width: fit-content;
+  }
+
+  .explore-btn:hover {
+    transform: translateX(4px);
+  }
+
+  .explore-btn span {
+    font-weight: 500;
+    font-size: 20px;
+    color: #ff40b4;
+  }
+
+  .explore-btn svg {
+    color: #ff40b4;
+  }
+
+  @media (max-width: 1440px) and (min-width: 769px) {
+    .hero-image-overlay {
+      height: calc(711px * 100vw / 1440px);
+      min-height: 400px;
+    }
+    .bg-image {
+      top: calc(35px * 100vw / 1440px);
+      height: calc(636px * 100vw / 1440px);
+    }
+    .text-overlay {
+      left: calc(790px * 100vw / 1440px);
+      bottom: calc(60px * 100vw / 1440px);
+      width: calc(517px * 100vw / 1440px);
+    }
+    .hero-image-overlay h1 {
+      font-size: clamp(20px, calc(35px * 100vw / 1440px), 35px);
+      line-height: clamp(24px, calc(40px * 100vw / 1440px), 40px);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero-image-overlay {
+      height: 500px;
+    }
+    .bg-image {
+      left: 20px;
+      right: 20px;
+      top: 20px;
+      width: calc(100% - 40px);
+      height: 300px;
+    }
+    .text-overlay {
+      left: 40px;
+      bottom: 20px;
+      width: calc(100vw - 80px);
+    }
+    .hero-image-overlay h1 {
+      font-size: 28px;
+      line-height: 32px;
+      margin-bottom: 16px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero-image-overlay {
+      height: 450px;
+    }
+    .bg-image {
+      left: 15px;
+      right: 15px;
+      top: 15px;
+      width: calc(100% - 30px);
+      height: 270px;
+    }
+    .text-overlay {
+      left: 30px;
+      right: 30px;
+      bottom: 15px;
+      width: calc(100% - 60px);
+    }
+    .hero-image-overlay h1 {
+      font-size: 24px;
+      line-height: 28px;
+    }
+  }
+</style>

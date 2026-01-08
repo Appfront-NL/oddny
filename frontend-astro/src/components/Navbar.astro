@@ -12,9 +12,14 @@ const settings = await getSiteSettings();
 const navItems = await getNavigationItems('header');
 
 function getItemUrl(item: NavigationItem): string {
-  if (item.url) return item.url;
+  if (item.url) return `/${currentLocale}${item.url}`;
   if (item.page) return `/${currentLocale}/${item.page.slug}`;
   return '#';
+}
+
+function getItemLabel(item: NavigationItem): string {
+  const localizedLabel = currentLocale === 'nl' ? item.label_nl : item.label_en;
+  return localizedLabel || item.label || '';
 }
 
 const otherLocale = currentLocale === 'en' ? 'nl' : 'en';
@@ -36,37 +41,21 @@ const otherLocale = currentLocale === 'en' ? 'nl' : 'en';
     <!-- Navigation Menu -->
     <nav class="navbar-nav">
       <div class="navbar-menu">
-        <!-- Nav Links with Dropdowns -->
-        <div class="navbar-dropdown">
-          <a href={`/${currentLocale}/creative-flow`} class="navbar-link">Creative Flow</a>
-          <div class="dropdown-menu">
-            <a href={`/${currentLocale}/creative-flow`} class="dropdown-item">The Source</a>
-            <a href={`/${currentLocale}/creative-flow`} class="dropdown-item">The Studio</a>
-            <a href={`/${currentLocale}/creative-flow`} class="dropdown-item">The Marketplace</a>
-          </div>
-        </div>
-        
-        <a href={`/${currentLocale}/wunderkammer`} class="navbar-link">Wunderkammer</a>
-        
-        <div class="navbar-dropdown">
-          <a href={`/${currentLocale}/hub`} class="navbar-link">Hub</a>
-          <div class="dropdown-menu">
-            <a href={`/${currentLocale}/tools`} class="dropdown-item">Tools</a>
-            <a href={`/${currentLocale}/guides`} class="dropdown-item">Guides</a>
-            <a href={`/${currentLocale}/products`} class="dropdown-item">Financial Products</a>
-            <a href={`/${currentLocale}/products`} class="dropdown-item">Other Products</a>
-          </div>
-        </div>
-        
-        <div class="navbar-dropdown">
-          <a href={`/${currentLocale}/fans-friends-foes`} class="navbar-link">Soulmates</a>
-          <div class="dropdown-menu">
-            <a href={`/${currentLocale}/fans-friends-foes`} class="dropdown-item">Fans, Friends & Foes</a>
-            <a href={`/${currentLocale}/news`} class="dropdown-item">News</a>
-            <a href={`/${currentLocale}/about-us`} class="dropdown-item">About us</a>
-            <a href={`/${currentLocale}/contact`} class="dropdown-item">Contact</a>
-          </div>
-        </div>
+        <!-- Dynamic Nav Links with Dropdowns -->
+        {navItems.map((item) => (
+          item.children && item.children.length > 0 ? (
+            <div class="navbar-dropdown">
+              <a href={getItemUrl(item)} class="navbar-link">{getItemLabel(item)}</a>
+              <div class="dropdown-menu">
+                {item.children.map((child) => (
+                  <a href={getItemUrl(child)} class="dropdown-item">{getItemLabel(child)}</a>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <a href={getItemUrl(item)} class="navbar-link">{getItemLabel(item)}</a>
+          )
+        ))}
 
         <!-- Subscribe Button -->
         <button type="button" class="navbar-subscribe" data-newsletter-trigger>
@@ -120,40 +109,20 @@ const otherLocale = currentLocale === 'en' ? 'nl' : 'en';
 
     <!-- Menu Items -->
     <div class="menu-content">
-      <!-- Creative Flow -->
-      <div class="menu-section">
-        <a href={`/${currentLocale}/creative-flow`} class="menu-title">Creative Flow</a>
-        <div class="menu-subitems">
-          <a href={`/${currentLocale}/creative-flow`} class="menu-subitem">The Source</a>
-          <a href={`/${currentLocale}/creative-flow`} class="menu-subitem">The Studio</a>
-          <a href={`/${currentLocale}/creative-flow`} class="menu-subitem">The Marketplace</a>
-        </div>
-      </div>
-
-      <!-- Wunderkammer -->
-      <a href={`/${currentLocale}/wunderkammer`} class="menu-title">Wunderkammer</a>
-
-      <!-- Hub -->
-      <div class="menu-section">
-        <a href={`/${currentLocale}/hub`} class="menu-title">Hub</a>
-        <div class="menu-subitems">
-          <a href={`/${currentLocale}/tools`} class="menu-subitem">Tools</a>
-          <a href={`/${currentLocale}/guides`} class="menu-subitem">Guides</a>
-          <a href={`/${currentLocale}/products`} class="menu-subitem">Financial Products</a>
-          <a href={`/${currentLocale}/products`} class="menu-subitem">Other Products</a>
-        </div>
-      </div>
-
-      <!-- Soulmates -->
-      <div class="menu-section">
-        <a href={`/${currentLocale}/fans-friends-foes`} class="menu-title">Soulmates</a>
-        <div class="menu-subitems">
-          <a href={`/${currentLocale}/fans-friends-foes`} class="menu-subitem-alt">Fans, Friends & Foes</a>
-          <a href={`/${currentLocale}/news`} class="menu-subitem">News</a>
-          <a href={`/${currentLocale}/contact`} class="menu-subitem">Contact</a>
-          <a href={`/${currentLocale}/about-us`} class="menu-subitem">About Us</a>
-        </div>
-      </div>
+      {navItems.map((item) => (
+        item.children && item.children.length > 0 ? (
+          <div class="menu-section">
+            <a href={getItemUrl(item)} class="menu-title">{getItemLabel(item)}</a>
+            <div class="menu-subitems">
+              {item.children.map((child) => (
+                <a href={getItemUrl(child)} class="menu-subitem">{getItemLabel(child)}</a>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <a href={getItemUrl(item)} class="menu-title">{getItemLabel(item)}</a>
+        )
+      ))}
     </div>
 
     <!-- Social Icons -->
@@ -188,9 +157,9 @@ const otherLocale = currentLocale === 'en' ? 'nl' : 'en';
   }
 
   .navbar-container {
-    max-width: 1400px;
+    max-width: var(--content-max-width);
     margin: 0 auto;
-    padding: 0 54px;
+    padding: 0 var(--content-padding);
     display: flex;
     align-items: center;
     justify-content: space-between;

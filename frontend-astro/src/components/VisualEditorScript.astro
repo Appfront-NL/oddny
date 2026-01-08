@@ -1,0 +1,3774 @@
+---
+interface Props {
+  directusUrl: string;
+  pageId?: string;
+}
+
+const { directusUrl, pageId } = Astro.props;
+---
+
+
+<style is:global>
+    /* Language Toolbar - Tabs Style */
+  .language-toolbar {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    padding: 6px;
+    z-index: 9999;
+    font-family: Inter, system-ui, sans-serif;
+  }
+  .lang-tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .lang-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    transition: all 0.15s ease;
+  }
+  .lang-tab.active {
+    background: linear-gradient(135deg, #6644ff 0%, #5533dd 100%);
+    color: white;
+  }
+  .lang-tab.clickable {
+    cursor: pointer;
+    background: #f3f4f6;
+  }
+  .lang-tab.clickable:hover {
+    background: #e5e7eb;
+    color: #374151;
+  }
+  .lang-tab.add-lang {
+    cursor: pointer;
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 2px dashed #86efac;
+  }
+  .lang-tab.add-lang:hover {
+    background: #dcfce7;
+    border-color: #22c55e;
+  }
+  .lang-flag {
+    font-size: 1.1rem;
+  }
+  .lang-name {
+    font-weight: 600;
+  }
+  .add-icon {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+  .inline-edit-popup {
+    position: fixed;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    z-index: 10000;
+    min-width: 320px;
+    max-width: 450px;
+    font-family: 'Inter', system-ui, sans-serif;
+    animation: popupIn 0.15s ease;
+  }
+
+  @keyframes popupIn {
+    from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .inline-edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .inline-edit-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .inline-edit-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .inline-edit-close:hover {
+    color: #374151;
+  }
+
+  .inline-edit-body {
+    padding: 16px;
+  }
+
+  .inline-edit-field {
+    margin-bottom: 12px;
+  }
+
+  .inline-edit-field:last-child {
+    margin-bottom: 0;
+  }
+
+  .inline-edit-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    margin-bottom: 6px;
+    text-transform: capitalize;
+  }
+
+  .inline-edit-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+  }
+
+  .inline-edit-input:focus {
+    outline: none;
+    border-color: #6644ff;
+    box-shadow: 0 0 0 3px rgba(102, 68, 255, 0.1);
+  }
+
+  textarea.inline-edit-input {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  .inline-edit-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+    border-radius: 0 0 12px 12px;
+  }
+
+  .inline-edit-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .inline-edit-btn-cancel {
+    background: white;
+    border: 1px solid #d1d5db;
+    color: #374151;
+  }
+
+  .inline-edit-btn-cancel:hover {
+    background: #f3f4f6;
+  }
+
+  .inline-edit-btn-save {
+    background: #6644ff;
+    border: none;
+    color: white;
+  }
+
+  .inline-edit-btn-save:hover {
+    background: #5533dd;
+  }
+
+  .inline-edit-btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .inline-edit-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 9999;
+  }
+</style>
+
+<script is:inline define:vars={{ passedDirectusUrl: directusUrl }}>
+(function() {
+  // Only enable editing when inside an iframe (Directus preview)
+  var inIframe = window.self !== window.top;
+  if (!inIframe) {
+    console.log('[Inline Edit] Not in iframe, editing disabled');
+    return;
+  }
+
+  // Inject all styles in iframe mode
+  var editStyles = document.createElement('style');
+  editStyles.textContent = `
+    [data-directus-edit] {
+      position: relative;
+      cursor: pointer;
+      transition: outline 0.15s ease;
+    }
+    [data-directus-edit]:hover {
+      outline: 2px solid #6644ff;
+      outline-offset: 2px;
+    }
+    [data-directus-edit]:hover::after {
+      content: '✏️';
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: #6644ff;
+      font-size: 11px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    /* Block wrapper for controls */
+    .block-wrapper {
+      position: relative;
+    }
+    .block-wrapper:hover .block-controls {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Block controls toolbar */
+    .block-controls {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      z-index: 100;
+    }
+
+    .block-control-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .block-control-move {
+      background: white;
+      color: #6b7280;
+    }
+    .block-control-move:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .block-control-move:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .block-control-delete {
+      background: white;
+      color: #ef4444;
+    }
+    .block-control-delete:hover {
+      background: #fef2f2;
+    }
+
+    /* Delete confirmation overlay */
+    .delete-confirm-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 99999;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 80px;
+      animation: fadeIn 0.15s ease;
+      overflow-y: auto;
+    }
+
+    .delete-highlight {
+      outline: 4px solid #ef4444 !important;
+      outline-offset: 0 !important;
+      position: relative;
+      z-index: 99998;
+    }
+
+    .delete-confirm-dialog {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      animation: slideDown 0.2s ease;
+      z-index: 100001;
+      position: relative;
+      margin-bottom: 40px;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .delete-confirm-icon {
+      width: 56px;
+      height: 56px;
+      background: #fef2f2;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 24px;
+    }
+
+    .delete-confirm-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+
+    .delete-confirm-text {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .delete-confirm-warning {
+      font-size: 12px;
+      color: #ef4444;
+      background: #fef2f2;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+
+    .delete-confirm-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .delete-confirm-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .delete-confirm-cancel {
+      background: #f3f4f6;
+      border: none;
+      color: #374151;
+    }
+    .delete-confirm-cancel:hover {
+      background: #e5e7eb;
+    }
+
+    .delete-confirm-delete {
+      background: #ef4444;
+      border: none;
+      color: white;
+    }
+    .delete-confirm-delete:hover {
+      background: #dc2626;
+    }
+    .delete-confirm-delete:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Move animation */
+    .block-wrapper.moving {
+      opacity: 0.5;
+      transform: scale(0.98);
+      transition: all 0.2s ease;
+    }
+
+    /* Add Block FAB */
+    .add-block-fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #6644ff 0%, #5533dd 100%);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 28px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(102, 68, 255, 0.4);
+      z-index: 9000;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .add-block-fab:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 25px rgba(102, 68, 255, 0.5);
+    }
+
+    /* Block Picker Modal */
+    .block-picker-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.15s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .block-picker {
+      background: white;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 700px;
+      height: 80vh;
+      max-height: 700px;
+      display: flex;
+      flex-direction: column;
+      animation: slideUp 0.2s ease;
+      overflow: hidden;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .block-picker-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .block-picker-header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+    .block-picker-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #9ca3af;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    .block-picker-close:hover {
+      color: #374151;
+    }
+
+    .block-picker-search input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+    .block-picker-search input:focus {
+      outline: none;
+      border-color: #6644ff;
+      box-shadow: 0 0 0 3px rgba(102, 68, 255, 0.1);
+    }
+
+    .block-category {
+      margin-bottom: 24px;
+    }
+    .block-category:last-child {
+      margin-bottom: 0;
+    }
+    .block-category-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .block-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .block-card {
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: white;
+      text-align: left;
+    }
+    .block-card:hover {
+      border-color: #6644ff;
+      box-shadow: 0 4px 12px rgba(102, 68, 255, 0.15);
+    }
+    .block-card.hidden {
+      display: none;
+    }
+
+    .block-card-thumb {
+      width: 100%;
+      height: 80px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: white;
+      font-weight: 500;
+      overflow: hidden;
+    }
+
+    /* Thumbnail styles for different block types */
+    .thumb-hero-centered {
+      background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+      flex-direction: column;
+    }
+    .thumb-hero-centered::before {
+      content: '';
+      width: 60%;
+      height: 8px;
+      background: white;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .thumb-hero-centered::after {
+      content: '';
+      width: 40%;
+      height: 5px;
+      background: rgba(255,255,255,0.5);
+      border-radius: 3px;
+    }
+
+    .thumb-hero-left {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+      padding: 12px;
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    .thumb-hero-left::before {
+      content: '';
+      width: 70%;
+      height: 8px;
+      background: white;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .thumb-hero-left::after {
+      content: '';
+      width: 50%;
+      height: 5px;
+      background: rgba(255,255,255,0.5);
+      border-radius: 3px;
+    }
+
+    .thumb-hero-gradient {
+      background: linear-gradient(135deg, #6644ff 0%, #ff6b6b 100%);
+      flex-direction: column;
+    }
+    .thumb-hero-gradient::before {
+      content: '';
+      width: 50%;
+      height: 10px;
+      background: white;
+      border-radius: 5px;
+      margin-bottom: 6px;
+    }
+    .thumb-hero-gradient::after {
+      content: '';
+      width: 30%;
+      height: 5px;
+      background: rgba(255,255,255,0.7);
+      border-radius: 3px;
+    }
+
+    .thumb-cta-simple {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      flex-direction: column;
+    }
+    .thumb-cta-simple::before {
+      content: '';
+      width: 50%;
+      height: 6px;
+      background: white;
+      border-radius: 3px;
+      margin-bottom: 8px;
+    }
+    .thumb-cta-simple::after {
+      content: '';
+      width: 35%;
+      height: 14px;
+      background: white;
+      border-radius: 7px;
+    }
+
+    .thumb-cta-highlight {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      flex-direction: column;
+    }
+    .thumb-cta-highlight::before {
+      content: '';
+      width: 60%;
+      height: 8px;
+      background: white;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .thumb-cta-highlight::after {
+      content: '';
+      width: 40%;
+      height: 16px;
+      background: #1f2937;
+      border-radius: 8px;
+    }
+
+    .thumb-cta-banner {
+      background: linear-gradient(90deg, #6644ff 0%, #8b5cf6 100%);
+      padding: 0 16px;
+      justify-content: space-between;
+    }
+    .thumb-cta-banner::before {
+      content: '';
+      width: 45%;
+      height: 6px;
+      background: white;
+      border-radius: 3px;
+    }
+    .thumb-cta-banner::after {
+      content: '';
+      width: 25%;
+      height: 14px;
+      background: white;
+      border-radius: 7px;
+    }
+
+    .thumb-text-simple {
+      background: #f9fafb;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 12px;
+      gap: 4px;
+    }
+    .thumb-text-simple span {
+      height: 4px;
+      background: #d1d5db;
+      border-radius: 2px;
+    }
+    .thumb-text-simple span:nth-child(1) { width: 50%; background: #374151; height: 6px; }
+    .thumb-text-simple span:nth-child(2) { width: 90%; }
+    .thumb-text-simple span:nth-child(3) { width: 85%; }
+    .thumb-text-simple span:nth-child(4) { width: 70%; }
+
+    .thumb-text-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      flex-direction: column;
+      padding: 10px;
+      gap: 4px;
+    }
+    .thumb-text-card span {
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+    }
+    .thumb-text-card span:nth-child(1) { width: 40%; background: #374151; height: 5px; }
+    .thumb-text-card span:nth-child(2) { width: 100%; }
+    .thumb-text-card span:nth-child(3) { width: 90%; }
+
+    .thumb-text-columns {
+      background: #f3f4f6;
+      padding: 8px;
+      gap: 6px;
+    }
+    .thumb-text-columns > div {
+      flex: 1;
+      background: white;
+      border-radius: 4px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 6px;
+      gap: 3px;
+    }
+    .thumb-text-columns span {
+      height: 3px;
+      background: #d1d5db;
+      border-radius: 2px;
+      width: 80%;
+    }
+
+    .thumb-image-left {
+      background: #f9fafb;
+      padding: 8px;
+      gap: 8px;
+    }
+    .thumb-image-left > div:first-child {
+      width: 45%;
+      height: 100%;
+      background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+      border-radius: 4px;
+    }
+    .thumb-image-left > div:last-child {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      justify-content: center;
+    }
+    .thumb-image-left span {
+      height: 4px;
+      background: #d1d5db;
+      border-radius: 2px;
+    }
+    .thumb-image-left span:first-child { width: 70%; background: #374151; height: 5px; }
+
+    .thumb-image-right {
+      background: #f9fafb;
+      padding: 8px;
+      gap: 8px;
+    }
+    .thumb-image-right > div:first-child {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      justify-content: center;
+    }
+    .thumb-image-right > div:last-child {
+      width: 45%;
+      height: 100%;
+      background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+      border-radius: 4px;
+    }
+    .thumb-image-right span {
+      height: 4px;
+      background: #d1d5db;
+      border-radius: 2px;
+    }
+    .thumb-image-right span:first-child { width: 70%; background: #374151; height: 5px; }
+
+    .block-card-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 2px;
+    }
+    .block-card-desc {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    /* Block Picker Tabs */
+    .block-picker-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid #e5e7eb;
+      margin: 0 -20px;
+      padding: 0 20px;
+    }
+    .block-picker-tab {
+      padding: 12px 20px;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.15s;
+    }
+    .block-picker-tab:hover {
+      color: #374151;
+    }
+    .block-picker-tab.active {
+      color: #6644ff;
+      border-bottom-color: #6644ff;
+    }
+
+    .block-picker-tab-content {
+      display: none;
+    }
+    .block-picker-tab-content.active {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    .block-picker-tab-content .block-picker-search {
+      padding: 16px 24px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .block-picker-tab-content .block-picker-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 24px 24px;
+    }
+
+    /* Existing Blocks List */
+    .existing-blocks-filter {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .existing-filter-btn {
+      padding: 6px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 20px;
+      background: white;
+      font-size: 12px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .existing-filter-btn:hover {
+      border-color: #6644ff;
+      color: #6644ff;
+    }
+    .existing-filter-btn.active {
+      background: #6644ff;
+      border-color: #6644ff;
+      color: white;
+    }
+
+    .existing-blocks-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .existing-block-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .existing-block-item:hover {
+      border-color: #6644ff;
+      background: rgba(102, 68, 255, 0.02);
+    }
+    .existing-block-type {
+      padding: 4px 10px;
+      background: #f3f4f6;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .existing-block-type.type-hero { background: #dbeafe; color: #1e40af; }
+    .existing-block-type.type-cta { background: #d1fae5; color: #065f46; }
+    .existing-block-type.type-richtext { background: #fef3c7; color: #92400e; }
+    .existing-block-type.type-image_with_text { background: #ede9fe; color: #5b21b6; }
+
+    .existing-block-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .existing-block-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1f2937;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .existing-block-preview {
+      font-size: 12px;
+      color: #9ca3af;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .existing-block-pages {
+      font-size: 11px;
+      color: #6b7280;
+      white-space: nowrap;
+    }
+    .existing-blocks-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #9ca3af;
+    }
+    .existing-blocks-loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #6b7280;
+    }
+
+    /* Image Picker Styles */
+    .image-picker-container {
+      border: 2px dashed #d1d5db;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.2s ease;
+      background: #fafafa;
+    }
+    .image-picker-container.dragover {
+      border-color: #6644ff;
+      background: rgba(102, 68, 255, 0.05);
+    }
+    .image-picker-container.has-image {
+      border-style: solid;
+      border-color: #e5e7eb;
+    }
+
+    .image-picker-preview {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      object-fit: contain;
+    }
+
+    .image-picker-actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .image-picker-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: white;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      color: #374151;
+    }
+    .image-picker-btn:hover {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+    }
+    .image-picker-btn.primary {
+      background: #6644ff;
+      border-color: #6644ff;
+      color: white;
+    }
+    .image-picker-btn.primary:hover {
+      background: #5533dd;
+    }
+    .image-picker-btn.danger {
+      color: #ef4444;
+      border-color: #fecaca;
+    }
+    .image-picker-btn.danger:hover {
+      background: #fef2f2;
+    }
+
+    .image-picker-icon {
+      font-size: 16px;
+    }
+
+    .image-picker-dropzone {
+      padding: 30px 20px;
+    }
+    .image-picker-dropzone-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+    .image-picker-dropzone-text {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .image-picker-dropzone-hint {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .image-picker-url-input {
+      width: 100%;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .image-picker-url-input:focus {
+      outline: none;
+      border-color: #6644ff;
+      box-shadow: 0 0 0 3px rgba(102, 68, 255, 0.1);
+    }
+
+    /* File Library Modal */
+    .file-library-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100002;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.15s ease;
+    }
+
+    .file-library-modal {
+      background: white;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      animation: slideUp 0.2s ease;
+      overflow: hidden;
+    }
+
+    .file-library-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .file-library-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .file-library-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #9ca3af;
+      padding: 0;
+      line-height: 1;
+    }
+    .file-library-close:hover {
+      color: #374151;
+    }
+
+    .file-library-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .file-library-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+    }
+
+    .file-library-item {
+      aspect-ratio: 1;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .file-library-item:hover {
+      border-color: #6644ff;
+      transform: scale(1.02);
+    }
+    .file-library-item.selected {
+      border-color: #6644ff;
+      box-shadow: 0 0 0 3px rgba(102, 68, 255, 0.2);
+    }
+
+    .file-library-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .file-library-item-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f3f4f6;
+      color: #9ca3af;
+      font-size: 32px;
+    }
+
+    .file-library-footer {
+      padding: 12px 20px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .file-library-loading {
+      text-align: center;
+      padding: 40px;
+      color: #6b7280;
+    }
+
+    .file-library-empty {
+      text-align: center;
+      padding: 40px;
+      color: #9ca3af;
+    }
+  `;
+  document.head.appendChild(editStyles);
+
+  var DIRECTUS_URL = passedDirectusUrl; var STATIC_TOKEN = '90ce679e199f84430ca651a4a3460386';
+  var accessToken = null;
+  var currentPopup = null;
+  var currentOverlay = null;
+  var blockPickerOverlay = null;
+
+  // Get page ID from data attribute
+  var pageContainer = document.querySelector('[data-page-id]');
+  var PAGE_ID = pageContainer ? pageContainer.getAttribute('data-page-id') : null;
+
+  var PAGE_LANGUAGE = pageContainer ? pageContainer.getAttribute("data-page-language") : "en";
+  var PAGE_SLUG = pageContainer ? pageContainer.getAttribute("data-page-slug") : "";
+  
+  // Language toolbar - improved version with translation groups
+  var LANGUAGES = {
+    en: { name: "English", flag: "🇬🇧" },
+    nl: { name: "Nederlands", flag: "🇳🇱" }
+  };
+  
+  var translationData = {
+    currentPage: null,
+    otherLanguagePage: null,
+    translationGroup: null
+  };
+  
+  async function loadTranslationData() {
+    var token = STATIC_TOKEN;
+    try {
+      var response = await fetch(DIRECTUS_URL + "/items/pages/" + PAGE_ID + "?fields=id,title,slug,language,translation_group", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      var data = await response.json();
+      translationData.currentPage = data.data;
+      translationData.translationGroup = data.data.translation_group;
+      
+      var otherLang = PAGE_LANGUAGE === "en" ? "nl" : "en";
+      
+      // First try to find by translation_group
+      if (translationData.translationGroup) {
+        var otherResponse = await fetch(DIRECTUS_URL + "/items/pages?filter[translation_group][_eq]=" + translationData.translationGroup + "&filter[language][_eq]=" + otherLang + "&limit=1", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        var otherData = await otherResponse.json();
+        if (otherData.data && otherData.data.length > 0) {
+          translationData.otherLanguagePage = otherData.data[0];
+          return true;
+        }
+      }
+      
+      // If no translation_group match, try to find by same slug and other language
+      var slugResponse = await fetch(DIRECTUS_URL + "/items/pages?filter[slug][_eq]=" + PAGE_SLUG + "&filter[language][_eq]=" + otherLang + "&limit=1", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      var slugData = await slugResponse.json();
+      if (slugData.data && slugData.data.length > 0) {
+        translationData.otherLanguagePage = slugData.data[0];
+        // Link them together now
+        var groupId = translationData.translationGroup || PAGE_ID;
+        await fetch(DIRECTUS_URL + "/items/pages/" + PAGE_ID, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: JSON.stringify({ translation_group: groupId })
+        });
+        await fetch(DIRECTUS_URL + "/items/pages/" + slugData.data[0].id, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: JSON.stringify({ translation_group: groupId })
+        });
+        translationData.translationGroup = groupId;
+      }
+      
+      return true;
+    } catch (e) {
+      console.error("Error loading translation data:", e);
+      return false;
+    }
+  }
+  
+  function createLanguageToolbar() {
+    loadTranslationData().then(function() {
+      var toolbar = document.createElement("div");
+      toolbar.className = "language-toolbar";
+      toolbar.id = "language-toolbar";
+      
+      var otherLang = PAGE_LANGUAGE === "en" ? "nl" : "en";
+      var hasOtherVersion = translationData.otherLanguagePage !== null;
+      
+      var html = "<div class=\"lang-tabs\">";
+      html += "<div class=\"lang-tab active\"><span class=\"lang-flag\">" + LANGUAGES[PAGE_LANGUAGE].flag + "</span><span class=\"lang-name\">" + LANGUAGES[PAGE_LANGUAGE].name + "</span></div>";
+      
+      if (hasOtherVersion) {
+        html += "<div class=\"lang-tab clickable\" onclick=\"switchToLanguage('" + otherLang + "')\"><span class=\"lang-flag\">" + LANGUAGES[otherLang].flag + "</span><span class=\"lang-name\">" + LANGUAGES[otherLang].name + "</span></div>";
+      } else {
+        html += "<div class=\"lang-tab add-lang\" onclick=\"createTranslation()\"><span class=\"add-icon\">+</span><span class=\"lang-flag\">" + LANGUAGES[otherLang].flag + "</span><span class=\"lang-name\">Add " + LANGUAGES[otherLang].name + "</span></div>";
+      }
+      
+      html += "</div>";
+
+      toolbar.innerHTML = html;
+      document.body.appendChild(toolbar);
+    });
+  }
+  
+  window.switchToLanguage = function(targetLang) {
+    if (translationData.otherLanguagePage) {
+      window.top.location.href = DIRECTUS_URL + "/admin/content/pages/" + translationData.otherLanguagePage.id;
+    }
+  };
+
+  // Sync blocks between language versions
+  window.syncBlocks = async function() {
+    if (!translationData.otherLanguagePage) {
+      alert("No other language version found to sync with.");
+      return;
+    }
+
+    if (!confirm("Sync blocks structure?\n\nThis will add any missing blocks to the other language version.")) return;
+
+    var token = STATIC_TOKEN;
+    var currentPageId = PAGE_ID;
+    var otherPageId = translationData.otherLanguagePage.id;
+
+    try {
+      // Get blocks from both pages
+      var currentBlocksResp = await fetch(DIRECTUS_URL + "/items/blocks?filter[page_id][_eq]=" + currentPageId + "&sort=sort", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      var currentBlocks = (await currentBlocksResp.json()).data || [];
+
+      var otherBlocksResp = await fetch(DIRECTUS_URL + "/items/blocks?filter[page_id][_eq]=" + otherPageId + "&sort=sort", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      var otherBlocks = (await otherBlocksResp.json()).data || [];
+
+      // Find blocks to add to other page (by comparing block_type + variant + sort)
+      var blocksToAdd = [];
+      for (var i = 0; i < currentBlocks.length; i++) {
+        var cb = currentBlocks[i];
+        var found = otherBlocks.some(function(ob) {
+          return ob.block_type === cb.block_type && ob.variant === cb.variant && ob.sort === cb.sort;
+        });
+        if (!found) {
+          blocksToAdd.push(cb);
+        }
+      }
+
+      if (blocksToAdd.length === 0) {
+        alert("Blocks are already in sync!");
+        return;
+      }
+
+      // Add missing blocks to other page
+      for (var j = 0; j < blocksToAdd.length; j++) {
+        var block = blocksToAdd[j];
+        await fetch(DIRECTUS_URL + "/items/blocks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: JSON.stringify({
+            block_type: block.block_type,
+            variant: block.variant,
+            heading_en: block.heading_en,
+            heading_nl: block.heading_nl,
+            subheading_en: block.subheading_en,
+            subheading_nl: block.subheading_nl,
+            content_en: block.content_en,
+            content_nl: block.content_nl,
+            button_text_en: block.button_text_en,
+            button_text_nl: block.button_text_nl,
+            text_en: block.text_en,
+            text_nl: block.text_nl,
+            button_link: block.button_link,
+            image: block.image,
+            image_position: block.image_position,
+            translation_group: translationData.translationGroup,
+            sort: block.sort,
+            page_id: otherPageId,
+            status: "published"
+          })
+        });
+      }
+
+      alert(blocksToAdd.length + " block(s) synced to " + LANGUAGES[translationData.otherLanguagePage.language].name + " version!");
+
+    } catch (e) {
+      console.error("Sync error:", e);
+      alert("Error syncing: " + e.message);
+    }
+  };
+  
+  window.createTranslation = async function() {
+    var token = STATIC_TOKEN;
+    var targetLang = PAGE_LANGUAGE === "en" ? "nl" : "en";
+    
+    if (!confirm("Create " + LANGUAGES[targetLang].name + " version?\n\nThis will create a copy with all blocks.")) return;
+    
+    try {
+      // First check if a page with same slug and target language already exists
+      var checkResponse = await fetch(DIRECTUS_URL + "/items/pages?filter[slug][_eq]=" + PAGE_SLUG + "&filter[language][_eq]=" + targetLang, {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      var checkData = await checkResponse.json();
+      
+      if (checkData.data && checkData.data.length > 0) {
+        // Page already exists - link them together
+        var existingPage = checkData.data[0];
+        var groupId = translationData.translationGroup || PAGE_ID;
+        
+        // Update both pages with same translation_group
+        await fetch(DIRECTUS_URL + "/items/pages/" + PAGE_ID, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: JSON.stringify({ translation_group: groupId })
+        });
+        
+        await fetch(DIRECTUS_URL + "/items/pages/" + existingPage.id, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: JSON.stringify({ translation_group: groupId })
+        });
+        
+        alert(LANGUAGES[targetLang].name + " version found and linked!");
+        window.top.location.href = DIRECTUS_URL + "/admin/content/pages/" + existingPage.id;
+        return;
+      }
+      
+      // No existing page, create new one
+      var pageResponse = await fetch(DIRECTUS_URL + "/items/pages/" + PAGE_ID + "?fields=*,blocks.*", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      var page = (await pageResponse.json()).data;
+      
+      var translationGroup = page.translation_group || PAGE_ID;
+      if (!page.translation_group) {
+        await fetch(DIRECTUS_URL + "/items/pages/" + PAGE_ID, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: JSON.stringify({ translation_group: translationGroup })
+        });
+      }
+      
+      var newPageResponse = await fetch(DIRECTUS_URL + "/items/pages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({
+          title: page.title,
+          slug: page.slug,
+          status: "draft",
+          language: targetLang,
+          translation_group: translationGroup
+        })
+      });
+      var newPage = await newPageResponse.json();
+      if (newPage.errors) throw new Error(JSON.stringify(newPage.errors));
+      
+      var newPageId = newPage.data.id;
+      
+      if (page.blocks && page.blocks.length > 0) {
+        for (var i = 0; i < page.blocks.length; i++) {
+          var block = page.blocks[i];
+          await fetch(DIRECTUS_URL + "/items/blocks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify({
+              block_type: block.block_type,
+              variant: block.variant,
+              // Copy all multilingual text fields
+              heading_en: block.heading_en || block.heading,
+              heading_nl: block.heading_nl || block.heading,
+              subheading_en: block.subheading_en || block.subheading,
+              subheading_nl: block.subheading_nl || block.subheading,
+              content_en: block.content_en || block.content,
+              content_nl: block.content_nl || block.content,
+              button_text_en: block.button_text_en || block.button_text,
+              button_text_nl: block.button_text_nl || block.button_text,
+              text_en: block.text_en || block.text,
+              text_nl: block.text_nl || block.text,
+              // Non-translatable fields
+              button_link: block.button_link,
+              image: block.image,
+              image_position: block.image_position,
+              translation_group: translationGroup,
+              sort: block.sort,
+              page_id: newPageId
+            })
+          });
+        }
+      }
+      
+      alert(LANGUAGES[targetLang].name + " version created!");
+      window.top.location.href = DIRECTUS_URL + "/admin/content/pages/" + newPageId;
+    } catch (e) {
+      console.error("Error:", e);
+      alert("Error: " + e.message);
+    }
+  };
+
+  createLanguageToolbar();
+  
+  // Block templates with variants
+  var BLOCK_TEMPLATES = [
+    // ODDNY templates
+    {
+      id: 'oddny-hero',
+      category: 'oddny',
+      name: 'Oddny Hero',
+      description: 'Hero with bear and bird illustration',
+      thumb: 'thumb-oddny-hero',
+      data: {
+        block_type: 'hero',
+        variant: 'oddny-hero',
+        heading_en: 'Dare to fly with Oddny', heading_nl: 'Durf te vliegen met Oddny',
+        subheading_en: 'Oddny empowers creative independents to protect their value and creative freedom.', subheading_nl: 'Oddny stelt creatieve zelfstandigen in staat hun waarde en creatieve vrijheid te beschermen.',
+        button_text_en: 'Explore', button_text_nl: 'Ontdek',
+        button_link: '#',
+        status: 'published'
+      }
+    },
+    {
+      id: 'hero-image-overlay',
+      category: 'oddny',
+      name: 'Hero Image Overlay',
+      description: 'Full-width hero with image background and text overlay',
+      thumb: 'thumb-hero-image',
+      data: {
+        block_type: 'hero',
+        variant: 'image-overlay',
+        heading_en: 'Step inside the world<br/>of Peter Bellerby\'s hand<br/>built globes',
+        heading_nl: 'Stap binnen in de wereld<br/>van Peter Bellerby\'s handgemaakte<br/>globes',
+        button_text_en: 'Explore',
+        button_text_nl: 'Ontdek',
+        button_link: '#',
+        background_image: null,
+        status: 'published'
+      }
+    },
+    {
+      id: 'wunderkamer-image-text',
+      category: 'oddny',
+      name: 'Wunderkamer Image Text',
+      description: 'Image left, text right layout with Read More button',
+      thumb: 'thumb-wunderkamer-2',
+      data: {
+        block_type: 'hero',
+        variant: 'wunderkamer-image-text',
+        heading_en: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy',
+        heading_nl: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy',
+        content_en: '<p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.</p><p>Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>',
+        content_nl: '<p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.</p><p>Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>',
+        button_text_en: 'Read More',
+        button_text_nl: 'Lees Meer',
+        button_link: '#',
+        image: null,
+        status: 'published'
+      }
+    },
+    {
+      id: 'wunderkamer-text-3',
+      category: 'oddny',
+      name: 'Wunderkamer Text 3',
+      description: 'Large title with text content and decorative bear illustration',
+      thumb: 'thumb-wunderkamer-3',
+      data: {
+        block_type: 'hero',
+        variant: 'wunderkamer-text-3',
+        heading_en: 'Wunderkammer',
+        heading_nl: 'Wunderkammer',
+        content_en: '<p>Once, a Wunderkammer gathered the wonders of art, nature and invention in one place.<br/><br/></p><p>At Oddny, we carry that spirit forward — exploring, connecting and sharing insights from the creative and financial worlds to protect, inspire and expand what creativity can achieve.</p><p>&nbsp;</p><p>A space to discover, to be inspired, and to spark new possibilities.</p>',
+        content_nl: '<p>Ooit verzamelde een Wunderkammer de wonderen van kunst, natuur en uitvinding op één plek.<br/><br/></p><p>Bij Oddny dragen we die geest voort — we verkennen, verbinden en delen inzichten uit de creatieve en financiële wereld om te beschermen, inspireren en uit te breiden wat creativiteit kan bereiken.</p><p>&nbsp;</p><p>Een ruimte om te ontdekken, geïnspireerd te raken en nieuwe mogelijkheden aan te wakkeren.</p>',
+        status: 'published'
+      }
+    },
+    {
+      id: 'dynamic-cards',
+      category: 'oddny',
+      name: 'Dynamic Cards',
+      description: 'Similar Articles - 6 cards layout for blogs and dynamic content',
+      thumb: 'thumb-dynamic-cards',
+      data: {
+        block_type: 'hero',
+        variant: 'dynamic-cards',
+        heading_en: 'Similar Articles',
+        heading_nl: 'Vergelijkbare Artikelen',
+        card1_title_en: 'Lorem ipsum dolor sit',
+        card1_title_nl: 'Lorem ipsum dolor sit',
+        card1_excerpt_en: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...',
+        card1_excerpt_nl: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...',
+        card2_title_en: 'Lorem ipsum dolor sit',
+        card2_title_nl: 'Lorem ipsum dolor sit',
+        card2_excerpt_en: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...',
+        card2_excerpt_nl: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...',
+        card3_title_en: 'Lorem ipsum dolor sit',
+        card3_title_nl: 'Lorem ipsum dolor sit',
+        card3_excerpt_en: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...',
+        card3_excerpt_nl: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...',
+        card4_title_en: 'Lorem ipsum dolor sit',
+        card4_title_nl: 'Lorem ipsum dolor sit',
+        card4_excerpt_en: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...',
+        card4_excerpt_nl: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...',
+        card5_title_en: 'Lorem ipsum dolor sit',
+        card5_title_nl: 'Lorem ipsum dolor sit',
+        card5_excerpt_en: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...',
+        card5_excerpt_nl: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...',
+        card6_title_en: 'Lorem ipsum dolor sit',
+        card6_title_nl: 'Lorem ipsum dolor sit',
+        card6_excerpt_en: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...',
+        card6_excerpt_nl: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat...',
+        image: null,
+        image_2: null,
+        image_3: null,
+        image_4: null,
+        image_5: null,
+        image_6: null,
+        status: 'published'
+      }
+    },
+    {
+      id: 'oddny-newsletter-cta',
+      category: 'oddny',
+      name: 'Newsletter CTA',
+      description: 'Newsletter signup with complete green bear and envelopes illustration',
+      thumb: 'thumb-newsletter-cta',
+      data: {
+        block_type: 'hero',
+        variant: 'newsletter-cta',
+        heading_en: 'Stay in touch',
+        heading_nl: 'Blijf op de hoogte',
+        content_en: '<p>Sign up to our newsletter to receive insights</p><p>from the creative and financial worlds to</p><p>protect, inspire and expand what creativity</p><p>can achieve.</p>',
+        content_nl: '<p>Meld je aan voor onze nieuwsbrief om inzichten</p><p>te ontvangen uit de creatieve en financiële wereld</p><p>om te beschermen, inspireren en uit te breiden</p><p>wat creativiteit kan bereiken.</p>',
+        button_text_en: 'Join now',
+        button_text_nl: 'Meld je aan',
+        placeholder_en: 'Enter your email',
+        placeholder_nl: 'Voer je email in',
+        button_link: '#newsletter-signup',
+        status: 'published'
+      }
+    },
+    {
+      id: 'oddny-partner',
+      category: 'oddny',
+      name: 'Oddny Partner',
+      description: 'Benefits of being an Oddny Partner with numbered list and decorative elements',
+      thumb: 'thumb-oddny-partner',
+      data: {
+        block_type: 'hero',
+        variant: 'oddny-partner',
+        heading_en: '<p>Benefits of being</p><p>an Oddny Partner</p>',
+        heading_nl: '<p>Voordelen van een</p><p>Oddny Partner worden</p>',
+        content_en: '<p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem</p><p>&nbsp;</p><p>&nbsp;</p>',
+        content_nl: '<p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem</p><p>&nbsp;</p><p>&nbsp;</p>',
+        benefit1_en: 'Boost your Network',
+        benefit1_nl: 'Vergroot je netwerk',
+        benefit1_desc_en: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        benefit1_desc_nl: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        benefit2_en: 'Build Strong Connections',
+        benefit2_nl: 'Bouw sterke connecties',
+        benefit2_desc_en: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        benefit2_desc_nl: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        benefit3_en: 'Generate New Business',
+        benefit3_nl: 'Genereer nieuwe business',
+        benefit3_desc_en: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        benefit3_desc_nl: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        benefit4_en: 'Empower the Creative Sector',
+        benefit4_nl: 'Versterk de creatieve sector',
+        benefit4_desc_en: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        benefit4_desc_nl: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        button_text_en: 'Become a Partner',
+        button_text_nl: 'Word een Partner',
+        button_link: '/partners',
+        status: 'published'
+      }
+    },
+    {
+      id: 'pricing-cards',
+      category: 'oddny',
+      name: 'Pricing Cards',
+      description: 'Responsive pricing cards with product bundles',
+      thumb: 'thumb-pricing-cards',
+      data: {
+        block_type: 'hero',
+        variant: 'pricing-cards',
+        heading_en: 'Popular Bundles',
+        heading_nl: 'Populaire Bundels',
+        card1_title_en: 'EQPT',
+        card1_title_nl: 'EQPT',
+        card1_desc_en: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit.',
+        card1_desc_nl: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit.',
+        card1_price_en: '€12, 61',
+        card1_price_nl: '€12, 61',
+        card2_title_en: 'CYBR',
+        card2_title_nl: 'CYBR',
+        card2_desc_en: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit.',
+        card2_desc_nl: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit.',
+        card2_price_en: '€24, 86',
+        card2_price_nl: '€24, 86',
+        card3_title_en: 'HME',
+        card3_title_nl: 'HME',
+        card3_desc_en: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit.',
+        card3_desc_nl: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit.',
+        card3_price_en: '€36, 12',
+        card3_price_nl: '€36, 12',
+        from_label_en: 'From',
+        from_label_nl: 'Vanaf',
+        button_text_en: 'Check our Prices',
+        button_text_nl: 'Bekijk onze Prijzen',
+        button_link: '/pricing',
+        status: 'published'
+      }
+    },
+    {
+      id: 'how-to-buy',
+      category: 'oddny',
+      name: 'How to Buy',
+      description: 'Step-by-step purchase guide with bird illustration',
+      thumb: 'thumb-how-to-buy',
+      data: {
+        block_type: 'hero',
+        variant: 'how-to-buy',
+        heading_en: 'How to purchase',
+        heading_nl: 'Hoe te kopen',
+        content_en: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        content_nl: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        step1_title_en: 'Step one',
+        step1_title_nl: 'Stap een',
+        step1_desc_en: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        step1_desc_nl: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        step2_title_en: 'Step two',
+        step2_title_nl: 'Stap twee',
+        step2_desc_en: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        step2_desc_nl: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        step3_title_en: 'Step three',
+        step3_title_nl: 'Stap drie',
+        step3_desc_en: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        step3_desc_nl: 'veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem',
+        status: 'published'
+      }
+    },
+    {
+      id: 'character-cards',
+      category: 'oddny',
+      name: 'Character Cards',
+      description: 'Oddny and Harrison character cards with stats and fact files',
+      thumb: 'thumb-character-cards',
+      data: {
+        block_type: 'hero',
+        variant: 'character-cards',
+        oddny_name_en: 'Oddny',
+        oddny_name_nl: 'Oddny',
+        oddny_image: null,
+        oddny_fact_en: 'She is solid, reliable and the keeper of all of the important stuff and the harvester of sound knowledge and common sense.',
+        oddny_fact_nl: 'Zij is solide, betrouwbaar en de bewaker van alle belangrijke zaken en de verzamelaar van gezond verstand en kennis.',
+        oddny_knowledge: '100',
+        oddny_strength: '100',
+        oddny_protection: '90',
+        oddny_energy: '60',
+        oddny_cuteness: '70',
+        oddny_overall: '90',
+        harrison_name_en: 'Harrison',
+        harrison_name_nl: 'Harrison',
+        harrison_image: null,
+        harrison_fact_en: 'the navigator, Energeticly showing, pointing out and guiding to new information.',
+        harrison_fact_nl: 'de navigator, energiek wijzend, uitleggen en begeleiden naar nieuwe informatie.',
+        harrison_knowledge: '100',
+        harrison_strength: '20',
+        harrison_protection: '80',
+        harrison_energy: '100',
+        harrison_cuteness: '80',
+        harrison_overall: '70',
+        status: 'published'
+      }
+    },
+    {
+      id: 'contact-widget',
+      category: 'oddny',
+      name: 'Contact Widget',
+      description: 'Contact section with email, phone and postcard options',
+      thumb: 'thumb-contact',
+      data: {
+        block_type: 'hero',
+        variant: 'contact-widget',
+        contact_email: 'contact@oddny.nl',
+        contact_phone: '0900 333 355 553',
+        email_text_en: '...you can fling us an email...',
+        email_text_nl: '...je kunt ons een email sturen...',
+        phone_text_en: '...dig out our phone number and give us a call...',
+        phone_text_nl: '...zoek ons telefoonnummer op en bel ons...',
+        postcard_text_en: '...or even send us a postcard if you like...',
+        postcard_text_nl: '...of stuur ons een ansichtkaart als je wilt...',
+        status: 'published'
+      }
+    },
+    {
+      id: 'friends-and-foes',
+      category: 'oddny',
+      name: 'Friends and Foes',
+      description: 'Dynamic grid of people cards with names and roles',
+      thumb: 'thumb-friends-foes',
+      data: {
+        block_type: 'hero',
+        variant: 'friends-and-foes',
+        heading_en: 'Friends and Foes',
+        heading_nl: 'Vrienden en Vijanden',
+        friends_cards: JSON.stringify([
+          { name_en: 'Merlijin Poolman', name_nl: 'Merlijin Poolman', role_en: 'Music night mayor, EU', role_nl: 'Muziek nachtburgemeester, EU' },
+          { name_en: 'Anthony Michael', name_nl: 'Anthony Michael', role_en: 'Designer', role_nl: 'Ontwerper' },
+          { name_en: 'Jos de Krieger', name_nl: 'Jos de Krieger', role_en: 'Architect', role_nl: 'Architect' },
+          { name_en: 'Ina Sok', name_nl: 'Ina Sok', role_en: 'Artist', role_nl: 'Kunstenaar' },
+          { name_en: 'Merlijin Poolman', name_nl: 'Merlijin Poolman', role_en: 'Designer', role_nl: 'Ontwerper' },
+          { name_en: 'Anthony Michael', name_nl: 'Anthony Michael', role_en: 'Architect', role_nl: 'Architect' },
+          { name_en: 'Merlijin Poolman', name_nl: 'Merlijin Poolman', role_en: 'Music night mayor, EU', role_nl: 'Muziek nachtburgemeester, EU' },
+          { name_en: 'Anthony Michael', name_nl: 'Anthony Michael', role_en: 'Designer', role_nl: 'Ontwerper' },
+          { name_en: 'Jos de Krieger', name_nl: 'Jos de Krieger', role_en: 'Architect', role_nl: 'Architect' },
+          { name_en: 'Ina Sok', name_nl: 'Ina Sok', role_en: 'Artist', role_nl: 'Kunstenaar' },
+          { name_en: 'Merlijin Poolman', name_nl: 'Merlijin Poolman', role_en: 'Designer', role_nl: 'Ontwerper' },
+          { name_en: 'Anthony Michael', name_nl: 'Anthony Michael', role_en: 'Architect', role_nl: 'Architect' }
+        ]),
+        status: 'published'
+      }
+    },
+    {
+      id: 'creative-flow-cards',
+      category: 'oddny',
+      name: 'Creative Flow Cards',
+      description: 'Product cards grid with prices and navigation',
+      thumb: 'thumb-creative-flow',
+      data: {
+        block_type: 'hero',
+        variant: 'creative-flow-cards',
+        heading_en: 'Creative Flow',
+        heading_nl: 'Creative Flow',
+        cf_nav1_en: 'Creative Flow', cf_nav1_nl: 'Creative Flow',
+        cf_nav2_en: 'Discipline', cf_nav2_nl: 'Discipline',
+        cf_nav3_en: 'Topic', cf_nav3_nl: 'Onderwerp',
+        cf_from_label_en: 'From', cf_from_label_nl: 'Vanaf',
+        cf_check_prices_label_en: 'Check our Prices', cf_check_prices_label_nl: 'Bekijk onze Prijzen',
+        cf_card1_title_en: 'EQPT', cf_card1_title_nl: 'EQPT',
+        cf_card1_price_en: '€12, 61', cf_card1_price_nl: '€12, 61',
+        cf_card1_desc_en: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation', cf_card1_desc_nl: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation',
+        cf_card2_title_en: 'MBIL', cf_card2_title_nl: 'MBIL',
+        cf_card2_price_en: '€12, 61', cf_card2_price_nl: '€12, 61',
+        cf_card2_desc_en: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation', cf_card2_desc_nl: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation',
+        cf_card3_title_en: 'HME', cf_card3_title_nl: 'HME',
+        cf_card3_price_en: '€12, 61', cf_card3_price_nl: '€12, 61',
+        cf_card3_desc_en: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation', cf_card3_desc_nl: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation',
+        cf_card4_title_en: 'STDO', cf_card4_title_nl: 'STDO',
+        cf_card4_price_en: '€12, 61', cf_card4_price_nl: '€12, 61',
+        cf_card4_desc_en: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation', cf_card4_desc_nl: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation',
+        cf_card5_title_en: 'CYBR', cf_card5_title_nl: 'CYBR',
+        cf_card5_price_en: '€12, 61', cf_card5_price_nl: '€12, 61',
+        cf_card5_desc_en: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation', cf_card5_desc_nl: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation',
+        cf_card6_title_en: 'LBTY', cf_card6_title_nl: 'LBTY',
+        cf_card6_price_en: '€12, 61', cf_card6_price_nl: '€12, 61',
+        cf_card6_desc_en: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation', cf_card6_desc_nl: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation',
+        status: 'published'
+      }
+    },
+    {
+      id: 'newsletter-popup',
+      category: 'oddny',
+      name: 'Newsletter Popup',
+      description: 'Email signup popup with bird illustration',
+      thumb: 'thumb-newsletter-popup',
+      data: {
+        block_type: 'hero',
+        variant: 'newsletter-popup',
+        np_title_en: 'Join our community of creatives', np_title_nl: 'Word lid van onze creatieve community',
+        np_subtitle_en: 'Get tips, opportunities, and advice delivered straight to your inbox', np_subtitle_nl: 'Ontvang tips, kansen en advies rechtstreeks in je inbox',
+        np_placeholder_en: 'Enter your email', np_placeholder_nl: 'Vul je e-mail in',
+        np_button_text_en: 'Join now', np_button_text_nl: 'Word lid',
+        status: 'published'
+      }
+    },
+    {
+      id: 'tools-collection',
+      category: 'oddny',
+      name: 'Tools Collection',
+      description: 'Card grid with Tools, Guide, and Product categories',
+      thumb: 'thumb-tools-collection',
+      data: {
+        block_type: 'hero',
+        variant: 'tools-collection',
+        tc_nav1_en: 'Creative Flow', tc_nav1_nl: 'Creative Flow',
+        tc_nav2_en: 'Discipline', tc_nav2_nl: 'Discipline',
+        tc_nav3_en: 'Topic', tc_nav3_nl: 'Onderwerp',
+        tc_type_tools_en: 'Tools', tc_type_tools_nl: 'Tools',
+        tc_type_guide_en: 'Guide', tc_type_guide_nl: 'Gids',
+        tc_type_product_en: 'Product', tc_type_product_nl: 'Product',
+        tc_card1_type_en: 'Tools', tc_card1_type_nl: 'Tools',
+        tc_card1_text_en: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.', tc_card1_text_nl: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.',
+        tc_card2_type_en: 'Guide', tc_card2_type_nl: 'Gids',
+        tc_card2_text_en: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.', tc_card2_text_nl: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.',
+        tc_card3_type_en: 'Product', tc_card3_type_nl: 'Product',
+        tc_card3_text_en: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.', tc_card3_text_nl: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.',
+        status: 'published'
+      }
+    },
+    {
+      id: 'guides-collection',
+      category: 'oddny',
+      name: 'Guides Collection',
+      description: 'Card grid with Guides collection',
+      thumb: 'thumb-guides-collection',
+      data: {
+        block_type: 'hero',
+        variant: 'guides-collection',
+        gc_nav1_en: 'Creative Flow', gc_nav1_nl: 'Creative Flow',
+        gc_nav2_en: 'Discipline', gc_nav2_nl: 'Discipline',
+        gc_nav3_en: 'Topic', gc_nav3_nl: 'Onderwerp',
+        status: 'published'
+      }
+    },
+    {
+      id: 'tool-hero',
+      category: 'oddny',
+      name: 'Tool Hero',
+      description: 'Hero banner with solid color background and category label',
+      thumb: 'thumb-tool-hero',
+      data: {
+        block_type: 'hero',
+        variant: 'tool-hero',
+        heading_en: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit ectetuer', heading_nl: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit ectetuer',
+        th_category_en: 'Guide', th_category_nl: 'Gids',
+        th_bg_color: '#FF40B4',
+        status: 'published'
+      }
+    },
+    {
+      id: 'popular-resources',
+      category: 'oddny',
+      name: 'Popular Resources',
+      description: '3 colored resource cards (Tools, Guide, Product)',
+      thumb: 'thumb-popular-resources',
+      data: {
+        block_type: 'hero',
+        variant: 'popular-resources',
+        pr_heading_en: 'Popular Resources', pr_heading_nl: 'Populaire Bronnen',
+        pr_card1_type_en: 'Tools', pr_card1_type_nl: 'Tools',
+        pr_card1_text_en: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim', pr_card1_text_nl: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim',
+        pr_card1_link: '#',
+        pr_card2_type_en: 'Guide', pr_card2_type_nl: 'Gids',
+        pr_card2_text_en: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim', pr_card2_text_nl: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim',
+        pr_card2_link: '#',
+        pr_card3_type_en: 'Product', pr_card3_type_nl: 'Product',
+        pr_card3_text_en: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim', pr_card3_text_nl: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim',
+        pr_card3_link: '#',
+        status: 'published'
+      }
+    },
+    {
+      id: 'about-us',
+      category: 'oddny',
+      name: 'About Us',
+      description: 'Full about us page with Oddny bear and Harrison bird',
+      thumb: 'thumb-about-us',
+      data: {
+        block_type: 'hero',
+        variant: 'about-us',
+        au_title_en: 'Let us introduce ourselves', au_title_nl: 'Laat ons onszelf voorstellen',
+        au_intro_en: 'We created Oddny to deal with the boring but necessary stuff', au_intro_nl: 'We hebben Oddny gemaakt om de saaie maar noodzakelijke dingen aan te pakken',
+        au_mission_title_en: 'Our Mission', au_mission_title_nl: 'Onze Missie',
+        au_mission_text_en: 'Once, a Wunderkammer gathered the wonders of art, nature and invention in one place.\n\nAt Oddny, we carry that spirit forward — exploring, connecting and sharing insights from the creative and financial worlds to protect, inspire and expand what creativity can achieve.\n\nA space to discover, to be inspired, and to spark new possibilities.',
+        au_mission_text_nl: 'Ooit verzamelde een Wunderkammer de wonderen van kunst, natuur en uitvinding op één plek.\n\nBij Oddny dragen we die geest voort — we verkennen, verbinden en delen inzichten uit de creatieve en financiële wereld om te beschermen, inspireren en uit te breiden wat creativiteit kan bereiken.\n\nEen ruimte om te ontdekken, geïnspireerd te raken en nieuwe mogelijkheden aan te wakkeren.',
+        au_promise_title_en: 'Our Promise', au_promise_title_nl: 'Onze Belofte',
+        au_promise_text_en: 'Once, a Wunderkammer gathered the wonders of art, nature and invention in one place.\n\nAt Oddny, we carry that spirit forward — exploring, connecting and sharing insights from the creative and financial worlds to protect, inspire and expand what creativity can achieve.\n\nA space to discover, to be inspired, and to spark new possibilities.',
+        au_promise_text_nl: 'Ooit verzamelde een Wunderkammer de wonderen van kunst, natuur en uitvinding op één plek.\n\nBij Oddny dragen we die geest voort — we verkennen, verbinden en delen inzichten uit de creatieve en financiële wereld om te beschermen, inspireren en uit te breiden wat creativiteit kan bereiken.\n\nEen ruimte om te ontdekken, geïnspireerd te raken en nieuwe mogelijkheden aan te wakkeren.',
+        au_cta_text_en: 'Get to know us some more...', au_cta_text_nl: 'Leer ons nog beter kennen...',
+        au_cta_link: '#',
+        au_oddny_label_en: "I'm Oddny", au_oddny_label_nl: 'Ik ben Oddny',
+        au_harrison_label_en: "I'm Harrison", au_harrison_label_nl: 'Ik ben Harrison',
+        au_humans_label_en: 'Sometimes Humans help us too...', au_humans_label_nl: 'Soms helpen mensen ons ook...',
+        status: 'published'
+      }
+    },
+    {
+      id: 'personal-products',
+      category: 'oddny',
+      name: 'Personal Products',
+      description: 'Display personal/bundle products in a grid',
+      thumb: 'thumb-personal-products',
+      data: {
+        block_type: 'hero',
+        variant: 'personal-products',
+        heading_en: 'Popular Bundles', heading_nl: 'Populaire Bundels',
+        status: 'published'
+      }
+    },
+    {
+      id: 'news-collection',
+      category: 'oddny',
+      name: 'News Collection',
+      description: 'Display latest news articles in a card grid',
+      thumb: 'thumb-news-collection',
+      data: {
+        block_type: 'hero',
+        variant: 'news-collection',
+        heading_en: 'Latest News', heading_nl: 'Laatste Nieuws',
+        status: 'published'
+      }
+    },
+    {
+      id: 'benefits-section',
+      category: 'oddny',
+      name: 'Benefits Section',
+      description: 'Three benefit blocks with headings and descriptions',
+      thumb: 'thumb-benefits-section',
+      data: {
+        block_type: 'hero',
+        variant: 'benefits-section',
+        benefits_heading1_en: 'Benefits of insuring with Oddny',
+        benefits_heading1_nl: 'Voordelen van verzekeren met Oddny',
+        benefits_text1_en: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.',
+        benefits_text1_nl: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.',
+        benefits_heading2_en: 'We can help you switch...',
+        benefits_heading2_nl: 'Wij kunnen je helpen overstappen...',
+        benefits_text2_en: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.',
+        benefits_text2_nl: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.',
+        benefits_heading3_en: 'Join our creative community today',
+        benefits_heading3_nl: 'Word vandaag lid van onze creatieve community',
+        benefits_text3_en: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.',
+        benefits_text3_nl: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.',
+        status: 'published'
+      }
+    },
+    {
+      id: 'colour-cards-green',
+      category: 'oddny',
+      name: 'Colour Cards Green',
+      description: 'Three image cards with CTA - Green theme',
+      thumb: 'thumb-colour-cards-green',
+      data: {
+        block_type: 'hero',
+        variant: 'colour-cards-green',
+        heading_en: 'The Source', heading_nl: 'De Bron',
+        cta_text_en: 'More Tools', cta_text_nl: 'Meer Tools',
+        cta_link: '#',
+        cc_card1_title_en: '', cc_card1_title_nl: '',
+        cc_card1_link: '#',
+        cc_card2_title_en: '', cc_card2_title_nl: '',
+        cc_card2_link: '#',
+        cc_card3_title_en: '', cc_card3_title_nl: '',
+        cc_card3_link: '#',
+        status: 'published'
+      }
+    },
+    {
+      id: 'colour-cards-pink',
+      category: 'oddny',
+      name: 'Colour Cards Pink',
+      description: 'Three image cards with CTA - Pink theme',
+      thumb: 'thumb-colour-cards-pink',
+      data: {
+        block_type: 'hero',
+        variant: 'colour-cards-pink',
+        heading_en: 'The Source', heading_nl: 'De Bron',
+        cta_text_en: 'More Tools', cta_text_nl: 'Meer Tools',
+        cta_link: '#',
+        cc_card1_title_en: '', cc_card1_title_nl: '',
+        cc_card1_link: '#',
+        cc_card2_title_en: '', cc_card2_title_nl: '',
+        cc_card2_link: '#',
+        cc_card3_title_en: '', cc_card3_title_nl: '',
+        cc_card3_link: '#',
+        status: 'published'
+      }
+    },
+    {
+      id: 'colour-cards-teal',
+      category: 'oddny',
+      name: 'Colour Cards Teal',
+      description: 'Three image cards with CTA - Teal theme',
+      thumb: 'thumb-colour-cards-teal',
+      data: {
+        block_type: 'hero',
+        variant: 'colour-cards-teal',
+        heading_en: 'The Source', heading_nl: 'De Bron',
+        cta_text_en: 'More Tools', cta_text_nl: 'Meer Tools',
+        cta_link: '#',
+        cc_card1_title_en: '', cc_card1_title_nl: '',
+        cc_card1_link: '#',
+        cc_card2_title_en: '', cc_card2_title_nl: '',
+        cc_card2_link: '#',
+        cc_card3_title_en: '', cc_card3_title_nl: '',
+        cc_card3_link: '#',
+        status: 'published'
+      }
+    },
+    {
+      id: 'oddny-cards',
+      category: 'oddny',
+      name: 'Oddny Cards',
+      description: 'Three column image cards',
+      thumb: 'thumb-oddny-cards',
+      data: {
+        block_type: 'hero',
+        variant: 'oddny-cards',
+        heading_en: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit', heading_nl: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit',
+        subheading_en: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ...', subheading_nl: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ...',
+        content_en: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit', content_nl: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit',
+        text_en: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam...', text_nl: 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam...',
+        button_text_en: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit', button_text_nl: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit',
+        status: 'published'
+      }
+    },
+    {
+      id: 'oddny-color-cards',
+      category: 'oddny',
+      name: 'Oddny Color Cards',
+      description: 'Colorful scrolling news cards',
+      thumb: 'thumb-oddny-color-cards',
+      data: {
+        block_type: 'hero',
+        variant: 'oddny-color-cards',
+        heading_en: 'Oddny empowers creative independents to protect their value', heading_nl: 'Oddny geeft creatieve zelfstandigen de kracht om hun waarde te beschermen',
+        subheading_en: 'Ten easy ways you can improve your work space', subheading_nl: 'Tien eenvoudige manieren om je werkruimte te verbeteren',
+        content_en: 'Connect and collaborate with fellow Oddny members', content_nl: 'Verbind en werk samen met andere Oddny leden',
+        text_en: 'Oddny empowers creative independents to protect their value', text_nl: 'Oddny geeft creatieve zelfstandigen de kracht om hun waarde te beschermen',
+        button_text_en: 'Ten easy ways you can improve your work space', button_text_nl: 'Tien eenvoudige manieren om je werkruimte te verbeteren',
+        button_link: '#',
+        status: 'published'
+      }
+    },
+    {
+      id: 'oddny-partners',
+      category: 'oddny',
+      name: 'Oddny Partners',
+      description: 'Why partner section with benefits list and bird',
+      thumb: 'thumb-oddny-partners',
+      data: {
+        block_type: 'hero',
+        variant: 'oddny-partners',
+        heading_en: 'Why partner with Oddny?', heading_nl: 'Waarom partner worden met Oddny?',
+        subheading_en: 'Experience the benefits yourself', subheading_nl: 'Ervaar de voordelen zelf',
+        content_en: 'Our Partners', content_nl: 'Onze Partners',
+        partners_subtitle_en: 'Experience the benefits yourself', partners_subtitle_nl: 'Ervaar de voordelen zelf',
+        button_text_en: 'Become a Partner', button_text_nl: 'Word een Partner',
+        text_en: 'More Partners', text_nl: 'Meer Partners',
+        button_link: '/partners',
+        benefits_en: 'Benefits of being an Oddny Partner\n1. Boost your network\n2. Build strong connections\n3. Generate new business\n4. Empower the creative sector',
+        benefits_nl: 'Voordelen van een Oddny Partner worden\n1. Vergroot je netwerk\n2. Bouw sterke connecties\n3. Genereer nieuwe business\n4. Versterk de creatieve sector',
+        partner1_name_en: 'Merlijin Poolman', partner1_name_nl: 'Merlijin Poolman',
+        partner1_role_en: 'Music night mayor, EU', partner1_role_nl: 'Music night mayor, EU',
+        partner2_name_en: 'Anthony Michael', partner2_name_nl: 'Anthony Michael',
+        partner2_role_en: 'Designer', partner2_role_nl: 'Designer',
+        partner3_name_en: 'Jos de Krieger', partner3_name_nl: 'Jos de Krieger',
+        partner3_role_en: 'Architect', partner3_role_nl: 'Architect',
+        partner4_name_en: 'Ina Sok', partner4_name_nl: 'Ina Sok',
+        partner4_role_en: 'Artist', partner4_role_nl: 'Artist',
+        partner5_name_en: 'Merlijin Poolman', partner5_name_nl: 'Merlijin Poolman',
+        partner5_role_en: 'Music night mayor, EU', partner5_role_nl: 'Music night mayor, EU',
+        partner6_name_en: 'Anthony Michael', partner6_name_nl: 'Anthony Michael',
+        partner6_role_en: 'Designer', partner6_role_nl: 'Designer',
+        speech_text_en: '"Join our community today"', speech_text_nl: '"Word vandaag lid van onze community"',
+        status: 'published'
+      }
+    },
+    {
+      id: 'oddny-hub',
+      category: 'oddny',
+      name: 'Oddny Hub',
+      description: 'Content hub with steps and 3 colored category cards',
+      thumb: 'thumb-oddny-hub',
+      data: {
+        block_type: 'hero',
+        variant: 'oddny-hub',
+        heading_en: 'Welcome to my hub, where I have gathered knowledge, ideas, and products to improve your creative world.',
+        heading_nl: 'Welkom bij mijn hub, waar ik kennis, ideeën en producten heb verzameld om jouw creatieve wereld te verbeteren.',
+        steps_content_en: '<h3>Step One: Idea generation and research</h3><p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p><h3>Step Two: Production</h3><p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p><h3>Step Three: Presentation</h3><p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>',
+        steps_content_nl: '<h3>Stap Een: Ideeën genereren en onderzoek</h3><p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p><h3>Stap Twee: Productie</h3><p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p><h3>Stap Drie: Presentatie</h3><p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>',
+        hub_speech1_en: '"That\'s a nice stick Harrison"',
+        hub_speech1_nl: '"Dat is een mooie stok Harrison"',
+        hub_speech2_en: '"Oddny, I\'ve found a stick!"',
+        hub_speech2_nl: '"Oddny, ik heb een stok gevonden!"',
+        card1_label: 'Tools',
+        card2_label: 'Guide',
+        card3_label: 'Product',
+        card1_text_en: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim',
+        card1_text_nl: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim',
+        card2_text_en: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim',
+        card2_text_nl: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim',
+        card3_text_en: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim',
+        card3_text_nl: 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim',
+        tools_link_text_en: 'More Tools',
+        tools_link_text_nl: 'Meer Tools',
+        tools_link: '/tools',
+        guides_link_text_en: 'More Guides',
+        guides_link_text_nl: 'Meer Gidsen',
+        guides_link: '/guides',
+        products_link_text_en: 'More Products',
+        products_link_text_nl: 'Meer Producten',
+        products_link: '/products',
+        button_text_en: 'More Tools',
+        button_text_nl: 'Meer Tools',
+        button_link: '/tools',
+        status: 'published'
+      }
+    },
+    // Hero variants
+    {
+      id: 'hero-centered',
+      category: 'hero',
+      name: 'Hero Centered',
+      description: 'Title and subtitle centered',
+      thumb: 'thumb-hero-centered',
+      data: {
+        block_type: 'hero',
+        variant: 'centered',
+        heading_en: 'Welcome to our website', heading_nl: 'Welkom op onze website',
+        subheading_en: 'Discover what we can do for you', subheading_nl: 'Ontdek wat wij voor u kunnen doen',
+        button_text_en: 'Learn more', button_text_nl: 'Meer weten',
+        button_link: '#',
+        status: 'published'
+      }
+    },
+    {
+      id: 'hero-left',
+      category: 'hero',
+      name: 'Hero Left',
+      description: 'Text aligned left',
+      thumb: 'thumb-hero-left',
+      data: {
+        block_type: 'hero',
+        variant: 'left',
+        heading_en: 'Your success starts here', heading_nl: 'Jouw succes begint hier',
+        subheading_en: 'We help you grow with proven strategies', subheading_nl: 'Wij helpen je groeien met bewezen strategieën',
+        button_text_en: 'Get started', button_text_nl: 'Aan de slag',
+        button_link: '#',
+        status: 'published'
+      }
+    },
+    {
+      id: 'hero-gradient',
+      category: 'hero',
+      name: 'Hero Gradient',
+      description: 'Colorful gradient background',
+      thumb: 'thumb-hero-gradient',
+      data: {
+        block_type: 'hero',
+        variant: 'gradient',
+        heading_en: 'Innovation & Creativity', heading_nl: 'Innovatie & Creativiteit',
+        subheading_en: 'The future starts today', subheading_nl: 'De toekomst begint vandaag',
+        button_text_en: 'Discover more', button_text_nl: 'Ontdek meer',
+        button_link: '#',
+        status: 'published'
+      }
+    },
+    // CTA variants
+    {
+      id: 'cta-simple',
+      category: 'cta',
+      name: 'CTA Simple',
+      description: 'Green background with button',
+      thumb: 'thumb-cta-simple',
+      data: {
+        block_type: 'cta',
+        variant: 'simple',
+        heading_en: 'Ready to get started?', heading_nl: 'Klaar om te beginnen?',
+        button_text_en: 'Start now', button_text_nl: 'Start nu',
+        button_link: '#contact',
+        status: 'published'
+      }
+    },
+    {
+      id: 'cta-highlight',
+      category: 'cta',
+      name: 'CTA Highlight',
+      description: 'Card with gradient button',
+      thumb: 'thumb-cta-highlight',
+      data: {
+        block_type: 'cta',
+        variant: 'highlight',
+        heading: "Don't miss this opportunity!",
+        subheading: 'Limited time offer for new customers',
+        button_text: 'View offer',
+        button_link: '#offer',
+        status: 'published'
+      }
+    },
+    {
+      id: 'cta-banner',
+      category: 'cta',
+      name: 'CTA Banner',
+      description: 'Horizontal banner style',
+      thumb: 'thumb-cta-banner',
+      data: {
+        block_type: 'cta',
+        variant: 'banner',
+        heading: 'Subscribe to newsletter',
+        subheading: 'Get the latest news in your inbox',
+        button_text: 'Subscribe',
+        button_link: '#newsletter',
+        status: 'published'
+      }
+    },
+    // Rich Text variants
+    {
+      id: 'text-simple',
+      category: 'richtext',
+      name: 'Text Simple',
+      description: 'Basic text section',
+      thumb: 'thumb-text-simple',
+      data: {
+        block_type: 'richtext',
+        variant: 'simple',
+        heading: 'About us',
+        content: '<p>Add your text here. This is a basic text section where you can tell your story.</p>',
+        status: 'published'
+      }
+    },
+    {
+      id: 'text-card',
+      category: 'richtext',
+      name: 'Text Card',
+      description: 'Text in a card',
+      thumb: 'thumb-text-card',
+      data: {
+        block_type: 'richtext',
+        variant: 'card',
+        heading: 'Important message',
+        content: '<p>This is an important announcement that draws attention from your visitors.</p>',
+        status: 'published'
+      }
+    },
+    {
+      id: 'text-columns',
+      category: 'richtext',
+      name: 'Text Columns',
+      description: 'Text in column layout',
+      thumb: 'thumb-text-columns',
+      data: {
+        block_type: 'richtext',
+        variant: 'columns',
+        heading: 'Our services',
+        content: '<p>Describe your services or products in a clear layout. This text is divided into two columns for a professional look.</p>',
+        status: 'published'
+      }
+    },
+    // Image with Text variants
+    {
+      id: 'image-left',
+      category: 'image_with_text',
+      name: 'Image Left',
+      description: 'Image left, text right',
+      thumb: 'thumb-image-left',
+      data: {
+        block_type: 'image_with_text',
+        heading: 'Our story',
+        text: '<p>Tell your story with a beautiful image beside it.</p>',
+        image_position: 'left',
+        status: 'published'
+      }
+    },
+    {
+      id: 'image-right',
+      category: 'image_with_text',
+      name: 'Image Right',
+      description: 'Text left, image right',
+      thumb: 'thumb-image-right',
+      data: {
+        block_type: 'image_with_text',
+        heading: 'What we do',
+        text: '<p>Explain what your company does with a supporting image.</p>',
+        image_position: 'right',
+        status: 'published'
+      }
+    }
+  ];
+
+  var CATEGORIES = [
+    { id: 'oddny', name: 'ODDNY', icon: '🐻' },
+    { id: 'hero', name: 'Hero Sections', icon: '🎯' },
+    { id: 'cta', name: 'Call to Action', icon: '🔘' },
+    { id: 'richtext', name: 'Text Blocks', icon: '📝' },
+    { id: 'image_with_text', name: 'Image & Text', icon: '🖼️' }
+  ];
+
+  // Request token from parent Directus window
+  function requestToken() {
+    window.parent.postMessage({ type: 'directus:request-token' }, '*');
+  }
+
+  // Listen for token from parent
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'directus:token') {
+      accessToken = event.data.token; window.directusAccessToken = event.data.token; console.log('DEBUG token received:', event.data.token ? 'valid token' : 'EMPTY TOKEN');
+      console.log('[Inline Edit] Received access token'); if (!document.querySelector('.language-toolbar')) { createLanguageToolbar(); }
+    }
+  });
+
+  // Request token on load
+  requestToken();
+
+  function closePopup() {
+    if (currentPopup) {
+      currentPopup.remove();
+      currentPopup = null;
+    }
+    if (currentOverlay) {
+      currentOverlay.remove();
+      currentOverlay = null;
+    }
+  }
+
+  function closeBlockPicker() {
+    if (blockPickerOverlay) {
+      blockPickerOverlay.remove();
+      blockPickerOverlay = null;
+    }
+  }
+
+  async function fetchItem(collection, itemId) {
+    try {
+      var headers = {};
+      if (accessToken) {
+        headers['Authorization'] = 'Bearer ' + (STATIC_TOKEN || accessToken);
+      }
+
+      var response = await fetch(DIRECTUS_URL + '/items/' + collection + '/' + itemId, {
+        headers: headers,
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        var data = await response.json();
+        return data.data;
+      }
+    } catch (e) {
+      console.error('[Inline Edit] Fetch error:', e);
+    }
+    return null;
+  }
+
+  async function saveItem(collection, itemId, fields) {
+    try {
+      var headers = { 'Content-Type': 'application/json' };
+      if (accessToken) {
+        headers['Authorization'] = 'Bearer ' + (STATIC_TOKEN || accessToken);
+      }
+
+      var response = await fetch(DIRECTUS_URL + '/items/' + collection + '/' + itemId, {
+        method: 'PATCH',
+        headers: headers,
+        credentials: 'include',
+        body: JSON.stringify(fields)
+      });
+      return response.ok;
+    } catch (e) {
+      console.error('[Inline Edit] Save error:', e);
+      return false;
+    }
+  }
+
+  async function createBlock(template) {
+    if (!PAGE_ID) {
+      alert('Page ID not found');
+      return false;
+    }
+
+    try {
+      var headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + STATIC_TOKEN
+      };
+
+      // Get current block count for sort order
+      var blocksResponse = await fetch(DIRECTUS_URL + '/items/blocks?filter[page_id][_eq]=' + PAGE_ID + '&aggregate[count]=id', {
+        headers: headers,
+        credentials: 'include'
+      });
+      var blocksData = await blocksResponse.json();
+      var blockCount = blocksData.data?.[0]?.count?.id || 0;
+      var newSort = parseInt(blockCount) + 1;
+
+      // Get translation_group from current page
+      var translationGroup = translationData.translationGroup || PAGE_ID;
+
+      var blockData = Object.assign({}, template.data, {
+        page_id: PAGE_ID,
+        translation_group: translationGroup,
+        sort: newSort
+      });
+
+      var response = await fetch(DIRECTUS_URL + '/items/blocks', {
+        method: 'POST',
+        headers: headers,
+        credentials: 'include',
+        body: JSON.stringify(blockData)
+      });
+
+      if (response.ok) {
+        var result = await response.json();
+        console.log('[Add Block] Created block:', result.data);
+
+        // AUTO-SYNC: Also create on other language page if it exists
+        if (translationData.otherLanguagePage) {
+          console.log('[Add Block] Auto-syncing to other language page:', translationData.otherLanguagePage.id);
+          var otherBlockData = Object.assign({}, template.data, {
+            page_id: translationData.otherLanguagePage.id,
+            translation_group: translationGroup,
+            sort: newSort
+          });
+          var syncResponse = await fetch(DIRECTUS_URL + '/items/blocks', {
+            method: 'POST',
+            headers: headers,
+            credentials: 'include',
+            body: JSON.stringify(otherBlockData)
+          });
+          if (syncResponse.ok) {
+            console.log('[Add Block] Auto-synced to other language successfully');
+          } else {
+            console.error('[Add Block] Auto-sync failed:', await syncResponse.text());
+          }
+        }
+
+        return true;
+      } else {
+        var error = await response.json();
+        console.error('[Add Block] Error:', error);
+        return false;
+      }
+    } catch (e) {
+      console.error('[Add Block] Error:', e);
+      return false;
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function formatFieldName(field) {
+    return field.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+  }
+
+  // Image picker functions
+  var fileLibraryOverlay = null;
+  var currentImageCallback = null;
+
+  async function uploadFile(file) {
+    try {
+      var formData = new FormData();
+      formData.append('file', file);
+
+      var headers = {};
+      if (accessToken) {
+        headers['Authorization'] = 'Bearer ' + (STATIC_TOKEN || accessToken);
+      }
+
+      var response = await fetch(DIRECTUS_URL + '/files', {
+        method: 'POST',
+        headers: headers,
+        credentials: 'include',
+        body: formData
+      });
+
+      if (response.ok) {
+        var data = await response.json();
+        return data.data;
+      }
+    } catch (e) {
+      console.error('[Image Upload] Error:', e);
+    }
+    return null;
+  }
+
+  async function fetchFiles() {
+    try {
+      var headers = {};
+      if (accessToken) {
+        headers['Authorization'] = 'Bearer ' + (STATIC_TOKEN || accessToken);
+      }
+
+      var response = await fetch(DIRECTUS_URL + '/files?filter[type][_starts_with]=image&sort=-uploaded_on&limit=50', {
+        headers: headers,
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        var data = await response.json();
+        return data.data || [];
+      }
+    } catch (e) {
+      console.error('[File Library] Error:', e);
+    }
+    return [];
+  }
+
+  function getFileUrl(fileId) {
+    return DIRECTUS_URL + '/assets/' + fileId;
+  }
+
+  function closeFileLibrary() {
+    if (fileLibraryOverlay) {
+      fileLibraryOverlay.remove();
+      fileLibraryOverlay = null;
+    }
+  }
+
+  async function showFileLibrary(onSelect) {
+    closeFileLibrary();
+    currentImageCallback = onSelect;
+
+    fileLibraryOverlay = document.createElement('div');
+    fileLibraryOverlay.className = 'file-library-overlay';
+
+    fileLibraryOverlay.innerHTML =
+      '<div class="file-library-modal">' +
+        '<div class="file-library-header">' +
+          '<h3>Choose from library</h3>' +
+          '<button class="file-library-close">&times;</button>' +
+        '</div>' +
+        '<div class="file-library-content">' +
+          '<div class="file-library-loading">Loading images...</div>' +
+        '</div>' +
+        '<div class="file-library-footer">' +
+          '<button class="inline-edit-btn inline-edit-btn-cancel">Cancel</button>' +
+          '<button class="inline-edit-btn inline-edit-btn-save" disabled>Select</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(fileLibraryOverlay);
+
+    // Close handlers
+    fileLibraryOverlay.querySelector('.file-library-close').onclick = closeFileLibrary;
+    fileLibraryOverlay.querySelector('.inline-edit-btn-cancel').onclick = closeFileLibrary;
+    fileLibraryOverlay.onclick = function(e) {
+      if (e.target === fileLibraryOverlay) closeFileLibrary();
+    };
+
+    // Load files
+    var files = await fetchFiles();
+    var contentEl = fileLibraryOverlay.querySelector('.file-library-content');
+    var selectBtn = fileLibraryOverlay.querySelector('.inline-edit-btn-save');
+    var selectedFileId = null;
+
+    if (files.length === 0) {
+      contentEl.innerHTML = '<div class="file-library-empty">No images found in the library.</div>';
+    } else {
+      var gridHtml = '<div class="file-library-grid">';
+      files.forEach(function(file) {
+        gridHtml += '<div class="file-library-item" data-file-id="' + file.id + '">';
+        if (file.type && file.type.startsWith('image/')) {
+          gridHtml += '<img src="' + getFileUrl(file.id) + '?width=200&height=200&fit=cover" alt="' + escapeHtml(file.filename_download || '') + '">';
+        } else {
+          gridHtml += '<div class="file-library-item-placeholder">📄</div>';
+        }
+        gridHtml += '</div>';
+      });
+      gridHtml += '</div>';
+      contentEl.innerHTML = gridHtml;
+
+      // Handle selection
+      contentEl.querySelectorAll('.file-library-item').forEach(function(item) {
+        item.onclick = function() {
+          contentEl.querySelectorAll('.file-library-item').forEach(function(i) {
+            i.classList.remove('selected');
+          });
+          this.classList.add('selected');
+          selectedFileId = this.getAttribute('data-file-id');
+          selectBtn.disabled = false;
+        };
+      });
+    }
+
+    // Select button
+    selectBtn.onclick = function() {
+      if (selectedFileId && currentImageCallback) {
+        currentImageCallback(selectedFileId);
+        closeFileLibrary();
+      }
+    };
+  }
+
+  function createImagePicker(field, currentValue, onChange) {
+    var container = document.createElement('div');
+    container.className = 'image-picker-container' + (currentValue ? ' has-image' : '');
+
+    var hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.setAttribute('data-field', field);
+    hiddenInput.value = currentValue || '';
+
+    function updatePreview(value) {
+      hiddenInput.value = value || '';
+      if (onChange) onChange(value);
+
+      if (value) {
+        // Check if it's a UUID (Directus file ID) or URL
+        var isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+        var imgUrl = isUuid ? getFileUrl(value) : value;
+
+        container.className = 'image-picker-container has-image';
+        container.innerHTML = '';
+        container.appendChild(hiddenInput);
+
+        var img = document.createElement('img');
+        img.className = 'image-picker-preview';
+        img.src = imgUrl;
+        img.onerror = function() {
+          this.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23f3f4f6" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="%239ca3af" font-size="12">No preview</text></svg>';
+        };
+        container.appendChild(img);
+
+        var actions = document.createElement('div');
+        actions.className = 'image-picker-actions';
+        actions.innerHTML =
+          '<button type="button" class="image-picker-btn" data-action="change">' +
+            '<span class="image-picker-icon">🔄</span> Change' +
+          '</button>' +
+          '<button type="button" class="image-picker-btn danger" data-action="remove">' +
+            '<span class="image-picker-icon">🗑️</span> Remove' +
+          '</button>';
+        container.appendChild(actions);
+
+        actions.querySelector('[data-action="change"]').onclick = function(e) {
+          e.preventDefault();
+          showImageOptions();
+        };
+        actions.querySelector('[data-action="remove"]').onclick = function(e) {
+          e.preventDefault();
+          updatePreview('');
+        };
+      } else {
+        container.className = 'image-picker-container';
+        container.innerHTML = '';
+        container.appendChild(hiddenInput);
+
+        var dropzone = document.createElement('div');
+        dropzone.className = 'image-picker-dropzone';
+        dropzone.innerHTML =
+          '<div class="image-picker-dropzone-icon">📁</div>' +
+          '<div class="image-picker-dropzone-text">Drag and drop an image here</div>' +
+          '<div class="image-picker-dropzone-hint">or choose one of the options below</div>';
+        container.appendChild(dropzone);
+
+        var actions = document.createElement('div');
+        actions.className = 'image-picker-actions';
+        actions.innerHTML =
+          '<button type="button" class="image-picker-btn primary" data-action="upload">' +
+            '<span class="image-picker-icon">⬆️</span> Upload' +
+          '</button>' +
+          '<button type="button" class="image-picker-btn" data-action="library">' +
+            '<span class="image-picker-icon">📚</span> Bibliotheek' +
+          '</button>' +
+          '<button type="button" class="image-picker-btn" data-action="url">' +
+            '<span class="image-picker-icon">🔗</span> URL' +
+          '</button>';
+        container.appendChild(actions);
+
+        setupDropzone(dropzone);
+        setupActions(actions);
+      }
+    }
+
+    function showImageOptions() {
+      var actions = document.createElement('div');
+      actions.className = 'image-picker-actions';
+      actions.style.marginTop = '0';
+      actions.innerHTML =
+        '<button type="button" class="image-picker-btn primary" data-action="upload">' +
+          '<span class="image-picker-icon">⬆️</span> Upload' +
+        '</button>' +
+        '<button type="button" class="image-picker-btn" data-action="library">' +
+          '<span class="image-picker-icon">📚</span> Bibliotheek' +
+        '</button>' +
+        '<button type="button" class="image-picker-btn" data-action="url">' +
+          '<span class="image-picker-icon">🔗</span> URL' +
+        '</button>';
+
+      // Replace the current actions
+      var oldActions = container.querySelector('.image-picker-actions');
+      if (oldActions) {
+        container.replaceChild(actions, oldActions);
+      }
+      setupActions(actions);
+    }
+
+    function setupDropzone(dropzone) {
+      dropzone.ondragover = function(e) {
+        e.preventDefault();
+        container.classList.add('dragover');
+      };
+      dropzone.ondragleave = function(e) {
+        e.preventDefault();
+        container.classList.remove('dragover');
+      };
+      dropzone.ondrop = async function(e) {
+        e.preventDefault();
+        container.classList.remove('dragover');
+
+        var files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+          dropzone.innerHTML = '<div class="image-picker-dropzone-text">Uploading...</div>';
+          var uploaded = await uploadFile(files[0]);
+          if (uploaded) {
+            updatePreview(uploaded.id);
+          } else {
+            alert('Upload failed. Please try again.');
+            updatePreview('');
+          }
+        }
+      };
+    }
+
+    function setupActions(actions) {
+      // Upload button
+      var uploadBtn = actions.querySelector('[data-action="upload"]');
+      if (uploadBtn) {
+        uploadBtn.onclick = function(e) {
+          e.preventDefault();
+          var fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.accept = 'image/*';
+          fileInput.onchange = async function() {
+            if (this.files.length > 0) {
+              uploadBtn.disabled = true;
+              uploadBtn.innerHTML = '<span class="image-picker-icon">⏳</span> Uploading...';
+              var uploaded = await uploadFile(this.files[0]);
+              if (uploaded) {
+                updatePreview(uploaded.id);
+              } else {
+                alert('Upload failed. Please try again.');
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<span class="image-picker-icon">⬆️</span> Upload';
+              }
+            }
+          };
+          fileInput.click();
+        };
+      }
+
+      // Library button
+      var libraryBtn = actions.querySelector('[data-action="library"]');
+      if (libraryBtn) {
+        libraryBtn.onclick = function(e) {
+          e.preventDefault();
+          showFileLibrary(function(fileId) {
+            updatePreview(fileId);
+          });
+        };
+      }
+
+      // URL button
+      var urlBtn = actions.querySelector('[data-action="url"]');
+      if (urlBtn) {
+        urlBtn.onclick = function(e) {
+          e.preventDefault();
+          var existingInput = container.querySelector('.image-picker-url-input');
+          if (existingInput) {
+            existingInput.focus();
+            return;
+          }
+
+          var urlInput = document.createElement('input');
+          urlInput.type = 'text';
+          urlInput.className = 'image-picker-url-input';
+          urlInput.placeholder = 'Enter image URL...';
+          urlInput.value = hiddenInput.value || '';
+          container.appendChild(urlInput);
+          urlInput.focus();
+
+          urlInput.onkeydown = function(event) {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              if (this.value) {
+                updatePreview(this.value);
+              }
+            }
+            if (event.key === 'Escape') {
+              this.remove();
+            }
+          };
+          urlInput.onblur = function() {
+            if (this.value && this.value !== hiddenInput.value) {
+              updatePreview(this.value);
+            }
+          };
+        };
+      }
+    }
+
+    // Initial render
+    updatePreview(currentValue);
+
+    // Setup drag and drop on container
+    container.ondragover = function(e) {
+      e.preventDefault();
+      container.classList.add('dragover');
+    };
+    container.ondragleave = function(e) {
+      e.preventDefault();
+      container.classList.remove('dragover');
+    };
+    container.ondrop = async function(e) {
+      e.preventDefault();
+      container.classList.remove('dragover');
+
+      var files = e.dataTransfer.files;
+      if (files.length > 0 && files[0].type.startsWith('image/')) {
+        var dropzone = container.querySelector('.image-picker-dropzone');
+        if (dropzone) {
+          dropzone.innerHTML = '<div class="image-picker-dropzone-text">Uploading...</div>';
+        }
+        var uploaded = await uploadFile(files[0]);
+        if (uploaded) {
+          updatePreview(uploaded.id);
+        } else {
+          alert('Upload failed. Please try again.');
+          updatePreview(currentValue);
+        }
+      }
+    };
+
+    return container;
+  }
+
+  async function showEditPopup(element, collection, itemId, fieldNames) {
+    closePopup();
+    requestToken();
+    await new Promise(function(r) { setTimeout(r, 100); });
+
+    var fields = fieldNames.split(',').map(function(f) { return f.trim(); });
+    var item = await fetchItem(collection, itemId);
+
+    if (!item) {
+      alert('Could not load item. Make sure you are logged in to Directus.');
+      return;
+    }
+
+    currentOverlay = document.createElement('div');
+    currentOverlay.className = 'inline-edit-overlay';
+    currentOverlay.onclick = closePopup;
+    document.body.appendChild(currentOverlay);
+
+    currentPopup = document.createElement('div');
+    currentPopup.className = 'inline-edit-popup';
+
+    var rect = element.getBoundingClientRect();
+    var popupTop = rect.bottom + 10;
+    var popupLeft = rect.left;
+
+    if (popupLeft + 400 > window.innerWidth) popupLeft = window.innerWidth - 420;
+    if (popupTop + 300 > window.innerHeight) popupTop = rect.top - 310;
+
+    currentPopup.style.top = Math.max(10, popupTop) + 'px';
+    currentPopup.style.left = Math.max(10, popupLeft) + 'px';
+
+    // Identify which fields are image fields
+    var imageFields = ['image', 'image_url', 'background_image', 'photo', 'thumbnail', 'avatar', 'logo', 'icon', 'banner', 'cover'];
+
+    var fieldsHtml = '';
+    var imageFieldsList = [];
+
+    for (var i = 0; i < fields.length; i++) {
+      var field = fields[i];
+      var value = item[field] || '';
+      var isImage = imageFields.some(function(imgField) {
+        return field.toLowerCase().includes(imgField) || field.toLowerCase() === imgField;
+      });
+      var isLong = field === 'content' || field === 'subheading' || field === 'text' || String(value).length > 100;
+
+      fieldsHtml += '<div class="inline-edit-field">';
+      fieldsHtml += '<label class="inline-edit-label">' + formatFieldName(field) + '</label>';
+
+      if (isImage) {
+        // Placeholder for image picker - will be replaced after DOM insertion
+        fieldsHtml += '<div class="image-picker-placeholder" data-field="' + field + '" data-value="' + escapeHtml(value) + '"></div>';
+        imageFieldsList.push({ field: field, value: value });
+      } else if (isLong) {
+        fieldsHtml += '<textarea class="inline-edit-input" data-field="' + field + '">' + escapeHtml(value) + '</textarea>';
+      } else {
+        fieldsHtml += '<input type="text" class="inline-edit-input" data-field="' + field + '" value="' + escapeHtml(value) + '">';
+      }
+      fieldsHtml += '</div>';
+    }
+
+    currentPopup.innerHTML =
+      '<div class="inline-edit-header">' +
+        '<h3>Edit ' + formatFieldName(fields[0]) + '</h3>' +
+        '<button class="inline-edit-close">&times;</button>' +
+      '</div>' +
+      '<div class="inline-edit-body">' + fieldsHtml + '</div>' +
+      '<div class="inline-edit-footer">' +
+        '<button class="inline-edit-btn inline-edit-btn-cancel">Cancel</button>' +
+        '<button class="inline-edit-btn inline-edit-btn-save">Save</button>' +
+      '</div>';
+
+    document.body.appendChild(currentPopup);
+
+    // Replace image picker placeholders with actual image pickers
+    imageFieldsList.forEach(function(imgField) {
+      var placeholder = currentPopup.querySelector('.image-picker-placeholder[data-field="' + imgField.field + '"]');
+      if (placeholder) {
+        var imagePicker = createImagePicker(imgField.field, imgField.value);
+        placeholder.parentNode.replaceChild(imagePicker, placeholder);
+      }
+    });
+
+    var firstInput = currentPopup.querySelector('.inline-edit-input');
+    if (firstInput) firstInput.focus();
+
+    currentPopup.querySelector('.inline-edit-close').onclick = closePopup;
+    currentPopup.querySelector('.inline-edit-btn-cancel').onclick = closePopup;
+
+    currentPopup.querySelector('.inline-edit-btn-save').onclick = async function() {
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      var updates = {};
+      for (var j = 0; j < fields.length; j++) {
+        var input = currentPopup.querySelector('[data-field="' + fields[j] + '"]');
+        if (input) updates[fields[j]] = input.value;
+      }
+
+      var success = await saveItem(collection, itemId, updates);
+
+      if (success) {
+        if (fields.length === 1 && updates[fields[0]]) {
+          element.textContent = updates[fields[0]];
+        }
+        window.parent.postMessage({ type: 'directus:content-updated' }, '*');
+        closePopup();
+        setTimeout(function() { window.location.reload(); }, 300);
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Save';
+        alert('Failed to save. Please try again.');
+      }
+    };
+  }
+
+  function renderThumb(thumbClass) {
+    if (thumbClass === 'thumb-text-simple') {
+      return '<div class="block-card-thumb ' + thumbClass + '"><span></span><span></span><span></span><span></span></div>';
+    }
+    if (thumbClass === 'thumb-text-card') {
+      return '<div class="block-card-thumb ' + thumbClass + '"><span></span><span></span><span></span></div>';
+    }
+    if (thumbClass === 'thumb-text-columns') {
+      return '<div class="block-card-thumb ' + thumbClass + '"><div><span></span><span></span></div><div><span></span><span></span></div></div>';
+    }
+    if (thumbClass === 'thumb-image-left') {
+      return '<div class="block-card-thumb ' + thumbClass + '"><div></div><div><span></span><span></span><span></span></div></div>';
+    }
+    if (thumbClass === 'thumb-image-right') {
+      return '<div class="block-card-thumb ' + thumbClass + '"><div><span></span><span></span><span></span></div><div></div></div>';
+    }
+    return '<div class="block-card-thumb ' + thumbClass + '"></div>';
+  }
+
+  // Fetch all existing blocks that can be reused
+  async function fetchExistingBlocks(filterType) {
+    // Wait for token if not available yet (max 2 seconds)
+    if (!accessToken) {
+      console.log('[Existing Blocks] Waiting for token...');
+      requestToken();
+      for (var i = 0; i < 20; i++) {
+        await new Promise(function(r) { setTimeout(r, 100); });
+        if (accessToken) break;
+      }
+    }
+
+    try {
+      var headers = {};
+      if (accessToken) {
+        headers['Authorization'] = 'Bearer ' + (STATIC_TOKEN || accessToken);
+      }
+
+      var url = DIRECTUS_URL + '/items/blocks?fields=id,block_type,variant,heading,subheading,content,text,page_id.title,page_id.slug&sort=-id&limit=100';
+      if (filterType && filterType !== 'all') {
+        url += '&filter[block_type][_eq]=' + filterType;
+      }
+
+      console.log('[Existing Blocks] Fetching from:', url);
+      console.log('[Existing Blocks] Token:', accessToken ? 'Present' : 'Missing');
+
+      var response = await fetch(url, {
+        headers: headers,
+        credentials: 'include'
+      });
+
+      console.log('[Existing Blocks] Response status:', response.status);
+
+      if (response.ok) {
+        var data = await response.json();
+        console.log('[Existing Blocks] Found:', data.data?.length || 0, 'blocks');
+        return data.data || [];
+      } else {
+        var errorText = await response.text();
+        console.error('[Existing Blocks] Error response:', errorText);
+      }
+    } catch (e) {
+      console.error('[Existing Blocks] Error:', e);
+    }
+    return [];
+  }
+
+  // Link an existing block to the current page (creates a reference)
+  async function linkExistingBlock(existingBlockId) {
+    if (!PAGE_ID) {
+      alert('Page ID not found');
+      return false;
+    }
+
+    try {
+      var headers = { 'Content-Type': 'application/json' };
+      if (accessToken) {
+        headers['Authorization'] = 'Bearer ' + (STATIC_TOKEN || accessToken);
+      }
+
+      // First, get the existing block data
+      var blockResponse = await fetch(DIRECTUS_URL + '/items/blocks/' + existingBlockId, {
+        headers: headers,
+        credentials: 'include'
+      });
+
+      if (!blockResponse.ok) {
+        console.error('[Link Block] Could not fetch block');
+        return false;
+      }
+
+      var blockData = await blockResponse.json();
+      var originalBlock = blockData.data;
+
+      // Get current block count for sort order
+      var blocksResponse = await fetch(DIRECTUS_URL + '/items/blocks?filter[page_id][_eq]=' + PAGE_ID + '&aggregate[count]=id', {
+        headers: headers,
+        credentials: 'include'
+      });
+      var blocksCountData = await blocksResponse.json();
+      var blockCount = blocksCountData.data?.[0]?.count?.id || 0;
+
+      // Create a copy of the block for this page (shallow copy with new page_id)
+      var newBlockData = {
+        block_type: originalBlock.block_type,
+        variant: originalBlock.variant,
+        heading: originalBlock.heading,
+        subheading: originalBlock.subheading,
+        content: originalBlock.content,
+        text: originalBlock.text,
+        button_text: originalBlock.button_text,
+        button_link: originalBlock.button_link,
+        image: originalBlock.image,
+        image_position: originalBlock.image_position,
+        status: 'published',
+        page_id: PAGE_ID,
+        sort: parseInt(blockCount) + 1
+      };
+
+      // Remove undefined values
+      Object.keys(newBlockData).forEach(function(key) {
+        if (newBlockData[key] === undefined || newBlockData[key] === null) {
+          delete newBlockData[key];
+        }
+      });
+
+      var response = await fetch(DIRECTUS_URL + '/items/blocks', {
+        method: 'POST',
+        headers: headers,
+        credentials: 'include',
+        body: JSON.stringify(newBlockData)
+      });
+
+      if (response.ok) {
+        var result = await response.json();
+        console.log('[Link Block] Created copy of block:', result.data);
+        return true;
+      } else {
+        var error = await response.json();
+        console.error('[Link Block] Error:', error);
+        return false;
+      }
+    } catch (e) {
+      console.error('[Link Block] Error:', e);
+      return false;
+    }
+  }
+
+  function getBlockTypeClass(blockType) {
+    if (blockType === 'hero') return 'type-hero';
+    if (blockType === 'cta') return 'type-cta';
+    if (blockType === 'richtext') return 'type-richtext';
+    if (blockType === 'image_with_text') return 'type-image_with_text';
+    return '';
+  }
+
+  function getBlockPreviewText(block) {
+    if (block.heading) return block.heading;
+    if (block.content) {
+      // Strip HTML and truncate
+      var text = block.content.replace(/<[^>]*>/g, '');
+      return text.length > 50 ? text.substring(0, 50) + '...' : text;
+    }
+    if (block.text) {
+      var text = block.text.replace(/<[^>]*>/g, '');
+      return text.length > 50 ? text.substring(0, 50) + '...' : text;
+    }
+    return 'No preview available';
+  }
+
+  function showBlockPicker() {
+    closeBlockPicker();
+
+    blockPickerOverlay = document.createElement('div');
+    blockPickerOverlay.className = 'block-picker-overlay';
+
+    var categoriesHtml = CATEGORIES.map(function(cat) {
+      var blocksHtml = BLOCK_TEMPLATES
+        .filter(function(t) { return t.category === cat.id; })
+        .map(function(template) {
+          return '<button class="block-card" data-template-id="' + template.id + '" data-name="' + template.name.toLowerCase() + '">' +
+            renderThumb(template.thumb) +
+            '<div class="block-card-name">' + template.name + '</div>' +
+            '<div class="block-card-desc">' + template.description + '</div>' +
+          '</button>';
+        }).join('');
+
+      return '<div class="block-category" data-category="' + cat.id + '">' +
+        '<div class="block-category-title">' + cat.icon + ' ' + cat.name + '</div>' +
+        '<div class="block-grid">' + blocksHtml + '</div>' +
+      '</div>';
+    }).join('');
+
+    blockPickerOverlay.innerHTML =
+      '<div class="block-picker">' +
+        '<div class="block-picker-header">' +
+          '<h2>Add Block</h2>' +
+          '<button class="block-picker-close">&times;</button>' +
+        '</div>' +
+        '<div class="block-picker-tabs-container" style="padding: 0 24px;">' +
+          '<div class="block-picker-tabs">' +
+            '<button class="block-picker-tab active" data-tab="new">New Block</button>' +
+            '<button class="block-picker-tab" data-tab="existing">Existing Block</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="block-picker-tab-content active" data-tab-content="new">' +
+          '<div class="block-picker-search">' +
+            '<input type="text" placeholder="Search blocks..." id="block-search">' +
+          '</div>' +
+          '<div class="block-picker-content">' +
+            categoriesHtml +
+          '</div>' +
+        '</div>' +
+        '<div class="block-picker-tab-content" data-tab-content="existing">' +
+          '<div class="block-picker-content">' +
+            '<div class="existing-blocks-filter">' +
+              '<button class="existing-filter-btn active" data-filter="all">All</button>' +
+              '<button class="existing-filter-btn" data-filter="hero">Hero</button>' +
+              '<button class="existing-filter-btn" data-filter="cta">CTA</button>' +
+              '<button class="existing-filter-btn" data-filter="richtext">Text</button>' +
+              '<button class="existing-filter-btn" data-filter="image_with_text">Image</button>' +
+            '</div>' +
+            '<div class="existing-blocks-list">' +
+              '<div class="existing-blocks-loading">Loading existing blocks...</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(blockPickerOverlay);
+
+    // Close button
+    blockPickerOverlay.querySelector('.block-picker-close').onclick = closeBlockPicker;
+
+    // Close on overlay click
+    blockPickerOverlay.onclick = function(e) {
+      if (e.target === blockPickerOverlay) {
+        closeBlockPicker();
+      }
+    };
+
+    // Tab switching
+    var tabs = blockPickerOverlay.querySelectorAll('.block-picker-tab');
+    var tabContents = blockPickerOverlay.querySelectorAll('.block-picker-tab-content');
+    var existingBlocksLoaded = false;
+
+    tabs.forEach(function(tab) {
+      tab.onclick = async function() {
+        var tabName = this.getAttribute('data-tab');
+
+        // Update active tab
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        this.classList.add('active');
+
+        // Update active content
+        tabContents.forEach(function(c) { c.classList.remove('active'); });
+        blockPickerOverlay.querySelector('[data-tab-content="' + tabName + '"]').classList.add('active');
+
+        // Load existing blocks on first switch to that tab
+        if (tabName === 'existing' && !existingBlocksLoaded) {
+          existingBlocksLoaded = true;
+          await loadExistingBlocks('all');
+        }
+      };
+    });
+
+    // Existing blocks filter buttons
+    var filterBtns = blockPickerOverlay.querySelectorAll('.existing-filter-btn');
+    filterBtns.forEach(function(btn) {
+      btn.onclick = async function() {
+        var filter = this.getAttribute('data-filter');
+
+        // Update active filter
+        filterBtns.forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+
+        await loadExistingBlocks(filter);
+      };
+    });
+
+    async function loadExistingBlocks(filterType) {
+      var listContainer = blockPickerOverlay.querySelector('.existing-blocks-list');
+      listContainer.innerHTML = '<div class="existing-blocks-loading">Loading existing blocks...</div>';
+
+      var blocks = await fetchExistingBlocks(filterType);
+
+      if (blocks.length === 0) {
+        listContainer.innerHTML = '<div class="existing-blocks-empty">No existing blocks found.</div>';
+        return;
+      }
+
+      var listHtml = blocks.map(function(block) {
+        var pageTitle = block.page_id ? (block.page_id.title || block.page_id.slug || 'Unknown page') : 'No page';
+        var blockTypeName = (block.block_type || 'unknown').replace('_', ' ');
+        var variantName = block.variant ? ' (' + block.variant + ')' : '';
+
+        return '<div class="existing-block-item" data-block-id="' + block.id + '">' +
+          '<span class="existing-block-type ' + getBlockTypeClass(block.block_type) + '">' + blockTypeName + variantName + '</span>' +
+          '<div class="existing-block-info">' +
+            '<div class="existing-block-title">' + escapeHtml(getBlockPreviewText(block)) + '</div>' +
+            '<div class="existing-block-preview">From: ' + escapeHtml(pageTitle) + '</div>' +
+          '</div>' +
+          '<span class="existing-block-pages">→</span>' +
+        '</div>';
+      }).join('');
+
+      listContainer.innerHTML = listHtml;
+
+      // Add click handlers
+      listContainer.querySelectorAll('.existing-block-item').forEach(function(item) {
+        item.onclick = async function() {
+          var blockId = this.getAttribute('data-block-id');
+
+          this.style.opacity = '0.5';
+          this.style.pointerEvents = 'none';
+
+          var success = await linkExistingBlock(blockId);
+          closeBlockPicker();
+
+          if (success) {
+            window.parent.postMessage({ type: 'directus:content-updated' }, '*');
+            setTimeout(function() { window.location.reload(); }, 300);
+          } else {
+            alert('Could not add block. Please try again.');
+          }
+        };
+      });
+    }
+
+    // Search functionality for new blocks
+    var searchInput = blockPickerOverlay.querySelector('#block-search');
+    searchInput.focus();
+    searchInput.oninput = function() {
+      var query = this.value.toLowerCase();
+      var cards = blockPickerOverlay.querySelectorAll('.block-card');
+      var categories = blockPickerOverlay.querySelectorAll('.block-category');
+
+      cards.forEach(function(card) {
+        var name = card.getAttribute('data-name');
+        if (name.includes(query) || query === '') {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+
+      // Hide empty categories
+      categories.forEach(function(cat) {
+        var visibleCards = cat.querySelectorAll('.block-card:not(.hidden)');
+        cat.style.display = visibleCards.length > 0 ? 'block' : 'none';
+      });
+    };
+
+    // Block selection for new blocks
+    blockPickerOverlay.querySelectorAll('.block-card').forEach(function(card) {
+      card.onclick = async function() {
+        var templateId = this.getAttribute('data-template-id');
+        var template = BLOCK_TEMPLATES.find(function(t) { return t.id === templateId; });
+
+        if (template) {
+          this.style.opacity = '0.5';
+          this.style.pointerEvents = 'none';
+
+          var success = await createBlock(template);
+          closeBlockPicker();
+
+          if (success) {
+            window.parent.postMessage({ type: 'directus:content-updated' }, '*');
+            setTimeout(function() { window.location.reload(); }, 300);
+          } else {
+            alert('Could not create block. Please try again.');
+          }
+        }
+      };
+    });
+  }
+
+  function createAddBlockButton() {
+    var fab = document.createElement('button');
+    fab.className = 'add-block-fab';
+    fab.innerHTML = '+';
+    fab.title = 'Add Block';
+    fab.onclick = function(e) {
+      e.stopPropagation();
+      showBlockPicker();
+    };
+    document.body.appendChild(fab);
+  }
+
+  // Delete block functionality
+  var deleteConfirmOverlay = null;
+
+  async function deleteBlock(blockId) {
+    try {
+      var headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + STATIC_TOKEN
+      };
+
+      // First get the block info to find matching block on other page
+      var blockResp = await fetch(DIRECTUS_URL + '/items/blocks/' + blockId, {
+        headers: headers,
+        credentials: 'include'
+      });
+      var blockData = await blockResp.json();
+      var block = blockData.data;
+
+      // Delete the block
+      var response = await fetch(DIRECTUS_URL + '/items/blocks/' + blockId, {
+        method: 'DELETE',
+        headers: headers,
+        credentials: 'include'
+      });
+
+      // AUTO-SYNC: Also delete matching block on other language page
+      if (response.ok && translationData.otherLanguagePage && block) {
+        console.log('[Delete Block] Auto-syncing deletion to other language');
+        var otherBlocksResp = await fetch(DIRECTUS_URL + '/items/blocks?filter[page_id][_eq]=' + translationData.otherLanguagePage.id + '&filter[block_type][_eq]=' + block.block_type + '&filter[sort][_eq]=' + block.sort, {
+          headers: headers,
+          credentials: 'include'
+        });
+        var otherBlocksData = await otherBlocksResp.json();
+        if (otherBlocksData.data && otherBlocksData.data.length > 0) {
+          await fetch(DIRECTUS_URL + '/items/blocks/' + otherBlocksData.data[0].id, {
+            method: 'DELETE',
+            headers: headers,
+            credentials: 'include'
+          });
+          console.log('[Delete Block] Auto-synced deletion successfully');
+        }
+      }
+
+      return response.ok;
+    } catch (e) {
+      console.error('[Delete Block] Error:', e);
+      return false;
+    }
+  }
+
+  function closeDeleteConfirm() {
+    if (deleteConfirmOverlay) {
+      deleteConfirmOverlay.remove();
+      deleteConfirmOverlay = null;
+    }
+    document.querySelectorAll('.delete-highlight').forEach(function(el) {
+      el.classList.remove('delete-highlight');
+    });
+  }
+
+  function showDeleteConfirm(blockElement, blockId, blockType) {
+    closeDeleteConfirm();
+    requestToken();
+
+    // Highlight the block in red
+    blockElement.classList.add('delete-highlight');
+
+    deleteConfirmOverlay = document.createElement('div');
+    deleteConfirmOverlay.className = 'delete-confirm-overlay';
+
+    var blockName = blockType || 'dit blok';
+    blockName = blockName.replace('_', ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+
+    deleteConfirmOverlay.innerHTML =
+      '<div class="delete-confirm-dialog">' +
+        '<div class="delete-confirm-icon">🗑️</div>' +
+        '<div class="delete-confirm-title">Delete Block?</div>' +
+        '<div class="delete-confirm-text">You are about to delete "<strong>' + blockName + '</strong>". The red border shows which block will be deleted.</div>' +
+        '<div class="delete-confirm-warning">⚠️ Warning: This cannot be undone!</div>' +
+        '<div class="delete-confirm-buttons">' +
+          '<button class="delete-confirm-btn delete-confirm-cancel">Cancel</button>' +
+          '<button class="delete-confirm-btn delete-confirm-delete">Delete</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(deleteConfirmOverlay);
+
+    // Cancel button
+    deleteConfirmOverlay.querySelector('.delete-confirm-cancel').onclick = closeDeleteConfirm;
+
+    // Click outside to close
+    deleteConfirmOverlay.onclick = function(e) {
+      if (e.target === deleteConfirmOverlay) {
+        closeDeleteConfirm();
+      }
+    };
+
+    // Delete button
+    deleteConfirmOverlay.querySelector('.delete-confirm-delete').onclick = async function() {
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Deleting...';
+
+      var success = await deleteBlock(blockId);
+
+      if (success) {
+        closeDeleteConfirm();
+        window.parent.postMessage({ type: 'directus:content-updated' }, '*');
+        setTimeout(function() { window.location.reload(); }, 300);
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Delete';
+        alert('Could not delete block. Please try again.');
+      }
+    };
+  }
+
+  // Move block functionality
+  async function moveBlock(blockId, direction) {
+    try {
+      var headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + STATIC_TOKEN
+      };
+
+      // Get all blocks for this page
+      var response = await fetch(DIRECTUS_URL + '/items/blocks?filter[page_id][_eq]=' + PAGE_ID + '&sort=sort', {
+        headers: headers,
+        credentials: 'include'
+      });
+
+      if (!response.ok) return false;
+
+      var data = await response.json();
+      var blocks = data.data || [];
+
+      // Find current index
+      var currentIndex = blocks.findIndex(function(b) { return b.id == blockId; });
+      if (currentIndex === -1) return false;
+
+      // Calculate new index
+      var newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+      if (newIndex < 0 || newIndex >= blocks.length) return false;
+
+      // Get the old sort values before swap
+      var oldSortCurrent = blocks[currentIndex].sort;
+      var oldSortOther = blocks[newIndex].sort;
+
+      // Swap the two blocks
+      var temp = blocks[currentIndex];
+      blocks[currentIndex] = blocks[newIndex];
+      blocks[newIndex] = temp;
+
+      // Update sort values for both blocks on current page
+      await fetch(DIRECTUS_URL + '/items/blocks/' + blocks[currentIndex].id, {
+        method: 'PATCH',
+        headers: headers,
+        credentials: 'include',
+        body: JSON.stringify({ sort: currentIndex + 1 })
+      });
+
+      await fetch(DIRECTUS_URL + '/items/blocks/' + blocks[newIndex].id, {
+        method: 'PATCH',
+        headers: headers,
+        credentials: 'include',
+        body: JSON.stringify({ sort: newIndex + 1 })
+      });
+
+      // AUTO-SYNC: Update sort on other language page too
+      if (translationData.otherLanguagePage) {
+        console.log('[Move Block] Auto-syncing order to other language');
+
+        // Get blocks from other page
+        var otherResponse = await fetch(DIRECTUS_URL + '/items/blocks?filter[page_id][_eq]=' + translationData.otherLanguagePage.id + '&sort=sort', {
+          headers: headers,
+          credentials: 'include'
+        });
+        var otherData = await otherResponse.json();
+        var otherBlocks = otherData.data || [];
+
+        // Find matching blocks by old sort position and swap them too
+        var otherBlock1 = otherBlocks.find(function(b) { return b.sort == oldSortCurrent; });
+        var otherBlock2 = otherBlocks.find(function(b) { return b.sort == oldSortOther; });
+
+        if (otherBlock1 && otherBlock2) {
+          await fetch(DIRECTUS_URL + '/items/blocks/' + otherBlock1.id, {
+            method: 'PATCH',
+            headers: headers,
+            credentials: 'include',
+            body: JSON.stringify({ sort: newIndex + 1 })
+          });
+
+          await fetch(DIRECTUS_URL + '/items/blocks/' + otherBlock2.id, {
+            method: 'PATCH',
+            headers: headers,
+            credentials: 'include',
+            body: JSON.stringify({ sort: currentIndex + 1 })
+          });
+          console.log('[Move Block] Auto-synced order successfully');
+        }
+      }
+
+      return true;
+    } catch (e) {
+      console.error('[Move Block] Error:', e);
+      return false;
+    }
+  }
+
+  // Get block position info
+  function getBlockPosition(blockId) {
+    var wrappers = document.querySelectorAll('.block-wrapper');
+    var total = wrappers.length;
+    var index = -1;
+
+    wrappers.forEach(function(w, i) {
+      if (w.getAttribute('data-block-id') == blockId) {
+        index = i;
+      }
+    });
+
+    return { index: index, total: total, isFirst: index === 0, isLast: index === total - 1 };
+  }
+
+  function wrapBlockWithControls(section, index, total) {
+    var attr = section.getAttribute('data-directus');
+    if (!attr) return;
+
+    var parts = {};
+    attr.split(';').forEach(function(part) {
+      var kv = part.split(':');
+      if (kv.length === 2) parts[kv[0]] = kv[1];
+    });
+
+    if (parts.collection !== 'blocks' || !parts.item) return;
+
+    var blockId = parts.item;
+    var isFirst = index === 0;
+    var isLast = index === total - 1;
+
+    // Create wrapper
+    var wrapper = document.createElement('div');
+    wrapper.className = 'block-wrapper';
+    wrapper.setAttribute('data-block-id', blockId);
+
+    // Create controls
+    var controls = document.createElement('div');
+    controls.className = 'block-controls';
+
+    // Move up button
+    var moveUpBtn = document.createElement('button');
+    moveUpBtn.className = 'block-control-btn block-control-move';
+    moveUpBtn.innerHTML = '↑';
+    moveUpBtn.title = 'Move up';
+    moveUpBtn.disabled = isFirst;
+    moveUpBtn.onclick = async function(e) {
+      e.stopPropagation();
+      if (isFirst) return;
+
+      wrapper.classList.add('moving');
+      var success = await moveBlock(blockId, 'up');
+
+      if (success) {
+        window.parent.postMessage({ type: 'directus:content-updated' }, '*');
+        setTimeout(function() { window.location.reload(); }, 200);
+      } else {
+        wrapper.classList.remove('moving');
+        alert('Could not move block.');
+      }
+    };
+
+    // Move down button
+    var moveDownBtn = document.createElement('button');
+    moveDownBtn.className = 'block-control-btn block-control-move';
+    moveDownBtn.innerHTML = '↓';
+    moveDownBtn.title = 'Move down';
+    moveDownBtn.disabled = isLast;
+    moveDownBtn.onclick = async function(e) {
+      e.stopPropagation();
+      if (isLast) return;
+
+      wrapper.classList.add('moving');
+      var success = await moveBlock(blockId, 'down');
+
+      if (success) {
+        window.parent.postMessage({ type: 'directus:content-updated' }, '*');
+        setTimeout(function() { window.location.reload(); }, 200);
+      } else {
+        wrapper.classList.remove('moving');
+        alert('Could not move block.');
+      }
+    };
+
+    // Delete button
+    var deleteBtn = document.createElement('button');
+    deleteBtn.className = 'block-control-btn block-control-delete';
+    deleteBtn.innerHTML = '🗑️';
+    deleteBtn.title = 'Delete';
+    deleteBtn.onclick = function(e) {
+      e.stopPropagation();
+      var blockType = section.className.split(' ')[0] || 'block';
+      showDeleteConfirm(section, blockId, blockType);
+    };
+
+    controls.appendChild(moveUpBtn);
+    controls.appendChild(moveDownBtn);
+    controls.appendChild(deleteBtn);
+
+    // Wrap the section
+    section.parentNode.insertBefore(wrapper, section);
+    wrapper.appendChild(controls);
+    wrapper.appendChild(section);
+  }
+
+  function init() {
+    // First wrap all block sections with controls
+    var blockSections = document.querySelectorAll('[data-directus*="collection:blocks"][data-directus*="mode:drawer"]');
+    var total = blockSections.length;
+    blockSections.forEach(function(section, index) {
+      wrapBlockWithControls(section, index, total);
+    });
+
+    // Then setup editable elements
+    var editables = document.querySelectorAll('[data-directus]');
+
+    editables.forEach(function(el) {
+      var attr = el.getAttribute('data-directus');
+      if (!attr) return;
+
+      var parts = {};
+      attr.split(';').forEach(function(part) {
+        var kv = part.split(':');
+        if (kv.length === 2) parts[kv[0]] = kv[1];
+      });
+
+      if (!parts.collection || !parts.item || !parts.fields) return;
+
+      el.setAttribute('data-directus-edit', 'true');
+
+      el.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showEditPopup(el, parts.collection, parts.item, parts.fields);
+      });
+    });
+
+    // Add the floating action button
+    createAddBlockButton();
+
+    console.log('[Inline Edit] Ready - ' + editables.length + ' editable elements');
+    console.log('[Block Controls] Wrapped ' + blockSections.length + ' blocks');
+    console.log('[Add Block] Page ID:', PAGE_ID);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>

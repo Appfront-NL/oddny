@@ -1,0 +1,146 @@
+---
+import { client, readItems, getAssetUrl } from '../../lib/directus';
+
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+const offset = block.news_offset || 0;
+const oddnyNews = await client.request(
+  readItems('news', {
+    filter: { status: { _eq: 'published' } },
+    fields: ['*'],
+    sort: ['-published_date'],
+    limit: 3,
+    offset: offset
+  })
+) as any[];
+
+const getOddnyImageSrc = (item: any) => {
+  if (!item?.featured_image) return '/images/card-1.png';
+  if (item.featured_image.startsWith('/')) return item.featured_image;
+  return getAssetUrl(item.featured_image);
+};
+---
+
+<section
+  class="oddny-cards-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <div class="oddny-cards-container">
+    {oddnyNews.map((item) => (
+      <a href={`/${locale}/news/${item.slug}`} class="oddny-card">
+        <div class="oddny-card-image">
+          <img src={getOddnyImageSrc(item)} alt={item[`title_${locale}`] || item.title_en} />
+        </div>
+        <h3 class="oddny-card-title">{item[`title_${locale}`] || item.title_en}</h3>
+        <p class="oddny-card-description">{item[`intro_${locale}`] || item.intro_en}</p>
+      </a>
+    ))}
+  </div>
+</section>
+
+<style>
+  .oddny-cards-section {
+    width: 100%;
+    background-color: white;
+    padding: 40px 0;
+    box-sizing: border-box;
+    font-family: 'Neue Haas Grotesk Display Pro', -apple-system, 'Inter', Roboto, Helvetica, sans-serif;
+  }
+
+  .oddny-cards-container {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 0 var(--content-padding);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+  }
+
+  .oddny-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s ease;
+  }
+
+  .oddny-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .oddny-card-image {
+    width: 100%;
+    aspect-ratio: 400 / 350;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .oddny-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(100%);
+    transition: filter 0.3s ease, transform 0.3s ease;
+  }
+
+  .oddny-card:hover .oddny-card-image img {
+    filter: grayscale(0%);
+    transform: scale(1.05);
+  }
+
+  .oddny-card-title {
+    font-size: clamp(20px, 2vw, 28px);
+    font-weight: 500;
+    line-height: 1.14;
+    color: #42383e;
+    margin: 0 0 12px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .oddny-card-description {
+    font-size: clamp(14px, 1.1vw, 16px);
+    font-weight: 300;
+    line-height: 1.4;
+    color: #888484;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  @media (max-width: 1024px) {
+    .oddny-cards-container {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+    }
+    .oddny-card:last-child {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .oddny-cards-section {
+      padding: 30px 0;
+    }
+
+    .oddny-cards-container {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+    .oddny-card:last-child {
+      display: flex;
+    }
+  }
+</style>

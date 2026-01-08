@@ -45,22 +45,30 @@ const svgPaths = {
       position: relative;
       max-width: var(--content-max-width);
       margin: 0 auto;
+      padding: 0 var(--content-padding);
       height: 1480px;
       overflow: visible;
     }
     
+    /* Header Container - groups title and intro */
+    .partner-header {
+      position: absolute;
+      left: 740px;
+      top: 134px;
+      width: 615px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    
     /* Main Title */
     .partner-title {
-      position: absolute;
       font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
       font-weight: 500;
       height: auto;
       line-height: 85px;
-      left: 740px;
       color: #42383e;
       font-size: 80px;
-      top: 134px;
-      width: 615px;
       margin: 0;
     }
     
@@ -70,15 +78,12 @@ const svgPaths = {
     
     /* Intro Text */
     .partner-intro {
-      position: absolute;
       font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
       font-weight: 500;
       height: auto;
       line-height: 30px;
-      left: 743px;
       color: #888484;
       font-size: 28px;
-      top: 390px;
       width: 612px;
     }
     
@@ -223,19 +228,20 @@ const svgPaths = {
     @media (max-width: 1440px) {
       .partner-container {
         width: 95%;
-        padding: 0 20px;
+        padding: 0 var(--content-padding);
         height: auto;
         min-height: 1400px;
       }
-      .partner-title {
+      .partner-header {
         left: 5%;
-        font-size: clamp(50px, 5.5vw, 80px);
-        line-height: clamp(55px, 6vw, 85px);
         width: 70%;
       }
+      .partner-title {
+        font-size: clamp(50px, 5.5vw, 80px);
+        line-height: clamp(55px, 6vw, 85px);
+      }
       .partner-intro {
-        left: 5%;
-        width: 70%;
+        width: 100%;
         font-size: clamp(20px, 2.5vw, 28px);
         line-height: clamp(24px, 3vw, 30px);
       }
@@ -284,29 +290,29 @@ const svgPaths = {
         display: flex;
         flex-direction: column;
         gap: 40px;
-        padding: 20px;
+        padding: var(--content-padding);
       }
-      .partner-title {
+      .partner-header {
         position: relative;
         left: 0;
         top: 0;
+        width: 100%;
+        order: 1;
+        gap: 20px;
+      }
+      .partner-title {
         width: 100%;
         text-align: center;
         font-size: 42px;
         line-height: 46px;
         height: auto;
-        order: 1;
       }
       .partner-intro {
-        position: relative;
-        left: 0;
-        top: 0;
         width: 100%;
         text-align: center;
         font-size: 20px;
         line-height: 24px;
         height: auto;
-        order: 2;
       }
       .partner-benefit,
       .partner-description {
@@ -347,27 +353,28 @@ const svgPaths = {
   </style>
   
   <div class="partner-container">
-    {/* Main Title */}
-    <div 
-      class="partner-title"
-      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
-      set:html={heading || `
-        <p>Benefits of being</p>
-        <p>an Oddny Partner</p>
-      `}
-    >
-    </div>
-    
-    {/* Intro Text */}
-    <div 
-      class="partner-intro"
-      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'popover' })}
-      set:html={content || `
-        <p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem</p>
-        <p>&nbsp;</p>
-        <p>&nbsp;</p>
-      `}
-    >
+    {/* Header Container */}
+    <div class="partner-header">
+      {/* Main Title */}
+      <div 
+        class="partner-title"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
+        set:html={heading || `
+          <p>Benefits of being</p>
+          <p>an Oddny Partner</p>
+        `}
+      >
+      </div>
+      
+      {/* Intro Text */}
+      <div 
+        class="partner-intro"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'popover' })}
+        set:html={content || `
+          <p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem</p>
+        `}
+      >
+      </div>
     </div>
     
     {/* Bear Images */}

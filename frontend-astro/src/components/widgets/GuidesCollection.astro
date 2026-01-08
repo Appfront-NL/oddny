@@ -151,7 +151,7 @@ const getColorByIndex = (index: number) => {
   .guides-collection-container {
     max-width: var(--content-max-width);
     margin: 0 auto;
-    padding: 0 80px;
+    padding: 0 var(--content-padding);
   }
 
   .guides-header {
@@ -290,7 +290,7 @@ const getColorByIndex = (index: number) => {
 
   @media (max-width: 1200px) {
     .guides-collection-container {
-      padding: 0 40px;
+      padding: 0 var(--content-padding);
     }
     .cards-grid {
       grid-template-columns: repeat(2, 1fr);
@@ -303,7 +303,7 @@ const getColorByIndex = (index: number) => {
 
   @media (max-width: 768px) {
     .guides-collection-container {
-      padding: 0 20px;
+      padding: 0 var(--content-padding);
     }
     .guides-header {
       flex-wrap: wrap;

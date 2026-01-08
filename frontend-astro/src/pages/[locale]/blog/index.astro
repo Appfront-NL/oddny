@@ -1,5 +1,6 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
+import RelatedArticles from '../../../components/widgets/RelatedArticles.astro';
 import { getArticles, locales, type Locale, defaultLocale, PUBLIC_DIRECTUS_URL } from '../../../lib/directus';
 
 export async function getStaticPaths() {
@@ -84,6 +85,10 @@ function formatDate(dateStr: string) {
           </article>
         ))}
       </div>
+    )}
+    
+    {articles.length > 0 && (
+      <RelatedArticles articles={articles.slice(0, 6).map((a: any) => ({ ...a, collection: 'blog' }))} locale={currentLocale} limit={6} />
     )}
   </div>
 </Layout>

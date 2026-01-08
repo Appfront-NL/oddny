@@ -15,6 +15,7 @@ const getLocalizedField = (block: any, fieldName: string) => {
 
 const email = block.contact_email || 'contact@oddny.nl';
 const phone = block.contact_phone || '0900 333 355 553';
+const titleText = getLocalizedField(block, 'title_text') || "If you'd like to say hello...";
 const emailText = getLocalizedField(block, 'email_text') || '...you can fling us an email...';
 const phoneText = getLocalizedField(block, 'phone_text') || '...dig out our phone number and give us a call...';
 const postcardText = getLocalizedField(block, 'postcard_text') || '...or even send us a postcard if you like...';
@@ -100,7 +101,7 @@ const svgPaths = {
     .contact-mobile {
       display: flex;
       flex-direction: column;
-      padding: 40px 24px;
+      padding: 40px var(--content-padding);
       gap: 48px;
       min-height: 100vh;
     }
@@ -194,12 +195,7 @@ const svgPaths = {
     }
     
     .contact-footer-decor {
-      margin-top: 48px;
-      opacity: 0.5;
-      position: relative;
-      width: 100%;
-      height: 160px;
-      overflow: hidden;
+      display: none;
     }
     
     .contact-footer-decor img {
@@ -213,7 +209,7 @@ const svgPaths = {
     
     @media (min-width: 768px) and (max-width: 1023px) {
       .contact-mobile {
-        padding: 60px 48px;
+        padding: 60px var(--content-padding);
         gap: 64px;
       }
       
@@ -266,8 +262,21 @@ const svgPaths = {
       .contact-desktop-inner {
         position: relative;
         width: 100%;
-        max-width: 1440px;
+        max-width: var(--content-max-width);
         aspect-ratio: 1440 / 1900;
+      }
+      
+      .contact-title {
+        position: absolute;
+        top: 1%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 24px;
+        font-weight: 500;
+        color: #888484;
+        z-index: 100;
+        white-space: nowrap;
+        font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
       }
     }
     
@@ -343,16 +352,7 @@ const svgPaths = {
       }
       
       .contact-phone-edit {
-        position: absolute;
-        left: 50.69%;
-        top: 25.26%;
-        color: #2e2e2e;
-        font-size: 1.4vw;
-        font-weight: bold;
-        z-index: 100;
-        cursor: pointer;
-        background: transparent;
-        padding: 0.5% 1%;
+        display: none;
       }
       
       .contact-email-edit {
@@ -382,13 +382,33 @@ const svgPaths = {
       
       .contact-email-link {
         position: absolute;
-        right: 3.47%;
-        top: 10%;
-        width: 27.78%;
-        height: 20%;
+        left: 5%;
+        top: 40%;
+        width: 40%;
+        height: 40%;
         cursor: pointer;
         z-index: 100;
         display: block;
+      }
+      
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      
+      .contact-email-edit-overlay {
+        display: block;
+        width: 100%;
+        height: 100%;
+        color: transparent;
+        cursor: pointer;
       }
       
       .contact-jumping-bear {
@@ -405,7 +425,18 @@ const svgPaths = {
         width: 100%;
         height: 100%;
         object-fit: contain;
-        pointer-events: none;
+        pointer-events: auto;
+        animation: contact-bird-bounce 0.4s steps(2) infinite;
+        cursor: pointer;
+      }
+      
+      .contact-jumping-bear img.paused {
+        animation-play-state: paused;
+      }
+      
+      @keyframes contact-bird-bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
       }
       
       .contact-tail-wrap {
@@ -435,6 +466,7 @@ const svgPaths = {
         pointer-events: none;
       }
       
+      
       .contact-group {
         position: absolute;
         height: 36%;
@@ -450,44 +482,44 @@ const svgPaths = {
       
       .contact-text-email {
         position: absolute;
-        height: 1.89%;
-        line-height: 1.5;
-        left: 63.61%;
+        line-height: 30px;
+        left: 59%;
         color: #888484;
-        font-size: 1.5vw;
-        top: 19.26%;
-        width: 26.74%;
+        font-size: 22px;
+        top: 20%;
+        width: 27%;
         font-weight: 300;
         z-index: 100;
         cursor: pointer;
+        font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
       }
       
       .contact-text-postcard {
         position: absolute;
-        height: 1.89%;
-        line-height: 1.5;
-        left: 17.99%;
+        line-height: 30px;
+        left: 17.9%;
         color: #888484;
-        font-size: 1.5vw;
-        top: 64.32%;
-        width: 26.74%;
+        font-size: 22px;
+        top: 64%;
+        width: 27%;
         font-weight: 300;
         z-index: 100;
         cursor: pointer;
+        font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
       }
       
       .contact-text-phone {
         position: absolute;
-        height: 4.21%;
-        line-height: 1.5;
-        left: 77.71%;
+        line-height: 30px;
+        left: 77.6%;
         color: #888484;
-        font-size: 1.5vw;
-        top: 37.74%;
-        width: 18.4%;
+        font-size: 22px;
+        top: 37%;
+        width: 18%;
         font-weight: 300;
         z-index: 100;
         cursor: pointer;
+        font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
       }
       
       .contact-pink-bird {
@@ -671,6 +703,12 @@ const svgPaths = {
   <!-- DESKTOP VERSION -->
   <div class="contact-desktop">
     <div class="contact-desktop-inner">
+      <h1 
+        class="contact-title"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`title_text_${locale}`], mode: 'popover' })}
+      >
+        {titleText}
+      </h1>
       <div class="contact-bg-top"></div>
       <div class="contact-bg-bottom"></div>
       
@@ -794,10 +832,11 @@ const svgPaths = {
           <svg viewBox="-50 -50 950 320" fill="none" style="width: 100%; height: 100%; overflow: visible;">
             <defs>
               <path d={svgPaths.p36834000} id="textPathCurve"/>
+              <path d="M180.9 211.861C311.778 198.157 368.326 140.6 395.622 88.2934C443.316 -3.09951 315.147 -29.6785 310.126 41.9823C304.771 118.334 385.31 145.7 496.31 104.769C580.554 73.7046 661.849 24.9783 741.363 45.023C855.408 73.7585 872.037 155.49 853.573 216.983" id="textPathCurveReversed"/>
             </defs>
             <path d={svgPaths.p36834000} stroke="#FF40B4" stroke-dasharray="7 8" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2"/>
             <text fill="#2e2e2e" font-size="24" font-weight="bold" style="letter-spacing: 1px; font-family: 'Neue Haas Grotesk Display Pro', sans-serif;">
-              <textPath href="#textPathCurve" startOffset="15%" text-anchor="middle" side="left">
+              <textPath href="#textPathCurveReversed" startOffset="5%">
                 {email}
               </textPath>
             </text>
@@ -806,8 +845,12 @@ const svgPaths = {
             href={`mailto:${email}`} 
             class="contact-email-link" 
             aria-label={`Send email to ${email}`}
-            data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['contact_email'], mode: 'popover' })}
-          ></a>
+          >
+            <span 
+              class="contact-email-edit-overlay"
+              data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['contact_email'], mode: 'popover' })}
+            >{email}</span>
+          </a>
         </div>
       </div>
       
@@ -900,4 +943,11 @@ const svgPaths = {
       </div>
     </div>
   </div>
+  <script is:inline>
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.contact-jumping-bear img')) {
+        e.target.classList.toggle('paused');
+      }
+    });
+  </script>
 </section>

@@ -1,0 +1,333 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import ContentLongLayout from '../../../components/ContentLongLayout.astro';
+import { client, readItems, getAssetUrl, locales, type Locale, defaultLocale } from '../../../lib/directus';
+
+export async function getStaticPaths() {
+  const allItems = await client.request(
+    readItems('studio_items', {
+      filter: { status: { _eq: 'published' } },
+      fields: ['slug']
+    })
+  ) as any[];
+
+  const paths: any[] = [];
+  for (const locale of locales) {
+    for (const item of allItems) {
+      if (item.slug) {
+        paths.push({ params: { locale, slug: item.slug } });
+      }
+    }
+  }
+  return paths;
+}
+
+const { locale, slug } = Astro.params;
+const currentLocale = (locales.includes(locale as Locale) ? locale : defaultLocale) as Locale;
+
+const studioItems = await client.request(
+  readItems('studio_items', {
+    filter: { 
+      slug: { _eq: slug },
+      status: { _eq: 'published' }
+    },
+    fields: ['*'],
+    limit: 1
+  })
+) as any[];
+
+const item = studioItems[0];
+
+if (!item) {
+  return Astro.redirect('/404');
+}
+
+const getLocalizedField = (i: any, field: string) => {
+  return i[`${field}_${currentLocale}`] || i[`${field}_en`] || i[field] || '';
+};
+
+const defaultImages = [
+  '/images/hero-jumping.png',
+  '/images/oddny-bird-pink.png',
+  '/images/oddny-benefits.png',
+  '/images/card-1.png'
+];
+const getRandomImage = (id: number) => defaultImages[id % defaultImages.length];
+
+const getImageSrc = (i: any) => {
+  if (!i.featured_image) return getRandomImage(i.id);
+  if (i.featured_image.startsWith('/')) return i.featured_image;
+  return getAssetUrl(i.featured_image);
+};
+
+const getImageUrl = (imageId: string | null) => {
+  if (!imageId) return null;
+  return getAssetUrl(imageId);
+};
+
+const title = getLocalizedField(item, 'title');
+const description = getLocalizedField(item, 'description');
+const content = getLocalizedField(item, 'content') || description;
+const articleLayout = item.article_layout || 'short';
+
+const relatedItems = await client.request(
+  readItems('studio_items', {
+    filter: { 
+      status: { _eq: 'published' },
+      slug: { _neq: slug }
+    },
+    fields: ['*'],
+    sort: ['sort'],
+    limit: 6
+  })
+) as any[];
+
+function setAttr(opts: { collection: string; item: any; fields?: string[]; mode?: string }) {
+  const parts = [`collection:${opts.collection}`, `item:${opts.item}`];
+  if (opts.fields) parts.push(`fields:${opts.fields.join(',')}`);
+  if (opts.mode) parts.push(`mode:${opts.mode}`);
+  return parts.join(';');
+}
+---
+
+<Layout title={title} currentLocale={currentLocale} currentSlug={`studio/${slug}`}>
+  {articleLayout === 'long' ? (
+    <ContentLongLayout
+      item={item}
+      collection="studio_items"
+      locale={currentLocale}
+      title={title}
+      intro={description}
+      content={content}
+      getImageUrl={getImageUrl}
+      setAttr={setAttr}
+      relatedItems={relatedItems}
+      relatedPath="studio"
+      relatedTitle={currentLocale === 'nl' ? 'Meer tools' : 'More Tools'}
+    />
+  ) : (
+  <article class="studio-article">
+    <div class="studio-hero">
+      <div class="studio-hero-content">
+        <div class="studio-meta">
+          <span class="studio-category">{item.category}</span>
+          {item.price && <span class="studio-price">{item.price}</span>}
+        </div>
+        <h1 class="studio-title">{title}</h1>
+        <p class="studio-description">{description}</p>
+        {(item.download_url || item.external_url) && (
+          <a href={item.download_url || item.external_url} class="studio-cta" target="_blank" rel="noopener">
+            {item.download_url ? (currentLocale === 'nl' ? 'Download' : 'Download') : (currentLocale === 'nl' ? 'Bekijken' : 'View')}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        )}
+      </div>
+      <div class="studio-hero-image">
+        <img src={getImageSrc(item)} alt={title} />
+      </div>
+    </div>
+
+    {relatedItems.length > 0 && (
+      <section class="related-items">
+        <h2>{currentLocale === 'nl' ? 'Meer tools' : 'More Tools'}</h2>
+        <div class="related-grid">
+          {relatedItems.slice(0, 3).map((i) => (
+            <a href={`/${currentLocale}/studio/${i.slug}`} class="related-card">
+              <div class="related-image">
+                <img src={getImageSrc(i)} alt={getLocalizedField(i, 'title')} loading="lazy" />
+              </div>
+              <div class="related-content">
+                <span class="related-category">{i.category}</span>
+                <h3>{getLocalizedField(i, 'title')}</h3>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+  </article>
+  )}
+</Layout>
+
+<style>
+  .studio-article {
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+  }
+
+  .studio-hero {
+    display: flex;
+    gap: 60px;
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 60px var(--content-padding);
+  }
+
+  .studio-hero-content {
+    flex: 1;
+  }
+
+  .studio-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .studio-category {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #ff40b4;
+  }
+
+  .studio-price {
+    font-size: 12px;
+    font-weight: 600;
+    color: #00FC26;
+    background: rgba(0, 252, 38, 0.1);
+    padding: 4px 12px;
+    border-radius: 4px;
+  }
+
+  .studio-title {
+    font-size: 48px;
+    font-weight: 500;
+    line-height: 1.1;
+    color: #42383e;
+    margin: 0 0 24px 0;
+  }
+
+  .studio-description {
+    font-size: 20px;
+    line-height: 1.6;
+    color: #888484;
+    margin: 0 0 32px 0;
+  }
+
+  .studio-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ff40b4;
+    color: white;
+    padding: 14px 28px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
+    transition: background 0.2s;
+  }
+
+  .studio-cta:hover {
+    background: #e6369f;
+  }
+
+  .studio-hero-image {
+    width: 400px;
+    height: 300px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #ff40b4 0%, #ff6b6b 100%);
+  }
+
+  .studio-hero-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .related-items {
+    background: rgba(217, 217, 217, 0.3);
+    padding: 60px 0;
+  }
+
+  .related-items h2 {
+    max-width: var(--content-max-width);
+    margin: 0 auto 40px;
+    padding: 0 var(--content-padding);
+    font-size: 28px;
+    font-weight: 500;
+    color: #42383e;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 0 var(--content-padding);
+  }
+
+  .related-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+  }
+
+  .related-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .related-image {
+    height: 140px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ff40b4 0%, #ff6b6b 100%);
+  }
+
+  .related-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .related-content {
+    padding: 20px;
+  }
+
+  .related-category {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #ff40b4;
+    margin-bottom: 8px;
+  }
+
+  .related-content h3 {
+    font-size: 18px;
+    font-weight: 500;
+    color: #42383e;
+    margin: 0;
+  }
+
+  @media (max-width: 1024px) {
+    .studio-hero {
+      flex-direction: column;
+      gap: 40px;
+    }
+    .studio-hero-image {
+      width: 100%;
+      height: 300px;
+    }
+    .related-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .studio-title {
+      font-size: 32px;
+    }
+    .related-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

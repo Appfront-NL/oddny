@@ -1,4 +1,6 @@
 ---
+import { getProducts, type Product } from '../../lib/directus';
+
 interface Props {
   block: any;
   locale: string;
@@ -15,36 +17,28 @@ const getLocalizedField = (block: any, fieldName: string) => {
 
 const heading = getLocalizedField(block, 'heading') || 'Creative Flow';
 
-const defaultCards = [
-  { title: 'EQPT', price: '€12, 61', desc: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation' },
-  { title: 'MBIL', price: '€12, 61', desc: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation' },
-  { title: 'HME', price: '€12, 61', desc: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation' },
-  { title: 'STDO', price: '€12, 61', desc: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation' },
-  { title: 'CYBR', price: '€12, 61', desc: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation' },
-  { title: 'LBTY', price: '€12, 61', desc: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation' },
-];
+const allProducts = await getProducts('published');
+const products = allProducts.filter((p: any) => p.is_personal !== true);
 
-const cards = [];
-for (let i = 1; i <= 6; i++) {
-  const title = getLocalizedField(block, `cf_card${i}_title`);
-  const price = getLocalizedField(block, `cf_card${i}_price`);
-  const desc = getLocalizedField(block, `cf_card${i}_desc`);
-  cards.push({
-    index: i,
-    title: title || defaultCards[i-1].title,
-    price: price || defaultCards[i-1].price,
-    desc: desc || defaultCards[i-1].desc,
-  });
-}
+const cards = products.slice(0, 6).map((product: Product) => ({
+  code: product.code,
+  title: product[`title_${locale}` as keyof Product] || product.title_en,
+  desc: product[`intro_${locale}` as keyof Product] || product.intro_en,
+  price: `${product.currency}${product.price_from}`,
+  slug: product.slug,
+}));
 
-const fromLabel = getLocalizedField(block, 'cf_from_label') || 'From';
-const checkPricesLabel = getLocalizedField(block, 'cf_check_prices_label') || 'Check our Prices';
+const fromLabel = getLocalizedField(block, 'cf_from_label') || (locale === 'nl' ? 'Vanaf' : 'From');
+const checkPricesLabel = getLocalizedField(block, 'cf_check_prices_label') || (locale === 'nl' ? 'Bekijk Prijzen' : 'Check our Prices');
 
 const navItems = [
   getLocalizedField(block, 'cf_nav1') || 'Creative Flow',
   getLocalizedField(block, 'cf_nav2') || 'Discipline',
   getLocalizedField(block, 'cf_nav3') || 'Topic',
 ];
+
+const searchPlaceholder = locale === 'nl' ? 'Zoek producten...' : 'Search products...';
+const blockId = block.id;
 ---
 
 <section 
@@ -71,36 +65,74 @@ const navItems = [
             {item}
           </span>
         ))}
-        <div class="search-icon">
-          <svg fill="none" viewBox="0 0 22 26">
-            <circle cx="9.7" cy="9.7" r="8.2" stroke="#00FC26" stroke-width="3" />
-            <line stroke="#00FC26" stroke-width="3" x1="14.1" x2="20.9" y1="16.3" y2="25.1" />
-          </svg>
+        <div class="search-wrapper">
+          <input 
+            type="text" 
+            class="cf-search-input" 
+            placeholder={searchPlaceholder}
+            data-cf-search={blockId}
+          />
+          <div class="search-icon">
+            <svg fill="none" viewBox="0 0 22 26">
+              <circle cx="9.7" cy="9.7" r="8.2" stroke="#00FC26" stroke-width="3" />
+              <line stroke="#00FC26" stroke-width="3" x1="14.1" x2="20.9" y1="16.3" y2="25.1" />
+            </svg>
+          </div>
         </div>
       </nav>
     </header>
 
-    <div class="cards-grid">
+    <div class="cards-grid" data-cf-grid={blockId}>
       {cards.map((card) => (
-        <div 
+        <a 
+          href={`/${locale}/products/${card.slug}`}
           class="product-card"
-          data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`cf_card${card.index}_title_${locale}`, `cf_card${card.index}_price_${locale}`, `cf_card${card.index}_desc_${locale}`], mode: 'popover' })}
+          data-title={String(card.title).toLowerCase()}
+          data-code={String(card.code).toLowerCase()}
+          data-desc={String(card.desc).toLowerCase()}
         >
-          <p class="card-title">{card.title}</p>
+          <p class="card-title">{card.code}</p>
           <p class="card-description">{card.desc}</p>
           <p class="card-from">{fromLabel}</p>
           <p class="card-price">{card.price}</p>
-          <a href="#" class="check-price-btn">
+          <span class="check-price-btn">
             <span>{checkPricesLabel}</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
               <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </a>
-        </div>
+          </span>
+        </a>
       ))}
     </div>
   </div>
 </section>
+
+<script>
+  document.querySelectorAll('.cf-search-input').forEach((input) => {
+    const blockId = (input as HTMLInputElement).dataset.cfSearch;
+    const grid = document.querySelector(`[data-cf-grid="${blockId}"]`);
+    
+    if (input && grid) {
+      input.addEventListener('input', (e) => {
+        const query = (e.target as HTMLInputElement).value.toLowerCase().trim();
+        const cards = grid.querySelectorAll('.product-card') as NodeListOf<HTMLElement>;
+        
+        cards.forEach((card) => {
+          const title = card.dataset.title || '';
+          const code = card.dataset.code || '';
+          const desc = card.dataset.desc || '';
+          
+          const matches = !query || 
+            title.includes(query) || 
+            code.includes(query) || 
+            desc.includes(query);
+          
+          card.style.display = matches ? 'block' : 'none';
+        });
+      });
+    }
+  });
+</script>
 
 <style>
   .creative-flow-section {
@@ -120,7 +152,7 @@ const navItems = [
     position: relative;
     max-width: var(--content-max-width);
     margin: 0 auto;
-    padding: 26px 80px;
+    padding: 26px var(--content-padding);
     z-index: 1;
   }
 
@@ -159,15 +191,37 @@ const navItems = [
     background: rgba(0, 0, 0, 0.05);
   }
 
+  .search-wrapper {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .cf-search-input {
+    width: 180px;
+    height: 40px;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    color: #42383e;
+    background: transparent;
+  }
+
+  .cf-search-input::placeholder {
+    color: #888484;
+  }
+
   .search-icon {
-    width: 48px;
-    height: 48px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    border-radius: 50%;
-    transition: background 0.2s;
+    flex-shrink: 0;
   }
 
   .search-icon:hover {
@@ -195,6 +249,8 @@ const navItems = [
     box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s;
     flex-shrink: 0;
+    text-decoration: none;
+    display: block;
   }
 
   .product-card:hover {
@@ -217,12 +273,16 @@ const navItems = [
     left: 20px;
     top: 94px;
     width: 137px;
+    height: 66px;
     font-size: 16px;
     font-weight: 300;
     line-height: 22px;
     color: #42383e;
     margin: 0;
     overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
   }
 
   .card-from {
@@ -276,7 +336,7 @@ const navItems = [
 
   @media (max-width: 1200px) {
     .creative-flow-container {
-      padding: 26px 40px;
+      padding: 26px var(--content-padding);
     }
     .cards-grid {
       justify-content: center;
@@ -285,7 +345,7 @@ const navItems = [
 
   @media (max-width: 768px) {
     .creative-flow-container {
-      padding: 20px;
+      padding: var(--content-padding);
     }
     .creative-flow-header {
       flex-direction: column;

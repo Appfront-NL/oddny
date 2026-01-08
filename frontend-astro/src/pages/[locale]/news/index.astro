@@ -1,6 +1,9 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { getNews, locales, type Locale, defaultLocale, PUBLIC_DIRECTUS_URL } from '../../../lib/directus';
+import BlockRenderer from '../../../components/BlockRenderer.astro';
+import { getPageBySlug, locales, type Locale, defaultLocale, PUBLIC_DIRECTUS_URL } from '../../../lib/directus';
+import NewsHeader from '../../../components/widgets/NewsHeader.astro';
+import NewsGrid from '../../../components/widgets/NewsGrid.astro';
 
 export async function getStaticPaths() {
   return [];
@@ -8,172 +11,590 @@ export async function getStaticPaths() {
 
 const { locale } = Astro.params;
 const currentLocale = (locales.includes(locale as Locale) ? locale : defaultLocale) as Locale;
-const newsItems = await getNews('published');
+const page = await getPageBySlug('news', currentLocale, true);
 const directusUrl = PUBLIC_DIRECTUS_URL;
+const pageId = page?.id || 'news';
+const pageLanguage = page?.language || currentLocale;
+const isPreview = Astro.url.searchParams.get('preview') === 'true' || Astro.request.headers.get('sec-fetch-dest') === 'iframe';
 
-function getImageUrl(image: any) {
-  if (!image) return '/images/7e155a058b2f08a228fca03af573b81922e39990.png';
-  if (typeof image === 'string') return `${directusUrl}/assets/${image}`;
-  return `${directusUrl}/assets/${image.id}`;
-}
+const defaultBlock = {
+  id: 'default-news-header',
+  block_type: 'hero',
+  variant: 'news-header',
+  nh_title_en: 'News',
+  nh_title_nl: 'Nieuws',
+  nh_description_en: 'Once, a Wunderkammer gathered the wonders of art, nature and invention in one place.\nAt Oddny, we carry that spirit forward — exploring, connecting and sharing insights from the creative and financial worlds to protect, inspire and expand what creativity can achieve.\n\nA space to discover, to be inspired, and to spark new possibilities.',
+  nh_description_nl: 'Ooit verzamelde een Wunderkammer de wonderen van kunst, natuur en uitvinding op één plek.\nBij Oddny dragen we die geest voort — we verkennen, verbinden en delen inzichten uit de creatieve en financiële wereld om te beschermen, inspireren en uit te breiden wat creativiteit kan bereiken.\n\nEen ruimte om te ontdekken, geïnspireerd te raken en nieuwe mogelijkheden aan te wakkeren.'
+};
+
+const defaultGridBlock = {
+  id: 'default-news-grid',
+  block_type: 'hero',
+  variant: 'news-grid'
+};
 ---
 
-<Layout title="News" currentLocale={currentLocale} currentSlug="news">
-  <div class="news-page">
-    <div class="news-header">
-      <h1 class="news-title">{currentLocale === 'nl' ? 'Nieuws' : 'News'}</h1>
-      <p class="news-subtitle">{currentLocale === 'nl' ? 'Het laatste nieuws en updates' : 'The latest news and updates'}</p>
-    </div>
-
-    {newsItems.length === 0 ? (
-      <p class="no-results">{currentLocale === 'nl' ? 'Nog geen nieuws gepubliceerd.' : 'No news published yet.'}</p>
+<Layout title="News" preview={isPreview} currentLocale={currentLocale} currentSlug="news">
+  <div data-directus-page={pageId} data-page-id={pageId} data-page-language={pageLanguage} data-page-slug="news">
+    {page && page.blocks && page.blocks.length > 0 ? (
+      <BlockRenderer blocks={page.blocks} locale={pageLanguage} />
     ) : (
-      <div class="results-grid">
-        {newsItems.map((item: any, index: number) => {
-          const title = item[`title_${currentLocale}`] || item.title_nl || item.title_en;
-          const intro = item[`intro_${currentLocale}`] || item.intro_nl || item.intro_en;
-          const imageUrl = item.featured_image ? getImageUrl(item.featured_image) : `/images/${index % 3 === 0 ? '7e155a058b2f08a228fca03af573b81922e39990' : index % 3 === 1 ? 'a68bee1ed41d916baeacb8282ff859fc0a335b75' : '0c59031718f023dc2a1306f1c3f4a839a4d90a93'}.png`;
-          
-          return (
-            <a href={`/${currentLocale}/news/${item.slug}`} class="result-card">
-              <div class="result-image">
-                <img src={imageUrl} alt={title} />
-              </div>
-              <div class="result-content">
-                {item.category && <span class="result-type">{item.category}</span>}
-                <h3 class="result-title">{title}</h3>
-                {intro && <p class="result-excerpt">{intro}</p>}
-              </div>
-            </a>
-          );
-        })}
-      </div>
+      <>
+        <NewsHeader block={defaultBlock} locale={currentLocale} />
+        <NewsGrid block={defaultGridBlock} locale={currentLocale} />
+      </>
     )}
   </div>
 </Layout>
 
-<style>
-  .news-page {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 40px 80px 80px;
-    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+<style is:global>
+  .language-toolbar {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    padding: 6px;
+    z-index: 9999;
+    font-family: Inter, system-ui, sans-serif;
   }
-
-  .news-header {
-    margin-bottom: 50px;
+  .lang-tabs {
+    display: flex;
+    gap: 4px;
   }
-
-  .news-title {
-    font-size: 80px;
+  .lang-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
     font-weight: 500;
-    line-height: 85px;
-    color: #42383e;
-    margin: 0 0 20px 0;
-    letter-spacing: -0.02em;
+    color: #6b7280;
+    transition: all 0.15s ease;
   }
-
-  .news-subtitle {
+  .lang-tab.active {
+    background: linear-gradient(135deg, #6644ff 0%, #5533dd 100%);
+    color: white;
+  }
+  .lang-tab.clickable {
+    cursor: pointer;
+    background: #f3f4f6;
+  }
+  .lang-tab.clickable:hover {
+    background: #e5e7eb;
+    color: #374151;
+  }
+  .lang-tab.add-lang {
+    cursor: pointer;
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 2px dashed #86efac;
+  }
+  .lang-tab.add-lang:hover {
+    background: #dcfce7;
+    border-color: #22c55e;
+  }
+  .lang-flag {
+    font-size: 1.1rem;
+  }
+  .lang-name {
+    font-weight: 600;
+  }
+  .add-icon {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+  
+  [data-directus-edit] {
+    position: relative;
+    cursor: pointer;
+    transition: outline 0.15s ease;
+  }
+  [data-directus-edit]:hover {
+    outline: 2px solid #6644ff;
+    outline-offset: 2px;
+  }
+  
+  .add-block-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #6644ff 0%, #5533dd 100%);
+    border: none;
+    border-radius: 50%;
+    color: white;
     font-size: 28px;
-    font-weight: 500;
-    line-height: 30px;
-    color: #888484;
-    margin: 0;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(102, 68, 255, 0.4);
+    z-index: 9000;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-
-  .results-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
+  .add-block-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(102, 68, 255, 0.5);
   }
-
-  .result-card {
-    text-decoration: none;
-    display: block;
+  
+  .block-picker-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.15s ease;
   }
-
-  .result-image {
-    width: 100%;
-    height: 350px;
-    border-radius: 10px;
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .block-picker {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 700px;
+    height: 80vh;
+    max-height: 700px;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.2s ease;
     overflow: hidden;
-    margin-bottom: 20px;
   }
-
-  .result-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s;
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-
-  .result-card:hover .result-image img {
-    transform: scale(1.05);
+  
+  .block-picker-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
-
-  .result-content {
-    padding: 0;
-  }
-
-  .result-type {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 500;
-    color: #888484;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
-  }
-
-  .result-title {
-    font-size: 28px;
-    font-weight: 500;
-    line-height: 32px;
-    color: #42383e;
-    margin: 0 0 12px 0;
-  }
-
-  .result-excerpt {
-    font-size: 16px;
-    font-weight: 300;
-    line-height: 22px;
-    color: #888484;
+  .block-picker-header h2 {
     margin: 0;
-  }
-
-  .no-results {
     font-size: 18px;
-    color: #888484;
-    text-align: center;
-    padding: 60px 0;
+    font-weight: 600;
+    color: #1f2937;
   }
-
-  @media (max-width: 1200px) {
-    .results-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
+  .block-picker-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
   }
-
-  @media (max-width: 768px) {
-    .news-page {
-      padding: 30px 20px 60px;
-    }
-
-    .news-title {
-      font-size: 48px;
-      line-height: 52px;
-    }
-
-    .news-subtitle {
-      font-size: 20px;
-    }
-
-    .results-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .result-image {
-      height: 250px;
-    }
+  .block-picker-close:hover {
+    color: #374151;
+  }
+  
+  .block-picker-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #e5e7eb;
+    margin: 0 -20px;
+    padding: 0 20px;
+  }
+  .block-picker-tab {
+    padding: 12px 20px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+  .block-picker-tab:hover {
+    color: #374151;
+  }
+  .block-picker-tab.active {
+    color: #6644ff;
+    border-bottom-color: #6644ff;
+  }
+  
+  .block-picker-tab-content {
+    display: none;
+  }
+  .block-picker-tab-content.active {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+  .block-picker-tab-content .block-picker-search {
+    padding: 16px 24px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .block-picker-tab-content .block-picker-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 24px 24px;
+  }
+  
+  .block-picker-search input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+  .block-picker-search input:focus {
+    outline: none;
+    border-color: #6644ff;
+    box-shadow: 0 0 0 3px rgba(102, 68, 255, 0.1);
+  }
+  
+  .block-category {
+    margin-bottom: 24px;
+  }
+  .block-category:last-child {
+    margin-bottom: 0;
+  }
+  .block-category-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+  
+  .block-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  
+  .block-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    background: white;
+    text-align: left;
+  }
+  .block-card:hover {
+    border-color: #6644ff;
+    box-shadow: 0 4px 12px rgba(102, 68, 255, 0.15);
+  }
+  .block-card.hidden {
+    display: none;
+  }
+  
+  .block-card-thumb {
+    width: 100%;
+    height: 80px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: white;
+    font-weight: 500;
+    overflow: hidden;
+    background: linear-gradient(135deg, #6644ff 0%, #5533dd 100%);
+  }
+  
+  .block-card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 2px;
+  }
+  .block-card-desc {
+    font-size: 11px;
+    color: #9ca3af;
   }
 </style>
+
+<script is:inline define:vars={{ passedDirectusUrl: directusUrl, passedPageId: pageId, passedPageLanguage: pageLanguage }}>
+(function() {
+  var inIframe = window.self !== window.top;
+  if (!inIframe) {
+    console.log('[News Editor] Not in iframe, editing disabled');
+    return;
+  }
+
+  var DIRECTUS_URL = passedDirectusUrl;
+  var STATIC_TOKEN = '90ce679e199f84430ca651a4a3460386';
+  var PAGE_ID = passedPageId;
+  var PAGE_LANGUAGE = passedPageLanguage;
+  var PAGE_SLUG = 'news';
+  var blockPickerOverlay = null;
+
+  var LANGUAGES = {
+    en: { name: "English", flag: "🇬🇧" },
+    nl: { name: "Nederlands", flag: "🇳🇱" }
+  };
+
+  var translationData = {
+    currentPage: null,
+    otherLanguagePage: null,
+    translationGroup: null
+  };
+
+  async function loadTranslationData() {
+    if (PAGE_ID === 'news') return false;
+    var token = STATIC_TOKEN;
+    try {
+      var response = await fetch(DIRECTUS_URL + "/items/pages/" + PAGE_ID + "?fields=id,title,slug,language,translation_group", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      var data = await response.json();
+      translationData.currentPage = data.data;
+      translationData.translationGroup = data.data.translation_group;
+      
+      var otherLang = PAGE_LANGUAGE === "en" ? "nl" : "en";
+      
+      if (translationData.translationGroup) {
+        var otherResponse = await fetch(DIRECTUS_URL + "/items/pages?filter[translation_group][_eq]=" + translationData.translationGroup + "&filter[language][_eq]=" + otherLang + "&limit=1", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        var otherData = await otherResponse.json();
+        if (otherData.data && otherData.data.length > 0) {
+          translationData.otherLanguagePage = otherData.data[0];
+          return true;
+        }
+      }
+      
+      var slugResponse = await fetch(DIRECTUS_URL + "/items/pages?filter[slug][_eq]=" + PAGE_SLUG + "&filter[language][_eq]=" + otherLang + "&limit=1", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      var slugData = await slugResponse.json();
+      if (slugData.data && slugData.data.length > 0) {
+        translationData.otherLanguagePage = slugData.data[0];
+      }
+      
+      return true;
+    } catch (e) {
+      console.error("Error loading translation data:", e);
+      return false;
+    }
+  }
+
+  function createLanguageToolbar() {
+    loadTranslationData().then(function() {
+      var toolbar = document.createElement("div");
+      toolbar.className = "language-toolbar";
+      toolbar.id = "language-toolbar";
+      
+      var otherLang = PAGE_LANGUAGE === "en" ? "nl" : "en";
+      
+      var html = "<div class=\"lang-tabs\">";
+      html += "<div class=\"lang-tab active\"><span class=\"lang-flag\">" + LANGUAGES[PAGE_LANGUAGE].flag + "</span><span class=\"lang-name\">" + LANGUAGES[PAGE_LANGUAGE].name + "</span></div>";
+      html += "<div class=\"lang-tab clickable\" onclick=\"window.location.href='/" + otherLang + "/news'\"><span class=\"lang-flag\">" + LANGUAGES[otherLang].flag + "</span><span class=\"lang-name\">" + LANGUAGES[otherLang].name + "</span></div>";
+      html += "</div>";
+
+      toolbar.innerHTML = html;
+      document.body.appendChild(toolbar);
+    });
+  }
+
+  var BLOCK_TEMPLATES = [
+    {
+      id: 'news-header',
+      category: 'oddny',
+      name: 'News Header',
+      description: 'News section header with title, description and green bear',
+      thumb: 'thumb-news-header',
+      data: {
+        block_type: 'hero',
+        variant: 'news-header',
+        nh_title_en: 'News', nh_title_nl: 'Nieuws',
+        nh_description_en: 'Once, a Wunderkammer gathered the wonders of art, nature and invention in one place.\nAt Oddny, we carry that spirit forward — exploring, connecting and sharing insights from the creative and financial worlds to protect, inspire and expand what creativity can achieve.\n\nA space to discover, to be inspired, and to spark new possibilities.',
+        nh_description_nl: 'Ooit verzamelde een Wunderkammer de wonderen van kunst, natuur en uitvinding op één plek.\nBij Oddny dragen we die geest voort — we verkennen, verbinden en delen inzichten uit de creatieve en financiële wereld om te beschermen, inspireren en uit te breiden wat creativiteit kan bereiken.\n\nEen ruimte om te ontdekken, geïnspireerd te raken en nieuwe mogelijkheden aan te wakkeren.',
+        status: 'published'
+      }
+    },
+    {
+      id: 'news-grid',
+      category: 'oddny',
+      name: 'News Grid',
+      description: 'Grid of news articles from the news collection',
+      thumb: 'thumb-news-grid',
+      data: {
+        block_type: 'hero',
+        variant: 'news-grid',
+        status: 'published'
+      }
+    }
+  ];
+
+  var CATEGORIES = [
+    { id: 'oddny', name: 'News Widgets', icon: '📰' }
+  ];
+
+  function closeBlockPicker() {
+    if (blockPickerOverlay) {
+      blockPickerOverlay.remove();
+      blockPickerOverlay = null;
+    }
+  }
+
+  async function createBlock(template) {
+    if (PAGE_ID === 'news') {
+      alert('To add blocks to the news page, first create a "news" page in Directus with English and Dutch versions.');
+      return false;
+    }
+
+    try {
+      var headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + STATIC_TOKEN
+      };
+
+      var blocksResponse = await fetch(DIRECTUS_URL + '/items/blocks?filter[page_id][_eq]=' + PAGE_ID + '&aggregate[count]=id', {
+        headers: headers,
+        credentials: 'include'
+      });
+      var blocksData = await blocksResponse.json();
+      var blockCount = blocksData.data?.[0]?.count?.id || 0;
+      var newSort = parseInt(blockCount) + 1;
+
+      var translationGroup = translationData.translationGroup || PAGE_ID;
+
+      var blockData = Object.assign({}, template.data, {
+        page_id: PAGE_ID,
+        translation_group: translationGroup,
+        sort: newSort
+      });
+
+      var response = await fetch(DIRECTUS_URL + '/items/blocks', {
+        method: 'POST',
+        headers: headers,
+        credentials: 'include',
+        body: JSON.stringify(blockData)
+      });
+
+      if (response.ok) {
+        if (translationData.otherLanguagePage) {
+          var otherBlockData = Object.assign({}, template.data, {
+            page_id: translationData.otherLanguagePage.id,
+            translation_group: translationGroup,
+            sort: newSort
+          });
+          await fetch(DIRECTUS_URL + '/items/blocks', {
+            method: 'POST',
+            headers: headers,
+            credentials: 'include',
+            body: JSON.stringify(otherBlockData)
+          });
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('[Add Block] Error:', e);
+      return false;
+    }
+  }
+
+  function showBlockPicker() {
+    closeBlockPicker();
+
+    blockPickerOverlay = document.createElement('div');
+    blockPickerOverlay.className = 'block-picker-overlay';
+
+    var html = '<div class="block-picker">' +
+      '<div class="block-picker-header">' +
+        '<h2>Add Block × New Block</h2>' +
+        '<button class="block-picker-close">&times;</button>' +
+      '</div>' +
+      '<div class="block-picker-tab-content active">' +
+        '<div class="block-picker-search"><input type="text" placeholder="Search blocks..."></div>' +
+        '<div class="block-picker-content">';
+
+    CATEGORIES.forEach(function(cat) {
+      var catTemplates = BLOCK_TEMPLATES.filter(function(t) { return t.category === cat.id; });
+      if (catTemplates.length > 0) {
+        html += '<div class="block-category" data-category="' + cat.id + '">' +
+          '<div class="block-category-title">' + cat.icon + ' ' + cat.name + '</div>' +
+          '<div class="block-grid">';
+        catTemplates.forEach(function(t) {
+          html += '<div class="block-card" data-template-id="' + t.id + '" data-name="' + t.name.toLowerCase() + '">' +
+            '<div class="block-card-thumb ' + t.thumb + '"></div>' +
+            '<div class="block-card-name">' + t.name + '</div>' +
+            '<div class="block-card-desc">' + t.description + '</div>' +
+          '</div>';
+        });
+        html += '</div></div>';
+      }
+    });
+
+    html += '</div></div></div>';
+
+    blockPickerOverlay.innerHTML = html;
+    document.body.appendChild(blockPickerOverlay);
+
+    blockPickerOverlay.querySelector('.block-picker-close').onclick = closeBlockPicker;
+    blockPickerOverlay.onclick = function(e) {
+      if (e.target === blockPickerOverlay) closeBlockPicker();
+    };
+
+    var searchInput = blockPickerOverlay.querySelector('.block-picker-search input');
+    searchInput.oninput = function() {
+      var query = this.value.toLowerCase();
+      blockPickerOverlay.querySelectorAll('.block-card').forEach(function(card) {
+        var name = card.getAttribute('data-name');
+        if (name.indexOf(query) >= 0) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+    };
+
+    blockPickerOverlay.querySelectorAll('.block-card').forEach(function(card) {
+      card.onclick = async function() {
+        var templateId = this.getAttribute('data-template-id');
+        var template = BLOCK_TEMPLATES.find(function(t) { return t.id === templateId; });
+        if (template) {
+          this.style.opacity = '0.5';
+          this.style.pointerEvents = 'none';
+          var success = await createBlock(template);
+          if (success) {
+            closeBlockPicker();
+            window.location.reload();
+          } else {
+            this.style.opacity = '1';
+            this.style.pointerEvents = 'auto';
+          }
+        }
+      };
+    });
+  }
+
+  function createAddBlockFab() {
+    var fab = document.createElement('button');
+    fab.className = 'add-block-fab';
+    fab.innerHTML = '+';
+    fab.title = 'Add Block';
+    fab.onclick = showBlockPicker;
+    document.body.appendChild(fab);
+  }
+
+  createLanguageToolbar();
+  createAddBlockFab();
+})();
+</script>

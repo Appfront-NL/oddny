@@ -1,0 +1,29 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import BlockRenderer from '../../../components/BlockRenderer.astro';
+import VisualEditorScript from '../../../components/VisualEditorScript.astro';
+import { getPageBySlug, locales, type Locale, defaultLocale, PUBLIC_DIRECTUS_URL } from '../../../lib/directus';
+
+export async function getStaticPaths() {
+  return locales.map(locale => ({ params: { locale } }));
+}
+
+const { locale } = Astro.params;
+const currentLocale = (locales.includes(locale as Locale) ? locale : defaultLocale) as Locale;
+
+const page = await getPageBySlug('products', currentLocale, true);
+const blocks = page?.blocks || [];
+const directusUrl = PUBLIC_DIRECTUS_URL;
+const pageId = page?.id;
+
+const title = currentLocale === 'nl' ? 'Producten' : 'Products';
+---
+
+<Layout title={title} currentLocale={currentLocale} currentSlug="products">
+  <div data-directus-page={pageId} data-page-id={pageId} data-page-language={currentLocale} data-page-slug="products">
+    {blocks.length > 0 && (
+      <BlockRenderer blocks={blocks} locale={currentLocale} />
+    )}
+  </div>
+  <VisualEditorScript directusUrl={directusUrl} pageId={pageId} />
+</Layout>

@@ -50,3 +50,14 @@ data-directus={setAttr({
 6. Registreer velden in directus_fields (INSERT)
 7. Zet standaardwaarden (UPDATE)
 8. Herstart Directus
+
+## Widget Styling Standaard
+Gebruik ALTIJD CSS variabelen voor consistente breedte:
+```css
+.widget-container {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--content-padding);
+}
+```
+NIET hardcoded waardes zoals `max-width: 1440px` of `padding: 0 5%`.

@@ -1,4 +1,6 @@
 ---
+import { client, readItems, getAssetUrl } from '../../lib/directus';
+
 interface Props {
   block: any;
   locale: string;
@@ -8,265 +10,229 @@ interface Props {
 
 const { block, locale, getImageUrl, setAttr } = Astro.props;
 
-// Get localized text values
-const getLocalizedField = (block: any, fieldName: string) => {
-  const localizedFieldName = `${fieldName}_${locale}`;
-  return block[localizedFieldName] || block[fieldName] || '';
+const getLocalizedField = (item: any, fieldName: string) => {
+  return item[`${fieldName}_${locale}`] || item[`${fieldName}_en`] || item[fieldName] || '';
 };
 
-const heading = getLocalizedField(block, 'heading');
-const content = getLocalizedField(block, 'content');
-const buttonText = getLocalizedField(block, 'button_text');
+const defaultImages = [
+  '/images/hero-jumping.png',
+  '/images/oddny-bird-pink.png',
+  '/images/oddny-benefits.png',
+  '/images/card-1.png'
+];
+const getRandomImage = (id: number) => defaultImages[id % defaultImages.length];
+
+const getImageSrc = (item: any) => {
+  if (!item?.featured_image) return getRandomImage(item?.id || 0);
+  if (item.featured_image.startsWith('/')) return item.featured_image;
+  return getAssetUrl(item.featured_image);
+};
+
+const featuredNews = await client.request(
+  readItems('news', {
+    filter: { status: { _eq: 'published' } },
+    fields: ['*'],
+    sort: ['-published_date'],
+    limit: 1
+  })
+) as any[];
+
+const news = featuredNews[0];
+const heading = news ? getLocalizedField(news, 'title') : getLocalizedField(block, 'heading');
+const content = news ? getLocalizedField(news, 'intro') : getLocalizedField(block, 'content');
+const buttonText = getLocalizedField(block, 'button_text') || (locale === 'nl' ? 'Lees Meer' : 'Read More');
+const newsLink = news ? `/${locale}/news/${news.slug}` : (block.button_link || '#');
 ---
 
 <section 
   class="wunderkamer-image-text-section"
   data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
 >
-  <style>
-    .wunderkamer-image-text-section {
-      position: relative;
-      width: 100%;
-      min-height: 650px;
-      background: white;
-      overflow: hidden;
-      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
-      padding: 45px 0;
-    }
-    
-    .wunderkamer-container {
-      position: relative;
-      max-width: 1440px;
-      height: 600px;
-      margin: 0 auto;
-    }
-    
-    /* Left Image */
-    .wunderkamer-image {
-      position: absolute;
-      left: 80px;
-      top: 45px;
-      width: 620px;
-      height: 543px;
-      border-radius: 10px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: opacity 0.3s ease;
-    }
-    
-    .wunderkamer-image:hover {
-      opacity: 0.95;
-    }
-    
-    .wunderkamer-image img {
-      position: absolute;
-      height: 103.3%;
-      left: -12.41%;
-      max-width: none;
-      top: -2.98%;
-      width: 135.6%;
-      object-fit: cover;
-    }
-    
-    /* Right Text Content */
-    .wunderkamer-text-content {
-      position: absolute;
-      left: 740px;
-      top: 45px;
-      width: 616px;
-      height: auto;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .wunderkamer-heading {
-      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
-      font-weight: 500;
-      font-size: 28px;
-      line-height: 32px;
-      color: #42383e;
-      margin: 0 0 24px 0;
-    }
-    
-    .wunderkamer-content {
-      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
-      font-weight: 300;
-      font-size: 16px;
-      line-height: 24px;
-      color: #888484;
-      margin: 0 0 30px 0;
-      flex: 1;
-    }
-    
-    .wunderkamer-content p {
-      margin: 0 0 16px 0;
-    }
-    
-    .wunderkamer-content p:last-child {
-      margin-bottom: 0;
-    }
-    
-    /* Read More Button */
-    .wunderkamer-button {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-      cursor: pointer;
-      transition: transform 0.3s ease;
-      width: fit-content;
-      margin-top: auto;
-    }
-    
-    .wunderkamer-button:hover {
-      transform: translateX(4px);
-    }
-    
-    .wunderkamer-button span {
-      font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
-      font-weight: 700;
-      font-size: 16px;
-      color: #ff40b4;
-      white-space: nowrap;
-    }
-    
-    .wunderkamer-button:hover span {
-      text-decoration: underline;
-    }
-    
-    .wunderkamer-button svg {
-      color: #ff40b4;
-      transition: transform 0.3s ease;
-    }
-    
-    .wunderkamer-button:hover svg {
-      transform: translateX(4px);
-    }
-    
-    /* Responsive Design */
-    @media (max-width: 1440px) {
-      .wunderkamer-container {
-        width: 95%;
-        padding: 0 20px;
-        height: auto;
-      }
-      .wunderkamer-image {
-        left: 5%;
-        width: 45%;
-        height: clamp(300px, 35vw, 543px);
-      }
-      .wunderkamer-text-content {
-        left: 55%;
-        width: 40%;
-        height: auto;
-      }
-    }
-    
-    @media (max-width: 768px) {
-      .wunderkamer-image-text-section {
-        min-height: auto;
-        padding: 30px 0;
-      }
-      .wunderkamer-container {
-        height: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 30px;
-        padding: 0 20px;
-      }
-      .wunderkamer-image {
-        position: relative;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 300px;
-      }
-      .wunderkamer-text-content {
-        position: relative;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: auto;
-      }
-      .wunderkamer-heading {
-        font-size: 24px;
-        line-height: 28px;
-      }
-      .wunderkamer-content {
-        font-size: 14px;
-        line-height: 20px;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .wunderkamer-image {
-        height: 250px;
-      }
-      .wunderkamer-heading {
-        font-size: 20px;
-        line-height: 24px;
-      }
-      .wunderkamer-content {
-        font-size: 13px;
-        line-height: 18px;
-      }
-    }
-  </style>
-  
   <div class="wunderkamer-container">
-    {/* Left Image */}
-    <div 
-      class="wunderkamer-image"
-      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'image', mode: 'popover' })}
-    >
-      <img 
-        src={block.image ? getImageUrl(block.image) : '/images/peter-bellerby-globes.png'}
-        alt="Wunderkamer image"
-        loading="lazy"
-      />
-    </div>
+    <a href={newsLink} class="wunderkamer-image">
+      <img src={getImageSrc(news)} alt={heading} loading="lazy" />
+    </a>
     
-    {/* Right Text Content */}
     <div class="wunderkamer-text-content">
-      <h2 
-        class="wunderkamer-heading"
-        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'heading', mode: 'popover' })}
-      >
-        {heading || 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy'}
+      <h2 class="wunderkamer-heading">
+        {heading || 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit'}
       </h2>
       
-      <div 
-        class="wunderkamer-content"
-        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: 'content', mode: 'popover' })}
-        set:html={content || `
-          <p>nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.</p>
-          <p>Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>
-        `}
-      >
+      <div class="wunderkamer-content">
+        <p>{content || 'nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.'}</p>
       </div>
       
-      {/* Read More Button */}
-      <a 
-        href={block.button_link || '#'}
-        class="wunderkamer-button"
-        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: ['button_text', 'button_link'], mode: 'popover' })}
-      >
-        <span>{buttonText || 'Read More'}</span>
-        <svg 
-          width="40" 
-          height="14" 
-          viewBox="0 0 40 14" 
-          fill="none"
-        >
-          <path 
-            d="M0 7H38M38 7L32 1M38 7L32 13" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          />
+      <a href={newsLink} class="wunderkamer-button">
+        <span>{buttonText}</span>
+        <svg width="40" height="14" viewBox="0 0 40 14" fill="none">
+          <path d="M0 7H38M38 7L32 1M38 7L32 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </a>
     </div>
   </div>
 </section>
+
+<style>
+  .wunderkamer-image-text-section {
+    position: relative;
+    width: 100%;
+    min-height: 650px;
+    background: white;
+    overflow: hidden;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    padding: 45px 0;
+  }
+
+  .wunderkamer-container {
+    position: relative;
+    max-width: var(--content-max-width);
+    height: 600px;
+    margin: 0 auto;
+    padding: 0 var(--content-padding);
+  }
+
+  .wunderkamer-image {
+    position: absolute;
+    left: var(--content-padding);
+    top: 45px;
+    width: 45%;
+    height: 543px;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    display: block;
+  }
+
+  .wunderkamer-image:hover {
+    transform: scale(1.01);
+  }
+
+  .wunderkamer-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .wunderkamer-image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%);
+  }
+
+  .wunderkamer-text-content {
+    position: absolute;
+    left: 52%;
+    top: 45px;
+    width: 45%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .wunderkamer-category {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #00FC26;
+    margin-bottom: 16px;
+  }
+
+  .wunderkamer-heading {
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 32px;
+    color: #42383e;
+    margin: 0 0 24px 0;
+  }
+
+  .wunderkamer-content {
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 24px;
+    color: #888484;
+    margin: 0 0 30px 0;
+    flex: 1;
+  }
+
+  .wunderkamer-content p {
+    margin: 0;
+  }
+
+  .wunderkamer-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    width: fit-content;
+    margin-top: auto;
+  }
+
+  .wunderkamer-button:hover {
+    transform: translateX(4px);
+  }
+
+  .wunderkamer-button span {
+    font-weight: 700;
+    font-size: 16px;
+    color: #ff40b4;
+  }
+
+  .wunderkamer-button:hover span {
+    text-decoration: underline;
+  }
+
+  .wunderkamer-button svg {
+    color: #ff40b4;
+  }
+
+  @media (max-width: 1440px) {
+    .wunderkamer-container {
+      width: 95%;
+      height: auto;
+    }
+    .wunderkamer-image {
+      left: 5%;
+      width: 45%;
+      height: clamp(300px, 35vw, 543px);
+    }
+    .wunderkamer-text-content {
+      left: 55%;
+      width: 40%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .wunderkamer-image-text-section {
+      min-height: auto;
+      padding: 30px 0;
+    }
+    .wunderkamer-container {
+      height: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    .wunderkamer-image {
+      position: relative;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 300px;
+    }
+    .wunderkamer-text-content {
+      position: relative;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+    .wunderkamer-heading {
+      font-size: 24px;
+      line-height: 28px;
+    }
+  }
+</style>

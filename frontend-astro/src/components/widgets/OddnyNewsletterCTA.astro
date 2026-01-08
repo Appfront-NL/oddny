@@ -42,7 +42,7 @@ const placeholder = getLocalizedField(block, 'placeholder');
       grid-template-columns: 1fr 1fr;
       gap: 60px;
       align-items: center;
-      padding: 0 80px;
+      padding: 0 var(--content-padding);
     }
     
     /* Left Side - Bear */
@@ -140,7 +140,7 @@ const placeholder = getLocalizedField(block, 'placeholder');
     /* Responsive Design */
     @media (max-width: 1200px) {
       .newsletter-container {
-        padding: 0 40px;
+        padding: 0 var(--content-padding);
         gap: 40px;
       }
       .newsletter-title {
@@ -161,7 +161,7 @@ const placeholder = getLocalizedField(block, 'placeholder');
       .newsletter-container {
         grid-template-columns: 1fr;
         gap: 40px;
-        padding: 0 20px;
+        padding: 0 var(--content-padding);
         text-align: center;
       }
       .newsletter-bear {
@@ -199,7 +199,7 @@ const placeholder = getLocalizedField(block, 'placeholder');
       }
       .newsletter-container {
         gap: 25px;
-        padding: 0 15px;
+        padding: 0 var(--content-padding);
       }
       .newsletter-bear {
         max-width: 220px;

@@ -1,0 +1,338 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { client, readItems, getAssetUrl, locales, type Locale, defaultLocale } from '../../../lib/directus';
+
+export async function getStaticPaths() {
+  const allItems = await client.request(
+    readItems('other_products', {
+      filter: { status: { _eq: 'published' } },
+      fields: ['slug']
+    })
+  ) as any[];
+
+  const paths: any[] = [];
+  for (const locale of locales) {
+    for (const item of allItems) {
+      if (item.slug) {
+        paths.push({ params: { locale, slug: item.slug } });
+      }
+    }
+  }
+  return paths;
+}
+
+const { locale, slug } = Astro.params;
+const currentLocale = (locales.includes(locale as Locale) ? locale : defaultLocale) as Locale;
+
+const items = await client.request(
+  readItems('other_products', {
+    filter: { 
+      slug: { _eq: slug },
+      status: { _eq: 'published' }
+    },
+    fields: ['*'],
+    limit: 1
+  })
+) as any[];
+
+const item = items[0];
+
+if (!item) {
+  return Astro.redirect('/404');
+}
+
+const getLocalizedField = (item: any, field: string) => {
+  return item[`${field}_${currentLocale}`] || item[`${field}_en`] || item[field] || '';
+};
+
+const defaultImages = [
+  '/images/hero-jumping.png',
+  '/images/oddny-bird-pink.png',
+  '/images/oddny-benefits.png',
+  '/images/card-1.png'
+];
+const getRandomImage = (id: number) => defaultImages[id % defaultImages.length];
+
+const getImageSrc = (i: any) => {
+  if (!i.featured_image) return getRandomImage(i.id);
+  if (i.featured_image.startsWith('/')) return i.featured_image;
+  return getAssetUrl(i.featured_image);
+};
+
+const title = getLocalizedField(item, 'title');
+const description = getLocalizedField(item, 'description');
+const content = getLocalizedField(item, 'content');
+
+const relatedItems = await client.request(
+  readItems('other_products', {
+    filter: { 
+      status: { _eq: 'published' },
+      slug: { _neq: slug }
+    },
+    fields: ['*'],
+    sort: ['sort'],
+    limit: 4
+  })
+) as any[];
+---
+
+<Layout title={title} currentLocale={currentLocale} currentSlug={`other-products/${slug}`}>
+  <article class="product-article">
+    <div class="product-hero">
+      <div class="product-hero-content">
+        <span class="product-category">{item.category}</span>
+        <h1 class="product-title">{title}</h1>
+        <p class="product-description">{description}</p>
+        <div class="product-pricing">
+          <span class="price-label">{currentLocale === 'nl' ? 'Vanaf' : 'From'}</span>
+          <span class="price-amount">{item.currency}{item.price_from}</span>
+        </div>
+        {item.external_url && (
+          <a href={item.external_url} class="product-cta" target="_blank" rel="noopener">
+            {currentLocale === 'nl' ? 'Nu Kopen' : 'Buy Now'}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        )}
+      </div>
+      <div class="product-hero-image">
+        <img src={getImageSrc(item)} alt={title} />
+      </div>
+    </div>
+
+    {content && (
+      <div class="product-content">
+        <div class="product-body" set:html={content} />
+      </div>
+    )}
+
+    {relatedItems.length > 0 && (
+      <section class="related-items">
+        <h2>{currentLocale === 'nl' ? 'Meer producten' : 'More Products'}</h2>
+        <div class="related-grid">
+          {relatedItems.map((i) => (
+            <a href={`/${currentLocale}/other-products/${i.slug}`} class="related-card">
+              <div class="related-image">
+                <img src={getImageSrc(i)} alt={getLocalizedField(i, 'title')} loading="lazy" />
+              </div>
+              <div class="related-content">
+                <span class="related-category">{i.category}</span>
+                <h3>{getLocalizedField(i, 'title')}</h3>
+                <span class="related-price">{currentLocale === 'nl' ? 'Vanaf' : 'From'} {i.currency}{i.price_from}</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+  </article>
+</Layout>
+
+<style>
+  .product-article {
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+  }
+
+  .product-hero {
+    display: flex;
+    gap: 60px;
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 60px var(--content-padding);
+  }
+
+  .product-hero-content {
+    flex: 1;
+  }
+
+  .product-category {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: white;
+    background: #764ba2;
+    padding: 6px 12px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+  }
+
+  .product-title {
+    font-size: 48px;
+    font-weight: 500;
+    line-height: 1.1;
+    color: #42383e;
+    margin: 0 0 24px 0;
+  }
+
+  .product-description {
+    font-size: 20px;
+    line-height: 1.6;
+    color: #888484;
+    margin: 0 0 32px 0;
+  }
+
+  .product-pricing {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+
+  .price-label {
+    font-size: 16px;
+    color: #888484;
+  }
+
+  .price-amount {
+    font-size: 36px;
+    font-weight: 500;
+    color: #ff40b4;
+  }
+
+  .product-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #764ba2;
+    color: white;
+    padding: 14px 28px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
+    transition: background 0.2s;
+  }
+
+  .product-cta:hover {
+    background: #5a3a7e;
+  }
+
+  .product-hero-image {
+    width: 400px;
+    height: 300px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .product-hero-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .product-content {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 0 var(--content-padding) 60px;
+  }
+
+  .product-body {
+    max-width: 800px;
+    font-size: 18px;
+    line-height: 1.8;
+    color: #42383e;
+  }
+
+  .related-items {
+    background: #f8f8f8;
+    padding: 60px 0;
+  }
+
+  .related-items h2 {
+    max-width: var(--content-max-width);
+    margin: 0 auto 40px;
+    padding: 0 var(--content-padding);
+    font-size: 28px;
+    font-weight: 500;
+    color: #42383e;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 0 var(--content-padding);
+  }
+
+  .related-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    text-decoration: none;
+    border: 1px solid #e5e5e5;
+    transition: transform 0.3s ease;
+  }
+
+  .related-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .related-image {
+    height: 100px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .related-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .related-content {
+    padding: 16px;
+  }
+
+  .related-category {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #764ba2;
+    margin-bottom: 6px;
+  }
+
+  .related-content h3 {
+    font-size: 15px;
+    font-weight: 500;
+    color: #42383e;
+    margin: 0 0 6px 0;
+  }
+
+  .related-price {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ff40b4;
+  }
+
+  @media (max-width: 1024px) {
+    .product-hero {
+      flex-direction: column;
+      gap: 40px;
+    }
+    .product-hero-image {
+      width: 100%;
+      height: 300px;
+    }
+    .related-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .product-title {
+      font-size: 32px;
+    }
+    .related-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

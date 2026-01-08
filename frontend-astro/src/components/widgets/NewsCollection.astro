@@ -1,0 +1,215 @@
+---
+import { client, readItems, getAssetUrl } from '../../lib/directus';
+import { setAttr } from '../../lib/directus';
+
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+}
+
+const { block, locale, getImageUrl } = Astro.props;
+
+const getLocalizedField = (item: any, field: string) => {
+  return item[`${field}_${locale}`] || item[`${field}_en`] || item[field] || '';
+};
+
+const defaultImages = [
+  '/images/hero-jumping.png',
+  '/images/oddny-bird-pink.png',
+  '/images/oddny-benefits.png',
+  '/images/card-1.png'
+];
+const getRandomImage = (id: number) => defaultImages[id % defaultImages.length];
+
+const getImageSrc = (item: any) => {
+  if (!item.featured_image) return getRandomImage(item.id);
+  if (item.featured_image.startsWith('/')) return item.featured_image;
+  return getAssetUrl(item.featured_image);
+};
+
+const news = await client.request(
+  readItems('news', {
+    filter: {
+      status: { _eq: 'published' }
+    },
+    fields: ['*'],
+    sort: ['-published_date'],
+    limit: 6
+  })
+) as any[];
+
+const heading = getLocalizedField(block, 'heading') || (locale === 'nl' ? 'Laatste Nieuws' : 'Latest News');
+---
+
+<section 
+  class="news-collection-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <div class="news-collection-container">
+    <h2 
+      class="news-collection-title"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`heading_${locale}`], mode: 'popover' })}
+    >
+      {heading}
+    </h2>
+    
+    <div class="news-grid">
+      {news.map((item) => (
+        <a 
+          href={`/${locale}/news/${item.slug}`}
+          class="news-card"
+          data-directus={setAttr({ collection: 'news', item: item.id, fields: ['title_en', 'title_nl', 'intro_en', 'intro_nl', 'featured_image'], mode: 'popover' })}
+        >
+          <div class="news-card-image">
+            <img src={getImageSrc(item)} alt={getLocalizedField(item, 'title')} loading="lazy" />
+          </div>
+          <div class="news-card-content">
+            <span class="news-card-category">{item.category}</span>
+            <h3 class="news-card-title">{getLocalizedField(item, 'title')}</h3>
+            <p class="news-card-excerpt">{getLocalizedField(item, 'intro')}</p>
+            <span class="news-card-date">
+              {item.published_date ? new Date(item.published_date).toLocaleDateString(locale === 'nl' ? 'nl-NL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+            </span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .news-collection-section {
+    width: 100%;
+    background: white;
+    padding: 60px 0;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+  }
+
+  .news-collection-container {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 0 var(--content-padding);
+  }
+
+  .news-collection-title {
+    font-size: 28px;
+    font-weight: 500;
+    color: #42383e;
+    margin: 0 0 40px 0;
+  }
+
+  .news-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+  }
+
+  .news-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .news-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .news-card-image {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: #f5f5f5;
+  }
+
+  .news-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .news-card:hover .news-card-image img {
+    transform: scale(1.05);
+  }
+
+  .news-card-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%);
+  }
+
+  .news-card-content {
+    padding: 20px;
+  }
+
+  .news-card-category {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #00FC26;
+    margin-bottom: 8px;
+  }
+
+  .news-card-title {
+    font-size: 20px;
+    font-weight: 500;
+    color: #42383e;
+    margin: 0 0 12px 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .news-card-excerpt {
+    font-size: 14px;
+    font-weight: 400;
+    color: #888484;
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .news-card-date {
+    font-size: 12px;
+    color: #888484;
+  }
+
+  @media (max-width: 1024px) {
+    .news-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .news-collection-section {
+      padding: 40px 0;
+    }
+
+    .news-collection-title {
+      font-size: 24px;
+      margin-bottom: 24px;
+    }
+
+    .news-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .news-card-title {
+      font-size: 18px;
+    }
+  }
+</style>

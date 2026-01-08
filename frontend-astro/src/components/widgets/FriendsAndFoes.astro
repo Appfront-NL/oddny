@@ -81,7 +81,7 @@ const friendsAndFoes = await getFriendsAndFoes('published');
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 40px 20px;
+    padding: 40px var(--content-padding);
     font-family: 'Neue Haas Grotesk Display Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   }
   
@@ -97,7 +97,7 @@ const friendsAndFoes = await getFriendsAndFoes('published');
   }
   
   .friends-foes-header {
-    padding: 39px 20px 47px 80px;
+    padding: 39px var(--content-padding) 47px var(--content-padding);
   }
   
   .friends-foes-title {
@@ -109,7 +109,7 @@ const friendsAndFoes = await getFriendsAndFoes('published');
   }
   
   .friends-foes-grid {
-    padding: 0 80px 40px;
+    padding: 0 var(--content-padding) 40px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 33px 40px;
@@ -166,10 +166,10 @@ const friendsAndFoes = await getFriendsAndFoes('published');
   
   @media (max-width: 1200px) {
     .friends-foes-header {
-      padding-left: 40px;
+      padding-left: var(--content-padding);
     }
     .friends-foes-grid {
-      padding: 0 40px 40px;
+      padding: 0 var(--content-padding) 40px;
     }
   }
   
@@ -181,11 +181,11 @@ const friendsAndFoes = await getFriendsAndFoes('published');
   
   @media (max-width: 768px) {
     .friends-foes-header {
-      padding: 30px 20px;
+      padding: 30px var(--content-padding);
     }
     .friends-foes-grid {
       grid-template-columns: 1fr;
-      padding: 0 20px 30px;
+      padding: 0 var(--content-padding) 30px;
       gap: 20px;
     }
     .friends-foes-card {

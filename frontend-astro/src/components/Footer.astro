@@ -8,12 +8,17 @@ interface Props {
 const { locale = defaultLocale } = Astro.props;
 
 const settings = await getSiteSettings();
-const navItems = await getNavigationItems('footer');
+const navItems = await getNavigationItems('header');
 
 function getItemUrl(item: NavigationItem): string {
-  if (item.url) return item.url;
+  if (item.url) return `/${locale}${item.url}`;
   if (item.page) return `/${locale}/${item.page.slug}`;
   return '#';
+}
+
+function getItemLabel(item: NavigationItem): string {
+  const localizedLabel = locale === 'nl' ? item.label_nl : item.label_en;
+  return localizedLabel || item.label || '';
 }
 
 // Helper to get localized field
@@ -21,6 +26,9 @@ const getLocalized = (fieldPrefix: string) => {
   const field = `${fieldPrefix}_${locale}` as keyof typeof settings;
   return settings?.[field] || settings?.[`${fieldPrefix}_en` as keyof typeof settings] || '';
 };
+
+// Group navigation items for footer columns (skip first one which is newsletter)
+const footerNavGroups = navItems.filter(item => item.children && item.children.length > 0);
 ---
 
 <footer class="footer">
@@ -51,30 +59,15 @@ const getLocalized = (fieldPrefix: string) => {
           </a>
         </div>
 
-        <!-- Column 2: Creative Flow -->
-        <div class="footer-column">
-          <p class="footer-column-title">{getLocalized('footer_col1_title') || 'Creative Flow'}</p>
-          <a href={`/${locale}/creative-flow`} class="footer-link">The Source</a>
-          <a href={`/${locale}/creative-flow`} class="footer-link">The Studio</a>
-          <a href={`/${locale}/creative-flow`} class="footer-link">The Marketplace</a>
-        </div>
-
-        <!-- Column 3: Wunderkrammer -->
-        <div class="footer-column">
-          <p class="footer-column-title">{getLocalized('footer_col2_title') || 'Wunderkrammer'}</p>
-          <a href={`/${locale}/tools`} class="footer-link">Tools</a>
-          <a href={`/${locale}/guides`} class="footer-link">Guides</a>
-          <a href={`/${locale}/products`} class="footer-link">Financial Products</a>
-          <a href={`/${locale}/products`} class="footer-link">Other Products</a>
-        </div>
-
-        <!-- Column 4: Fans, Friends and Foes -->
-        <div class="footer-column">
-          <p class="footer-column-title">{getLocalized('footer_col3_title') || 'Fans, Friends and Foes'}</p>
-          <a href={`/${locale}/news`} class="footer-link">News</a>
-          <a href={`/${locale}/about-us`} class="footer-link">About Us</a>
-          <a href={`/${locale}/contact`} class="footer-link">Contact</a>
-        </div>
+        <!-- Dynamic Navigation Columns -->
+        {footerNavGroups.map((group) => (
+          <div class="footer-column">
+            <p class="footer-column-title">{getItemLabel(group)}</p>
+            {group.children?.map((child) => (
+              <a href={getItemUrl(child)} class="footer-link">{getItemLabel(child)}</a>
+            ))}
+          </div>
+        ))}
       </div>
 
       <!-- Social icons -->
@@ -146,7 +139,7 @@ const getLocalized = (fieldPrefix: string) => {
   }
 
   .footer-container {
-    max-width: 1280px;
+    max-width: var(--content-max-width);
     margin: 0 auto;
     position: relative;
   }

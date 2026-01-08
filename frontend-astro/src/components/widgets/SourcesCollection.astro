@@ -1,0 +1,174 @@
+---
+import { client, readItems, getAssetUrl } from '../../lib/directus';
+
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+const getLocalizedField = (item: any, fieldName: string) => {
+  return item[`${fieldName}_${locale}`] || item[`${fieldName}_en`] || item[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading');
+
+const defaultImages = [
+  '/images/hero-jumping.png',
+  '/images/oddny-bird-pink.png',
+  '/images/oddny-benefits.png',
+  '/images/card-1.png'
+];
+const getRandomImage = (id: number) => defaultImages[id % defaultImages.length];
+
+const getImageSrc = (item: any) => {
+  if (!item.featured_image) return getRandomImage(item.id);
+  if (item.featured_image.startsWith('/')) return item.featured_image;
+  return getAssetUrl(item.featured_image);
+};
+
+const sources = await client.request(
+  readItems('sources', {
+    filter: { status: { _eq: 'published' } },
+    fields: ['*'],
+    sort: ['sort'],
+    limit: 6
+  })
+) as any[];
+---
+
+<section 
+  class="sources-collection-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <div class="sources-container">
+    <h2 
+      class="sources-title"
+      data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`heading_${locale}`], mode: 'popover' })}
+    >
+      {heading || (locale === 'nl' ? 'Kennisbank' : 'Knowledge Base')}
+    </h2>
+    
+    <div class="sources-grid">
+      {sources.map((item) => (
+        <a href={item.external_url || `/${locale}/sources/${item.slug}`} class="source-card">
+          <div class="source-image">
+            <img src={getImageSrc(item)} alt={getLocalizedField(item, 'title')} loading="lazy" />
+          </div>
+          <div class="source-content">
+            <span class="source-category">{item.category}</span>
+            <h3 class="source-title">{getLocalizedField(item, 'title')}</h3>
+            <p class="source-description">{getLocalizedField(item, 'description')}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .sources-collection-section {
+    position: relative;
+    width: 100%;
+    background: white;
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    padding: 60px 0;
+  }
+
+  .sources-container {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 0 var(--content-padding);
+  }
+
+  .sources-title {
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 32px;
+    color: #42383e;
+    margin: 0 0 40px 0;
+  }
+
+  .sources-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+  }
+
+  .source-card {
+    background: #f8f8f8;
+    border-radius: 10px;
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .source-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .source-image {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+  }
+
+  .source-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .source-content {
+    padding: 20px;
+  }
+
+  .source-category {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #00FC26;
+    margin-bottom: 8px;
+  }
+
+  .source-title {
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 24px;
+    color: #42383e;
+    margin: 0 0 8px 0;
+  }
+
+  .source-description {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    color: #888484;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  @media (max-width: 1024px) {
+    .sources-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .sources-collection-section {
+      padding: 40px 0;
+    }
+    .sources-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

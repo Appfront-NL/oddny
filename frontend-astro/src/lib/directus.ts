@@ -177,6 +177,8 @@ export interface NavigationItem {
   status: string;
   sort: number;
   label: string;
+  label_en?: string;
+  label_nl?: string;
   url: string | null;
   page_id: string | null;
   parent_id: string | null;
@@ -245,6 +247,7 @@ export async function getNavigationItems(location?: 'header' | 'footer' | 'both'
 
 export function getAssetUrl(fileId: string | null): string | null {
   if (!fileId) return null;
+  if (fileId.startsWith('/')) return fileId;
   return `${PUBLIC_DIRECTUS_URL}/assets/${fileId}`;
 }
 
@@ -723,6 +726,79 @@ export async function getFriendsAndFoes(status: string = 'published'): Promise<F
     return response as FriendAndFoe[];
   } catch (error) {
     console.error('Error fetching friends and foes:', error);
+    return [];
+  }
+}
+
+// ===== PRODUCTS =====
+export interface Product {
+  id: string;
+  status: string;
+  sort: number | null;
+  code: string;
+  slug: string;
+  title_en: string;
+  title_nl: string;
+  intro_en: string;
+  intro_nl: string;
+  description_en: string;
+  description_nl: string;
+  category: string;
+  price: string;
+  price_from: string;
+  currency: string;
+  image: string | null;
+}
+
+export async function getProducts(status: string = 'published'): Promise<Product[]> {
+  try {
+    const response = await client.request(
+      readItems('products', {
+        filter: { status: { _eq: status } },
+        sort: ['sort'],
+        fields: ['*'],
+      })
+    );
+    return response as Product[];
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+}
+
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  try {
+    const response = await client.request(
+      readItems('products', {
+        filter: { slug: { _eq: slug } },
+        fields: ['*'],
+        limit: 1,
+      })
+    );
+    return (response as Product[])[0] || null;
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+}
+
+export async function getSimilarProducts(category: string, excludeId: string, limit: number = 6): Promise<Product[]> {
+  try {
+    const response = await client.request(
+      readItems('products', {
+        filter: { 
+          status: { _eq: 'published' },
+          category: { _eq: category },
+          id: { _neq: excludeId }
+        },
+        sort: ['sort'],
+        fields: ['*'],
+        limit: limit,
+      })
+    );
+    return response as Product[];
+  } catch (error) {
+    console.error('Error fetching similar products:', error);
     return [];
   }
 }

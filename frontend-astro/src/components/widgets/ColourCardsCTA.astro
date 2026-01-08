@@ -1,4 +1,6 @@
 ---
+import { client, readItems } from '../../lib/directus';
+
 interface Props {
   block: any;
   locale: string;
@@ -8,27 +10,12 @@ interface Props {
 
 const { block, locale, getImageUrl, setAttr } = Astro.props;
 
-const getLocalizedField = (block: any, fieldName: string) => {
+const getLocalizedField = (item: any, fieldName: string) => {
   const localizedFieldName = `${fieldName}_${locale}`;
-  return block[localizedFieldName] || block[fieldName] || '';
+  return item[localizedFieldName] || item[fieldName] || '';
 };
 
 const heading = getLocalizedField(block, 'heading');
-const ctaText = getLocalizedField(block, 'cta_text');
-const ctaLink = block.cta_link || '#';
-
-const card1Label = getLocalizedField(block, 'cc_card1_label') || 'Tools';
-const card1Text = getLocalizedField(block, 'cc_card1_text');
-const card1Link = block.cc_card1_link || '#';
-
-const card2Label = getLocalizedField(block, 'cc_card2_label') || 'Tools';
-const card2Text = getLocalizedField(block, 'cc_card2_text');
-const card2Link = block.cc_card2_link || '#';
-
-const card3Label = getLocalizedField(block, 'cc_card3_label') || 'Tools';
-const card3Text = getLocalizedField(block, 'cc_card3_text');
-const card3Link = block.cc_card3_link || '#';
-
 const colorVariant = block.variant || 'green';
 
 const colorMap: Record<string, string> = {
@@ -39,13 +26,44 @@ const colorMap: Record<string, string> = {
 
 const bgColor = colorMap[colorVariant] || colorMap.green;
 
-const defaultText = 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim enim ad minim';
+const collectionMap: Record<string, { collection: string; path: string; defaultHeading: string }> = {
+  green: { collection: 'sources', path: 'sources', defaultHeading: 'The Source' },
+  pink: { collection: 'studio_items', path: 'studio', defaultHeading: 'The Studio' },
+  teal: { collection: 'marketplace_items', path: 'marketplace', defaultHeading: 'The Marketplace' }
+};
 
-const cards = [
-  { label: card1Label, text: card1Text || defaultText, link: card1Link },
-  { label: card2Label, text: card2Text || defaultText, link: card2Link },
-  { label: card3Label, text: card3Text || defaultText, link: card3Link },
+const config = collectionMap[colorVariant] || collectionMap.green;
+
+let dynamicCards: any[] = [];
+try {
+  const items = await client.request(
+    readItems(config.collection as any, {
+      filter: { status: { _eq: 'published' } },
+      fields: ['*'],
+      sort: ['-id'],
+      limit: 3
+    })
+  ) as any[];
+  
+  dynamicCards = items.map((item) => ({
+    label: item.category || 'Item',
+    text: getLocalizedField(item, 'title'),
+    link: `/${locale}/${config.path}/${item.slug}`
+  }));
+} catch (e) {
+  dynamicCards = [];
+}
+
+const defaultText = 'Nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.';
+
+const cards = dynamicCards.length > 0 ? dynamicCards : [
+  { label: 'Item', text: defaultText, link: '#' },
+  { label: 'Item', text: defaultText, link: '#' },
+  { label: 'Item', text: defaultText, link: '#' },
 ];
+
+const ctaLink = `/${locale}/${config.path}`;
+const ctaText = locale === 'nl' ? `Bekijk alle ${config.defaultHeading}` : `View all ${config.defaultHeading}`;
 ---
 
 <section 
@@ -74,18 +92,15 @@ const cards = [
       ))}
     </div>
 
-    {ctaText && (
-      <a 
-        href={ctaLink} 
-        class="cta-button"
-        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`cta_text_${locale}`, 'cta_link'], mode: 'popover' })}
-      >
-        <span>{ctaText}</span>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </a>
-    )}
+    <a 
+      href={ctaLink} 
+      class="cta-button"
+    >
+      <span>{ctaText}</span>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
   </div>
 </section>
 
@@ -100,7 +115,7 @@ const cards = [
   .colour-cards-container {
     max-width: var(--content-max-width);
     margin: 0 auto;
-    padding: 0 80px;
+    padding: 0 var(--content-padding);
   }
 
   .section-title {
@@ -181,7 +196,7 @@ const cards = [
 
   @media (max-width: 1200px) {
     .colour-cards-container {
-      padding: 0 40px;
+      padding: 0 var(--content-padding);
     }
     .cards-grid {
       gap: 30px;
@@ -201,7 +216,7 @@ const cards = [
 
   @media (max-width: 768px) {
     .colour-cards-container {
-      padding: 0 20px;
+      padding: 0 var(--content-padding);
     }
     .section-title {
       font-size: 28px;

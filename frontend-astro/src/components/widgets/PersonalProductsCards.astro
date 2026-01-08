@@ -1,0 +1,363 @@
+---
+import { getProducts, type Product } from '../../lib/directus';
+
+interface Props {
+  block: any;
+  locale: string;
+  getImageUrl: (id: string) => string;
+  setAttr: (opts: any) => string;
+}
+
+const { block, locale, getImageUrl, setAttr } = Astro.props;
+
+const getLocalizedField = (block: any, fieldName: string) => {
+  const localizedFieldName = `${fieldName}_${locale}`;
+  return block[localizedFieldName] || block[fieldName] || '';
+};
+
+const heading = getLocalizedField(block, 'heading') || (locale === 'nl' ? 'Persoonlijke Producten' : 'Personal Products');
+
+const allProducts = await getProducts('published');
+const personalProducts = allProducts.filter((p: any) => p.is_personal === true);
+
+const cards = personalProducts.slice(0, 6).map((product: Product) => ({
+  code: product.code,
+  title: product[`title_${locale}` as keyof Product] || product.title_en,
+  desc: product[`intro_${locale}` as keyof Product] || product.intro_en,
+  price: `${product.currency}${product.price_from}`,
+  slug: product.slug,
+}));
+
+const fromLabel = getLocalizedField(block, 'pp_from_label') || (locale === 'nl' ? 'Vanaf' : 'From');
+const checkPricesLabel = getLocalizedField(block, 'pp_check_prices_label') || (locale === 'nl' ? 'Bekijk Prijzen' : 'Check our Prices');
+
+const navItems = [
+  getLocalizedField(block, 'pp_nav1') || (locale === 'nl' ? 'Persoonlijk' : 'Personal'),
+  getLocalizedField(block, 'pp_nav2') || (locale === 'nl' ? 'Zakelijk' : 'Business'),
+  getLocalizedField(block, 'pp_nav3') || (locale === 'nl' ? 'Bundels' : 'Bundles'),
+];
+
+const searchPlaceholder = locale === 'nl' ? 'Zoek producten...' : 'Search products...';
+const blockId = block.id;
+---
+
+<section 
+  class="personal-products-section"
+  data-directus={setAttr({ collection: 'blocks', item: block.id, mode: 'drawer' })}
+>
+  <div class="personal-products-bg"></div>
+  
+  <div class="personal-products-container">
+    <header class="personal-products-header">
+      <h2 
+        class="personal-products-title"
+        data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`heading_${locale}`], mode: 'popover' })}
+      >
+        {heading}
+      </h2>
+      
+      <nav class="personal-products-nav">
+        {navItems.map((item, index) => (
+          <span 
+            class="nav-item"
+            data-directus={setAttr({ collection: 'blocks', item: block.id, fields: [`pp_nav${index + 1}_${locale}`], mode: 'popover' })}
+          >
+            {item}
+          </span>
+        ))}
+        <div class="search-wrapper">
+          <input 
+            type="text" 
+            class="pp-search-input" 
+            placeholder={searchPlaceholder}
+            data-pp-search={blockId}
+          />
+          <div class="search-icon">
+            <svg fill="none" viewBox="0 0 22 26">
+              <circle cx="9.7" cy="9.7" r="8.2" stroke="#00FC26" stroke-width="3" />
+              <line stroke="#00FC26" stroke-width="3" x1="14.1" x2="20.9" y1="16.3" y2="25.1" />
+            </svg>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <div class="cards-grid" data-pp-grid={blockId}>
+      {cards.map((card) => (
+        <a 
+          href={`/${locale}/products/${card.slug}`}
+          class="product-card"
+          data-title={String(card.title).toLowerCase()}
+          data-code={String(card.code).toLowerCase()}
+          data-desc={String(card.desc).toLowerCase()}
+        >
+          <p class="card-title">{card.code}</p>
+          <p class="card-description">{card.desc}</p>
+          <p class="card-from">{fromLabel}</p>
+          <p class="card-price">{card.price}</p>
+          <span class="check-price-btn">
+            <span>{checkPricesLabel}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.pp-search-input').forEach((input) => {
+    const blockId = (input as HTMLInputElement).dataset.ppSearch;
+    const grid = document.querySelector(`[data-pp-grid="${blockId}"]`);
+    
+    if (input && grid) {
+      input.addEventListener('input', (e) => {
+        const query = (e.target as HTMLInputElement).value.toLowerCase().trim();
+        const cards = grid.querySelectorAll('.product-card') as NodeListOf<HTMLElement>;
+        
+        cards.forEach((card) => {
+          const title = card.dataset.title || '';
+          const code = card.dataset.code || '';
+          const desc = card.dataset.desc || '';
+          
+          const matches = !query || 
+            title.includes(query) || 
+            code.includes(query) || 
+            desc.includes(query);
+          
+          card.style.display = matches ? 'block' : 'none';
+        });
+      });
+    }
+  });
+</script>
+
+<style>
+  .personal-products-section {
+    position: relative;
+    width: 100%;
+    min-height: 433px;
+    background: rgba(217, 217, 217, 0.72);
+    font-family: 'Neue Haas Grotesk Display Pro', sans-serif;
+    overflow: hidden;
+  }
+
+  .personal-products-bg {
+    display: none;
+  }
+
+  .personal-products-container {
+    position: relative;
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 26px var(--content-padding);
+    z-index: 1;
+  }
+
+  .personal-products-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 48px;
+  }
+
+  .personal-products-title {
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 40px;
+    color: #42383e;
+    margin: 0;
+  }
+
+  .personal-products-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .nav-item {
+    padding: 8px 16px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #42383e;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+
+  .nav-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .search-wrapper {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .pp-search-input {
+    width: 180px;
+    height: 40px;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    color: #42383e;
+    background: transparent;
+  }
+
+  .pp-search-input::placeholder {
+    color: #888484;
+  }
+
+  .search-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .search-icon:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .search-icon svg {
+    width: 20px;
+    height: 26px;
+  }
+
+  .cards-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 24px 24px;
+  }
+
+  .product-card {
+    position: relative;
+    width: 180px;
+    height: 262px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    text-decoration: none;
+    display: block;
+  }
+
+  .product-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .card-title {
+    position: absolute;
+    left: 17px;
+    top: 46px;
+    font-size: 55px;
+    font-weight: 500;
+    line-height: 16px;
+    color: #42383e;
+    margin: 0;
+  }
+
+  .card-description {
+    position: absolute;
+    left: 20px;
+    top: 94px;
+    width: 137px;
+    height: 66px;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 22px;
+    color: #42383e;
+    margin: 0;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+
+  .card-from {
+    position: absolute;
+    left: 19px;
+    top: 178px;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 16px;
+    color: #42383e;
+    margin: 0;
+  }
+
+  .card-price {
+    position: absolute;
+    left: 19px;
+    top: 202px;
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 16px;
+    color: #ff40b4;
+    margin: 0;
+  }
+
+  .check-price-btn {
+    position: absolute;
+    left: 51px;
+    top: 235px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+
+  .check-price-btn span {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #ff40b4;
+  }
+
+  .check-price-btn svg {
+    color: #ff40b4;
+    transition: transform 0.2s;
+  }
+
+  .check-price-btn:hover svg {
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 1200px) {
+    .personal-products-container {
+      padding: 26px var(--content-padding);
+    }
+    .cards-grid {
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .personal-products-container {
+      padding: var(--content-padding);
+    }
+    .personal-products-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .personal-products-nav {
+      flex-wrap: wrap;
+    }
+    .cards-grid {
+      justify-content: center;
+      gap: 20px;
+    }
+  }
+</style>
