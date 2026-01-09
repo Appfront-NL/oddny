@@ -4,7 +4,20 @@ FROM directus/directus:11
 USER root
 RUN mkdir -p /directus/database && chown -R node:node /directus
 
-# Copy our database and uploads as the node user
+# Copy package.json to install extensions
+COPY --chown=node:node package.json /directus/package.json
+
+# Switch to node user for npm install
+USER node
+WORKDIR /directus
+
+# Install the SEO plugin extension
+RUN npm install @directus-labs/seo-plugin@1.1.0
+
+# Switch back to root for copying files
+USER root
+
+# Copy our database and uploads
 COPY --chown=node:node database.sqlite /directus/database/database.sqlite
 COPY --chown=node:node uploads/ /directus/uploads/
 
