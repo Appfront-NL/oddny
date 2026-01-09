@@ -1,35 +1,33 @@
 FROM directus/directus:11
 
-# Create directus user directories
 USER root
+
+# Create directus user directories
 RUN mkdir -p /directus/database && chown -R node:node /directus
 
-# Copy package.json to install extensions
-COPY --chown=node:node package.json /directus/package.json
+# Copy package files for extension installation
+COPY --chown=node:node package.json package-lock.json /directus/
 
-# Switch to node user for npm install
+# Install extensions as node user
 USER node
 WORKDIR /directus
+RUN npm ci --omit=dev
 
-# Install the SEO plugin extension
-RUN npm install @directus-labs/seo-plugin@1.1.0
-
-# Switch back to root for copying files
+# Switch back to root for copying data files
 USER root
 
 # Copy our database and uploads
 COPY --chown=node:node database.sqlite /directus/database/database.sqlite
 COPY --chown=node:node uploads/ /directus/uploads/
 
+# Copy extensions folder if exists
+COPY --chown=node:node extensions/ /directus/extensions/
+
 # Switch back to node user
 USER node
 
-# Set environment variables to use our existing database
+# Set environment variables
 ENV DB_CLIENT=sqlite3
 ENV DB_FILENAME=/directus/database/database.sqlite
-ENV PUBLIC_URL=http://localhost:8055
-ENV CORS_ENABLED=true
-ENV CORS_ORIGIN=http://localhost,http://localhost:4321,true
 
-# Expose port
 EXPOSE 8055
